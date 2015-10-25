@@ -50,7 +50,7 @@ public class LSMRTreeDiskComponentFactory implements ILSMComponentFactory {
             HyracksDataException {
         return new LSMRTreeDiskComponent(rtreeFactory.createIndexInstance(cfr.getInsertIndexFileReference()),
                 btreeFactory.createIndexInstance(cfr.getDeleteIndexFileReference()),
-                bloomFilterFactory.createBloomFiltertInstance(cfr.getBloomFilterFileReference()),
+                bloomFilterFactory.createBloomFilterInstance(cfr.getBloomFilterFileReference()),
                 filterFactory == null ? null : filterFactory.createLSMComponentFilter());
     }
 

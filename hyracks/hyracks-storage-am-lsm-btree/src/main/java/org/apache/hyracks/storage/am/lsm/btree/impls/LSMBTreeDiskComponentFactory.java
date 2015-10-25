@@ -23,6 +23,7 @@ import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.storage.am.bloomfilter.impls.BloomFilterFactory;
 import org.apache.hyracks.storage.am.btree.impls.BTree;
 import org.apache.hyracks.storage.am.common.api.IndexException;
+import org.apache.hyracks.storage.am.common.statistics.StatisticsFactory;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMComponent;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMComponentFactory;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMComponentFilterFactory;
@@ -34,20 +35,23 @@ public class LSMBTreeDiskComponentFactory implements ILSMComponentFactory {
     private final TreeIndexFactory<BTree> btreeFactory;
     private final BloomFilterFactory bloomFilterFactory;
     private final ILSMComponentFilterFactory filterFactory;
+    private final StatisticsFactory statisticsFactory;
 
     public LSMBTreeDiskComponentFactory(TreeIndexFactory<BTree> btreeFactory, BloomFilterFactory bloomFilterFactory,
-            ILSMComponentFilterFactory filterFactory) {
+            ILSMComponentFilterFactory filterFactory, StatisticsFactory statisticsFactory) {
         this.btreeFactory = btreeFactory;
         this.bloomFilterFactory = bloomFilterFactory;
         this.filterFactory = filterFactory;
+        this.statisticsFactory = statisticsFactory;
     }
 
     @Override
-    public ILSMComponent createLSMComponentInstance(LSMComponentFileReferences cfr) throws IndexException,
-            HyracksDataException {
+    public ILSMComponent createLSMComponentInstance(LSMComponentFileReferences cfr)
+            throws IndexException, HyracksDataException {
         return new LSMBTreeDiskComponent(btreeFactory.createIndexInstance(cfr.getInsertIndexFileReference()),
-                bloomFilterFactory.createBloomFiltertInstance(cfr.getBloomFilterFileReference()),
-                filterFactory == null ? null : filterFactory.createLSMComponentFilter());
+                bloomFilterFactory.createBloomFilterInstance(cfr.getBloomFilterFileReference()),
+                filterFactory == null ? null : filterFactory.createLSMComponentFilter(), statisticsFactory == null
+                        ? null : statisticsFactory.createWaveletStatistics(cfr.getStatisticsFileReference()));
     }
 
     @Override

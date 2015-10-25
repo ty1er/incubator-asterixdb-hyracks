@@ -21,6 +21,7 @@ package org.apache.hyracks.storage.am.lsm.btree.dataflow;
 import org.apache.hyracks.api.context.IHyracksTaskContext;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.storage.am.common.api.IIndex;
+import org.apache.hyracks.storage.am.common.api.IPrimitiveIntegerValueProviderFactory;
 import org.apache.hyracks.storage.am.common.dataflow.AbstractTreeIndexOperatorDescriptor;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexOperatorDescriptor;
 import org.apache.hyracks.storage.am.lsm.btree.util.LSMBTreeUtils;
@@ -28,29 +29,29 @@ import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperationCallbackFacto
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperationScheduler;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMMergePolicy;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMOperationTrackerProvider;
-import org.apache.hyracks.storage.am.lsm.common.dataflow.AbstractLSMIndexDataflowHelper;
 
-public class ExternalBTreeWithBuddyDataflowHelper extends AbstractLSMIndexDataflowHelper {
+public class ExternalBTreeWithBuddyDataflowHelper extends AbstractLSMBTreeDataflowHelper {
 
     private final int[] buddyBtreeFields;
     private final int version;
 
-    public ExternalBTreeWithBuddyDataflowHelper(IIndexOperatorDescriptor opDesc, IHyracksTaskContext ctx,
-            int partition, ILSMMergePolicy mergePolicy, ILSMOperationTrackerProvider opTrackerFactory,
+    public ExternalBTreeWithBuddyDataflowHelper(IIndexOperatorDescriptor opDesc, IHyracksTaskContext ctx, int partition,
+            ILSMMergePolicy mergePolicy, ILSMOperationTrackerProvider opTrackerFactory,
             ILSMIOOperationScheduler ioScheduler, ILSMIOOperationCallbackFactory ioOpCallbackFactory,
-            int[] buddyBtreeFields, int version, boolean durable) {
-        super(opDesc, ctx, partition, null, mergePolicy, opTrackerFactory, ioScheduler, ioOpCallbackFactory, null,
-                null, null, durable);
-        this.buddyBtreeFields = buddyBtreeFields;
-        this.version = version;
+            int[] buddyBtreeFields, int version, boolean durable, boolean collectStatistics,
+            IPrimitiveIntegerValueProviderFactory statsValueProviderFactory) {
+        this(opDesc, ctx, partition, DEFAULT_BLOOM_FILTER_FALSE_POSITIVE_RATE, mergePolicy, opTrackerFactory,
+                ioScheduler, ioOpCallbackFactory, buddyBtreeFields, version, durable, collectStatistics,
+                statsValueProviderFactory);
     }
 
-    public ExternalBTreeWithBuddyDataflowHelper(IIndexOperatorDescriptor opDesc, IHyracksTaskContext ctx,
-            int partition, double bloomFilterFalsePositiveRate, ILSMMergePolicy mergePolicy,
+    public ExternalBTreeWithBuddyDataflowHelper(IIndexOperatorDescriptor opDesc, IHyracksTaskContext ctx, int partition,
+            double bloomFilterFalsePositiveRate, ILSMMergePolicy mergePolicy,
             ILSMOperationTrackerProvider opTrackerFactory, ILSMIOOperationScheduler ioScheduler,
-            ILSMIOOperationCallbackFactory ioOpCallbackFactory, int[] buddyBtreeFields, int version, boolean durable) {
+            ILSMIOOperationCallbackFactory ioOpCallbackFactory, int[] buddyBtreeFields, int version, boolean durable,
+            boolean collectStatistics, IPrimitiveIntegerValueProviderFactory statsValueProviderFactory) {
         super(opDesc, ctx, partition, null, bloomFilterFalsePositiveRate, mergePolicy, opTrackerFactory, ioScheduler,
-                ioOpCallbackFactory, null, null, null, durable);
+                ioOpCallbackFactory, null, null, null, durable, collectStatistics, statsValueProviderFactory);
         this.buddyBtreeFields = buddyBtreeFields;
         this.version = version;
     }
@@ -72,10 +73,10 @@ public class ExternalBTreeWithBuddyDataflowHelper extends AbstractLSMIndexDatafl
     @Override
     protected IIndex createIndexInstance() throws HyracksDataException {
         AbstractTreeIndexOperatorDescriptor treeOpDesc = (AbstractTreeIndexOperatorDescriptor) opDesc;
-        return LSMBTreeUtils.createExternalBTreeWithBuddy(file, opDesc.getStorageManager().getBufferCache(ctx), opDesc
-                .getStorageManager().getFileMapProvider(ctx), treeOpDesc.getTreeIndexTypeTraits(), treeOpDesc
-                .getTreeIndexComparatorFactories(), bloomFilterFalsePositiveRate, mergePolicy, opTrackerFactory
-                .getOperationTracker(ctx), ioScheduler, ioOpCallbackFactory.createIOOperationCallback(),
+        return LSMBTreeUtils.createExternalBTreeWithBuddy(file, opDesc.getStorageManager().getBufferCache(ctx),
+                opDesc.getStorageManager().getFileMapProvider(ctx), treeOpDesc.getTreeIndexTypeTraits(),
+                treeOpDesc.getTreeIndexComparatorFactories(), bloomFilterFalsePositiveRate, mergePolicy,
+                opTrackerFactory.getOperationTracker(ctx), ioScheduler, ioOpCallbackFactory.createIOOperationCallback(),
                 buddyBtreeFields, version, durable);
     }
 

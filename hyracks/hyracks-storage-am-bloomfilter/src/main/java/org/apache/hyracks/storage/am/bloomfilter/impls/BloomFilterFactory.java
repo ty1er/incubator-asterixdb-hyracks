@@ -35,7 +35,7 @@ public class BloomFilterFactory {
         this.bloomFilterKeyFields = bloomFilterKeyFields;
     }
 
-    public BloomFilter createBloomFiltertInstance(FileReference file) throws HyracksDataException {
+    public BloomFilter createBloomFilterInstance(FileReference file) throws HyracksDataException {
         return new BloomFilter(bufferCache, fileMapProvider, file, bloomFilterKeyFields);
     }
 

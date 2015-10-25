@@ -34,6 +34,7 @@ import org.apache.hyracks.tests.am.common.LSMTreeOperatorTestHelper;
 public class LSMBTreeOperatorTestHelper extends LSMTreeOperatorTestHelper {
 
     private static final Map<String, String> MERGE_POLICY_PROPERTIES;
+
     static {
         MERGE_POLICY_PROPERTIES = new HashMap<String, String>();
         MERGE_POLICY_PROPERTIES.put("num-components", "3");
@@ -47,7 +48,7 @@ public class LSMBTreeOperatorTestHelper extends LSMTreeOperatorTestHelper {
         return new LSMBTreeDataflowHelperFactory(virtualBufferCacheProvider, new ConstantMergePolicyFactory(),
                 MERGE_POLICY_PROPERTIES, ThreadCountingOperationTrackerProvider.INSTANCE,
                 SynchronousSchedulerProvider.INSTANCE, NoOpIOOperationCallback.INSTANCE,
-                DEFAULT_BLOOM_FILTER_FALSE_POSITIVE_RATE, true, null, null, null, null, true);
+                DEFAULT_BLOOM_FILTER_FALSE_POSITIVE_RATE, true, null, null, null, null, true, false, null);
     }
 
 }

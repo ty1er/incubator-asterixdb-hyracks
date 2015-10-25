@@ -56,7 +56,8 @@ public class LSMBTreeFileManager extends AbstractLSMIndexFileManager {
         String baseName = baseDir + ts + SPLIT_STRING + ts;
         // Begin timestamp and end timestamp are identical since it is a flush
         return new LSMComponentFileReferences(createFlushFile(baseName + SPLIT_STRING + BTREE_STRING), null,
-                createFlushFile(baseName + SPLIT_STRING + BLOOM_FILTER_STRING));
+                createFlushFile(baseName + SPLIT_STRING + BLOOM_FILTER_STRING),
+                createFlushFile(baseName + SPLIT_STRING + STATISTICS_STRING));
     }
 
     @Override
@@ -68,7 +69,8 @@ public class LSMBTreeFileManager extends AbstractLSMIndexFileManager {
         String baseName = baseDir + firstTimestampRange[0] + SPLIT_STRING + lastTimestampRange[1];
         // Get the range of timestamps by taking the earliest and the latest timestamps
         return new LSMComponentFileReferences(createMergeFile(baseName + SPLIT_STRING + BTREE_STRING), null,
-                createMergeFile(baseName + SPLIT_STRING + BLOOM_FILTER_STRING));
+                createMergeFile(baseName + SPLIT_STRING + BLOOM_FILTER_STRING),
+                createFlushFile(baseName + SPLIT_STRING + STATISTICS_STRING));
     }
 
     private static FilenameFilter btreeFilter = new FilenameFilter() {
@@ -96,7 +98,8 @@ public class LSMBTreeFileManager extends AbstractLSMIndexFileManager {
             int index = cmpFileName.fileName.lastIndexOf(SPLIT_STRING);
             btreeFilesSet.add(cmpFileName.fileName.substring(0, index));
         }
-        validateFiles(btreeFilesSet, allBloomFilterFiles, getCompoundFilter(transactionFilter, bloomFilterFilter), null);
+        validateFiles(btreeFilesSet, allBloomFilterFiles, getCompoundFilter(transactionFilter, bloomFilterFilter),
+                null);
 
         // Sanity check.
         if (allBTreeFiles.size() != allBloomFilterFiles.size()) {
@@ -110,8 +113,8 @@ public class LSMBTreeFileManager extends AbstractLSMIndexFileManager {
         }
 
         if (allBTreeFiles.size() == 1 && allBloomFilterFiles.size() == 1) {
-            validFiles.add(new LSMComponentFileReferences(allBTreeFiles.get(0).fileRef, null, allBloomFilterFiles
-                    .get(0).fileRef));
+            validFiles.add(new LSMComponentFileReferences(allBTreeFiles.get(0).fileRef, null,
+                    allBloomFilterFiles.get(0).fileRef, null));
             return validFiles;
         }
 
@@ -148,7 +151,8 @@ public class LSMBTreeFileManager extends AbstractLSMIndexFileManager {
                 invalidBloomFilterFile.delete();
             } else {
                 // This scenario should not be possible.
-                throw new HyracksDataException("Found LSM files with overlapping but not contained timetamp intervals.");
+                throw new HyracksDataException(
+                        "Found LSM files with overlapping but not contained timetamp intervals.");
             }
         }
 
@@ -163,7 +167,7 @@ public class LSMBTreeFileManager extends AbstractLSMIndexFileManager {
             ComparableFileName cmpBTreeFileName = btreeFileIter.next();
             ComparableFileName cmpBloomFilterFileName = bloomFilterFileIter.next();
             validFiles.add(new LSMComponentFileReferences(cmpBTreeFileName.fileRef, null,
-                    cmpBloomFilterFileName.fileRef));
+                    cmpBloomFilterFileName.fileRef, null));
         }
 
         return validFiles;
@@ -178,7 +182,7 @@ public class LSMBTreeFileManager extends AbstractLSMIndexFileManager {
         String baseName = baseDir + ts + SPLIT_STRING + ts;
         // Begin timestamp and end timestamp are identical since it is a transaction
         return new LSMComponentFileReferences(createFlushFile(baseName + SPLIT_STRING + BTREE_STRING), null,
-                createFlushFile(baseName + SPLIT_STRING + BLOOM_FILTER_STRING));
+                createFlushFile(baseName + SPLIT_STRING + BLOOM_FILTER_STRING), null);
     }
 
     @Override
@@ -220,6 +224,6 @@ public class LSMBTreeFileManager extends AbstractLSMIndexFileManager {
         FileReference bTreeFileRef = new FileReference(bTreeFile);
         FileReference bloomFilterFileRef = new FileReference(bloomFilterFile);
 
-        return new LSMComponentFileReferences(bTreeFileRef, null, bloomFilterFileRef);
+        return new LSMComponentFileReferences(bTreeFileRef, null, bloomFilterFileRef, null);
     }
 }

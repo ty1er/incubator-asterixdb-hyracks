@@ -19,18 +19,22 @@
 package org.apache.hyracks.storage.am.lsm.common.impls;
 
 import org.apache.hyracks.api.exceptions.HyracksDataException;
+import org.apache.hyracks.storage.am.bloomfilter.impls.BloomFilter;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMComponentFilter;
 import org.apache.hyracks.storage.am.lsm.common.api.LSMOperationType;
 
 public abstract class AbstractDiskLSMComponent extends AbstractLSMComponent {
 
-    public AbstractDiskLSMComponent(ILSMComponentFilter filter) {
+    protected final BloomFilter bloomFilter;
+
+    public AbstractDiskLSMComponent(BloomFilter bloomFilter, ILSMComponentFilter filter) {
         super(filter);
+        this.bloomFilter = bloomFilter;
         state = ComponentState.READABLE_UNWRITABLE;
     }
 
     public AbstractDiskLSMComponent() {
-        this(null);
+        this(null, null);
     }
 
     @Override
@@ -100,9 +104,18 @@ public abstract class AbstractDiskLSMComponent extends AbstractLSMComponent {
         return state;
     }
 
-    protected abstract void destroy() throws HyracksDataException;
+    public BloomFilter getBloomFilter() {
+        return bloomFilter;
+    }
 
-    public abstract long getComponentSize();
+    protected void destroy() throws HyracksDataException {
+        bloomFilter.deactivate();
+        bloomFilter.destroy();
+    }
+
+    public long getComponentSize() {
+        return bloomFilter.getFileReference().getFile().length();
+    }
 
     public abstract int getFileReferenceCount();
 

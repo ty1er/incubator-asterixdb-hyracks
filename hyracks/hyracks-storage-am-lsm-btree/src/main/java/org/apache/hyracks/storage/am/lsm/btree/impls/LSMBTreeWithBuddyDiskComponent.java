@@ -27,12 +27,11 @@ public class LSMBTreeWithBuddyDiskComponent extends AbstractDiskLSMComponent {
 
     private final BTree btree;
     private final BTree buddyBtree;
-    private final BloomFilter bloomFilter;
 
     public LSMBTreeWithBuddyDiskComponent(BTree btree, BTree buddyBtree, BloomFilter bloomFilter) {
+        super(bloomFilter, null);
         this.btree = btree;
         this.buddyBtree = buddyBtree;
-        this.bloomFilter = bloomFilter;
     }
 
     @Override
@@ -41,8 +40,7 @@ public class LSMBTreeWithBuddyDiskComponent extends AbstractDiskLSMComponent {
         btree.destroy();
         buddyBtree.deactivate();
         buddyBtree.destroy();
-        bloomFilter.deactivate();
-        bloomFilter.destroy();
+        super.destroy();
     }
 
     public BTree getBTree() {
@@ -53,15 +51,11 @@ public class LSMBTreeWithBuddyDiskComponent extends AbstractDiskLSMComponent {
         return buddyBtree;
     }
 
-    public BloomFilter getBloomFilter() {
-        return bloomFilter;
-    }
-
     @Override
     public long getComponentSize() {
-        long size = btree.getFileReference().getFile().length();
+        long size = super.getComponentSize();
+        size = btree.getFileReference().getFile().length();
         size += buddyBtree.getFileReference().getFile().length();
-        size += bloomFilter.getFileReference().getFile().length();
         return size;
     }
 

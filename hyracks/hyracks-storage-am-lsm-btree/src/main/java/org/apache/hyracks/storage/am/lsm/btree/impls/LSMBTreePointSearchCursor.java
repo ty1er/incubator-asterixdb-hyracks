@@ -40,6 +40,7 @@ import org.apache.hyracks.storage.am.lsm.common.api.ILSMComponent.LSMComponentTy
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMHarness;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIndexOperationContext;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMTreeTupleReference;
+import org.apache.hyracks.storage.am.lsm.common.impls.AbstractDiskLSMComponent;
 import org.apache.hyracks.storage.am.lsm.common.impls.BloomFilterAwareBTreePointSearchCursor;
 import org.apache.hyracks.storage.common.buffercache.IBufferCache;
 import org.apache.hyracks.storage.common.buffercache.ICachedPage;
@@ -166,7 +167,7 @@ public class LSMBTreePointSearchCursor implements ITreeIndexCursor {
                 btree = (BTree) ((LSMBTreeMemoryComponent) component).getBTree();
             } else {
                 rangeCursors[i] = new BloomFilterAwareBTreePointSearchCursor(leafFrame, false,
-                        ((LSMBTreeDiskComponent) component).getBloomFilter());
+                        ((AbstractDiskLSMComponent) component).getBloomFilter());
                 btree = (BTree) ((LSMBTreeDiskComponent) component).getBTree();
             }
             btreeAccessors[i] = btree.createAccessor(NoOpOperationCallback.INSTANCE, NoOpOperationCallback.INSTANCE);

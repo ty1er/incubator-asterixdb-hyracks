@@ -51,7 +51,7 @@ public class LSMInvertedIndexDiskComponentFactory implements ILSMComponentFactor
             HyracksDataException {
         return new LSMInvertedIndexDiskComponent(diskInvIndexFactory.createIndexInstance(cfr
                 .getInsertIndexFileReference()), btreeFactory.createIndexInstance(cfr.getDeleteIndexFileReference()),
-                bloomFilterFactory.createBloomFiltertInstance(cfr.getBloomFilterFileReference()),
+                bloomFilterFactory.createBloomFilterInstance(cfr.getBloomFilterFileReference()),
                 filterFactory == null ? null : filterFactory.createLSMComponentFilter());
     }
 

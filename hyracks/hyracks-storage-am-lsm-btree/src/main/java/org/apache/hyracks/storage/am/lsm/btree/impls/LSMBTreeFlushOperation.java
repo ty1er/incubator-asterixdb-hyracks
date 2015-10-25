@@ -18,87 +18,42 @@
  */
 package org.apache.hyracks.storage.am.lsm.btree.impls;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.api.io.FileReference;
 import org.apache.hyracks.api.io.IODeviceHandle;
-import org.apache.hyracks.storage.am.common.api.IndexException;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMComponent;
-import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperation;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperationCallback;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIndexAccessorInternal;
+import org.apache.hyracks.storage.am.lsm.common.impls.AbstractLSMFlushOperation;
 
-public class LSMBTreeFlushOperation implements ILSMIOOperation, Comparable<LSMBTreeFlushOperation> {
+public class LSMBTreeFlushOperation extends AbstractLSMFlushOperation implements Comparable<LSMBTreeFlushOperation> {
 
-    private final ILSMIndexAccessorInternal accessor;
-    private final ILSMComponent flushingComponent;
     private final FileReference btreeFlushTarget;
-    private final FileReference bloomFilterFlushTarget;
-    private final ILSMIOOperationCallback callback;
-    private final String indexIdentifier;
+    private final FileReference statisticsFlushTarget;
 
     public LSMBTreeFlushOperation(ILSMIndexAccessorInternal accessor, ILSMComponent flushingComponent,
-            FileReference btreeFlushTarget, FileReference bloomFilterFlushTarget, ILSMIOOperationCallback callback,
-            String indexIdentifier) {
-        this.accessor = accessor;
-        this.flushingComponent = flushingComponent;
+            FileReference btreeFlushTarget, FileReference bloomFilterFlushTarget, FileReference statisticsFlushTarget,
+            ILSMIOOperationCallback callback, String indexIdentifier) {
+        super(accessor, flushingComponent, bloomFilterFlushTarget, callback, indexIdentifier);
         this.btreeFlushTarget = btreeFlushTarget;
-        this.bloomFilterFlushTarget = bloomFilterFlushTarget;
-        this.callback = callback;
-        this.indexIdentifier = indexIdentifier;
-    }
-
-    @Override
-    public Set<IODeviceHandle> getReadDevices() {
-        return Collections.emptySet();
+        this.statisticsFlushTarget = statisticsFlushTarget;
     }
 
     @Override
     public Set<IODeviceHandle> getWriteDevices() {
-        Set<IODeviceHandle> devs = new HashSet<IODeviceHandle>();
+        Set<IODeviceHandle> devs = super.getWriteDevices();
         devs.add(btreeFlushTarget.getDeviceHandle());
-        devs.add(bloomFilterFlushTarget.getDeviceHandle());
+        devs.add(statisticsFlushTarget.getDeviceHandle());
         return devs;
-    }
-
-    @Override
-    public Boolean call() throws HyracksDataException, IndexException {
-        accessor.flush(this);
-        return true;
-    }
-
-    @Override
-    public ILSMIOOperationCallback getCallback() {
-        return callback;
     }
 
     public FileReference getBTreeFlushTarget() {
         return btreeFlushTarget;
     }
 
-    public FileReference getBloomFilterFlushTarget() {
-        return bloomFilterFlushTarget;
-    }
-
-    public ILSMIndexAccessorInternal getAccessor() {
-        return accessor;
-    }
-
-    public ILSMComponent getFlushingComponent() {
-        return flushingComponent;
-    }
-
-    @Override
-    public String getIndexUniqueIdentifier() {
-        return indexIdentifier;
-    }
-
-    @Override
-    public LSMIOOpertionType getIOOpertionType() {
-        return LSMIOOpertionType.FLUSH;
+    public FileReference getStatisticsTarget() {
+        return statisticsFlushTarget;
     }
 
     @Override

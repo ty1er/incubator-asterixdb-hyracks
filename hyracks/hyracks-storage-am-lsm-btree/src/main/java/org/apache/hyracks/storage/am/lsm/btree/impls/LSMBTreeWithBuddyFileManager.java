@@ -73,8 +73,9 @@ public class LSMBTreeWithBuddyFileManager extends AbstractLSMIndexFileManager {
         String baseName = baseDir + ts + SPLIT_STRING + ts;
         // Begin timestamp and end timestamp are identical since it is a flush
         return new LSMComponentFileReferences(createFlushFile(baseName + SPLIT_STRING + BTREE_STRING),
-                createFlushFile(baseName + SPLIT_STRING + BUDDY_BTREE_STRING), createFlushFile(baseName + SPLIT_STRING
-                        + BLOOM_FILTER_STRING));
+                createFlushFile(baseName + SPLIT_STRING + BUDDY_BTREE_STRING),
+                createFlushFile(baseName + SPLIT_STRING + BLOOM_FILTER_STRING),
+                createFlushFile(baseName + SPLIT_STRING + STATISTICS_STRING));
     }
 
     @Override
@@ -87,8 +88,9 @@ public class LSMBTreeWithBuddyFileManager extends AbstractLSMIndexFileManager {
         // Get the range of timestamps by taking the earliest and the latest
         // timestamps
         return new LSMComponentFileReferences(createMergeFile(baseName + SPLIT_STRING + BTREE_STRING),
-                createMergeFile(baseName + SPLIT_STRING + BUDDY_BTREE_STRING), createMergeFile(baseName + SPLIT_STRING
-                        + BLOOM_FILTER_STRING));
+                createMergeFile(baseName + SPLIT_STRING + BUDDY_BTREE_STRING),
+                createMergeFile(baseName + SPLIT_STRING + BLOOM_FILTER_STRING),
+                createFlushFile(baseName + SPLIT_STRING + STATISTICS_STRING));
     }
 
     @Override
@@ -127,7 +129,7 @@ public class LSMBTreeWithBuddyFileManager extends AbstractLSMIndexFileManager {
 
         if (allBTreeFiles.size() == 1 && allBuddyBTreeFiles.size() == 1 && allBloomFilterFiles.size() == 1) {
             validFiles.add(new LSMComponentFileReferences(allBTreeFiles.get(0).fileRef,
-                    allBuddyBTreeFiles.get(0).fileRef, allBloomFilterFiles.get(0).fileRef));
+                    allBuddyBTreeFiles.get(0).fileRef, allBloomFilterFiles.get(0).fileRef, null));
             return validFiles;
         }
 
@@ -177,7 +179,8 @@ public class LSMBTreeWithBuddyFileManager extends AbstractLSMIndexFileManager {
                 invalidBloomFilterFile.delete();
             } else {
                 // This scenario should not be possible.
-                throw new HyracksDataException("Found LSM files with overlapping but not contained timetamp intervals.");
+                throw new HyracksDataException(
+                        "Found LSM files with overlapping but not contained timetamp intervals.");
             }
         }
 
@@ -195,7 +198,7 @@ public class LSMBTreeWithBuddyFileManager extends AbstractLSMIndexFileManager {
             ComparableFileName cmpBuddyBTreeFileName = buddyBtreeFileIter.next();
             ComparableFileName cmpBloomFilterFileName = bloomFilterFileIter.next();
             validFiles.add(new LSMComponentFileReferences(cmpBTreeFileName.fileRef, cmpBuddyBTreeFileName.fileRef,
-                    cmpBloomFilterFileName.fileRef));
+                    cmpBloomFilterFileName.fileRef, null));
         }
 
         return validFiles;
@@ -209,8 +212,8 @@ public class LSMBTreeWithBuddyFileManager extends AbstractLSMIndexFileManager {
 
         String baseName = baseDir + ts + SPLIT_STRING + ts;
         return new LSMComponentFileReferences(createFlushFile(baseName + SPLIT_STRING + BTREE_STRING),
-                createFlushFile(baseName + SPLIT_STRING + BUDDY_BTREE_STRING), createFlushFile(baseName + SPLIT_STRING
-                        + BLOOM_FILTER_STRING));
+                createFlushFile(baseName + SPLIT_STRING + BUDDY_BTREE_STRING),
+                createFlushFile(baseName + SPLIT_STRING + BLOOM_FILTER_STRING), null);
     }
 
     @Override
@@ -229,8 +232,8 @@ public class LSMBTreeWithBuddyFileManager extends AbstractLSMIndexFileManager {
             // get the actual transaction files
             files = dir.list(transactionFilter);
             if (files.length < 3) {
-                throw new HyracksDataException("LSM Btree with buddy transaction has less than 3 files :"
-                        + files.length);
+                throw new HyracksDataException(
+                        "LSM Btree with buddy transaction has less than 3 files :" + files.length);
             }
             try {
                 Files.delete(Paths.get(txnFileName));
@@ -255,7 +258,7 @@ public class LSMBTreeWithBuddyFileManager extends AbstractLSMIndexFileManager {
         FileReference bTreeFileRef = new FileReference(bTreeFile);
         FileReference buddyBTreeFileRef = new FileReference(buddyBTreeFile);
         FileReference bloomFilterFileRef = new FileReference(bloomFilterFile);
-        return new LSMComponentFileReferences(bTreeFileRef, buddyBTreeFileRef, bloomFilterFileRef);
+        return new LSMComponentFileReferences(bTreeFileRef, buddyBTreeFileRef, bloomFilterFileRef, null);
     }
 
 }

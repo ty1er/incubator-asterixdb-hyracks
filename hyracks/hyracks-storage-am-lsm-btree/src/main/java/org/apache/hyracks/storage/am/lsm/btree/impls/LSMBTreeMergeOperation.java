@@ -19,95 +19,54 @@
 
 package org.apache.hyracks.storage.am.lsm.btree.impls;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.api.io.FileReference;
 import org.apache.hyracks.api.io.IODeviceHandle;
 import org.apache.hyracks.storage.am.common.api.ITreeIndexCursor;
-import org.apache.hyracks.storage.am.common.api.IndexException;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMComponent;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperation;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperationCallback;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIndexAccessorInternal;
+import org.apache.hyracks.storage.am.lsm.common.impls.AbstractLSMMergeOperation;
 
-public class LSMBTreeMergeOperation implements ILSMIOOperation {
+public class LSMBTreeMergeOperation extends AbstractLSMMergeOperation implements ILSMIOOperation {
 
-    private final ILSMIndexAccessorInternal accessor;
-    private final List<ILSMComponent> mergingComponents;
-    private final ITreeIndexCursor cursor;
     private final FileReference btreeMergeTarget;
-    private final FileReference bloomFilterMergeTarget;
-    private final ILSMIOOperationCallback callback;
-    private final String indexIdentifier;
+    private final FileReference statisticsMergeTarget;
 
     public LSMBTreeMergeOperation(ILSMIndexAccessorInternal accessor, List<ILSMComponent> mergingComponents,
             ITreeIndexCursor cursor, FileReference btreeMergeTarget, FileReference bloomFilterMergeTarget,
-            ILSMIOOperationCallback callback, String indexIdentifier) {
-        this.accessor = accessor;
-        this.mergingComponents = mergingComponents;
-        this.cursor = cursor;
+            FileReference statisticsMergeTarget, ILSMIOOperationCallback callback, String indexIdentifier) {
+        super(accessor, mergingComponents, cursor, bloomFilterMergeTarget, callback, indexIdentifier);
         this.btreeMergeTarget = btreeMergeTarget;
-        this.bloomFilterMergeTarget = bloomFilterMergeTarget;
-        this.callback = callback;
-        this.indexIdentifier = indexIdentifier;
+        this.statisticsMergeTarget = statisticsMergeTarget;
     }
 
     @Override
     public Set<IODeviceHandle> getReadDevices() {
-        Set<IODeviceHandle> devs = new HashSet<IODeviceHandle>();
+        Set<IODeviceHandle> devs = super.getReadDevices();
         for (ILSMComponent o : mergingComponents) {
             LSMBTreeDiskComponent component = (LSMBTreeDiskComponent) o;
             devs.add(component.getBTree().getFileReference().getDeviceHandle());
-            devs.add(component.getBloomFilter().getFileReference().getDeviceHandle());
         }
         return devs;
     }
 
     @Override
     public Set<IODeviceHandle> getWriteDevices() {
-        Set<IODeviceHandle> devs = new HashSet<IODeviceHandle>();
+        Set<IODeviceHandle> devs = super.getWriteDevices();
         devs.add(btreeMergeTarget.getDeviceHandle());
-        devs.add(bloomFilterMergeTarget.getDeviceHandle());
+        devs.add(statisticsMergeTarget.getDeviceHandle());
         return devs;
-    }
-
-    @Override
-    public Boolean call() throws HyracksDataException, IndexException {
-        accessor.merge(this);
-        return true;
-    }
-
-    @Override
-    public ILSMIOOperationCallback getCallback() {
-        return callback;
     }
 
     public FileReference getBTreeMergeTarget() {
         return btreeMergeTarget;
     }
 
-    public FileReference getBloomFilterMergeTarget() {
-        return bloomFilterMergeTarget;
-    }
-
-    public ITreeIndexCursor getCursor() {
-        return cursor;
-    }
-
-    public List<ILSMComponent> getMergingComponents() {
-        return mergingComponents;
-    }
-
-    @Override
-    public String getIndexUniqueIdentifier() {
-        return indexIdentifier;
-    }
-
-    @Override
-    public LSMIOOpertionType getIOOpertionType() {
-        return LSMIOOpertionType.MERGE;
+    public FileReference getStatisticsMergeTarget() {
+        return statisticsMergeTarget;
     }
 }

@@ -26,7 +26,8 @@ import org.apache.hyracks.data.std.api.INumeric;
 import org.apache.hyracks.data.std.api.IPointable;
 import org.apache.hyracks.data.std.api.IPointableFactory;
 
-public final class IntegerPointable extends AbstractPointable implements IHashable, IComparable, INumeric {
+public final class IntegerPointable extends AbstractPointable
+        implements IHashable, IComparable, INumeric/*, IMath<IntegerPointable>*/ {
     public static final ITypeTraits TYPE_TRAITS = new ITypeTraits() {
         private static final long serialVersionUID = 1L;
 
@@ -135,4 +136,70 @@ public final class IntegerPointable extends AbstractPointable implements IHashab
     public double doubleValue() {
         return getInteger();
     }
+
+    //    @Override
+    //    public IntegerPointable shiftRight(Number positions) {
+    //        // TODO Auto-generated method stub
+    //        return null;
+    //    }
+    //
+    //    @Override
+    //    public IntegerPointable shiftLeft(Number positions) {
+    //        // TODO Auto-generated method stub
+    //        return null;
+    //    }
+    //
+    //    @Override
+    //    public IntegerPointable add(Number summand) {
+    //        // TODO Auto-generated method stub
+    //        return null;
+    //    }
+    //
+    //    @Override
+    //    public IntegerPointable add(IntegerPointable pointableSummand) {
+    //        // TODO Auto-generated method stub
+    //        return null;
+    //    }
+    //
+    //    @Override
+    //    public IntegerPointable sub(Number subtrahend) {
+    //        // TODO Auto-generated method stub
+    //        return null;
+    //    }
+    //
+    //    @Override
+    //    public IntegerPointable sub(IntegerPointable pointableSubtrahend) {
+    //        // TODO Auto-generated method stub
+    //        return null;
+    //    }
+    //
+    //    @Override
+    //    public IntegerPointable and(Number mask) {
+    //        // TODO Auto-generated method stub
+    //        return null;
+    //    }
+    //
+    //    @Override
+    //    public IntegerPointable div(Number subtrahend) {
+    //        // TODO Auto-generated method stub
+    //        return null;
+    //    }
+    //
+    //    @Override
+    //    public IntegerPointable div(IntegerPointable pointableSubtrahend) {
+    //        // TODO Auto-generated method stub
+    //        return null;
+    //    }
+    //
+    //    @Override
+    //    public IntegerPointable mult(Number subtrahend) {
+    //        // TODO Auto-generated method stub
+    //        return null;
+    //    }
+    //
+    //    @Override
+    //    public IntegerPointable mult(IntegerPointable pointableSubtrahend) {
+    //        // TODO Auto-generated method stub
+    //        return null;
+    //    }
 }

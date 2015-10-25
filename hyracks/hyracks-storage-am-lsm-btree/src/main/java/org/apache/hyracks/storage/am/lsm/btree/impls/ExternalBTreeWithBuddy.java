@@ -138,7 +138,8 @@ public class ExternalBTreeWithBuddy extends AbstractLSMIndex implements ITreeInd
                     component = createDiskComponent(componentFactory,
                             lsmComonentFileReference.getInsertIndexFileReference(),
                             lsmComonentFileReference.getDeleteIndexFileReference(),
-                            lsmComonentFileReference.getBloomFilterFileReference(), false);
+                            lsmComonentFileReference.getBloomFilterFileReference(),
+                            lsmComonentFileReference.getStatisticsFileReference(), false);
                 } catch (IndexException e) {
                     throw new HyracksDataException(e);
                 }
@@ -363,8 +364,8 @@ public class ExternalBTreeWithBuddy extends AbstractLSMIndex implements ITreeInd
         // which list to check against and we need to synchronize for this
         boolean keepDeleteTuples = false;
         if (version == 0) {
-            keepDeleteTuples = mergingComponents.get(mergingComponents.size() - 1) != diskComponents.get(diskComponents
-                    .size() - 1);
+            keepDeleteTuples = mergingComponents.get(mergingComponents.size() - 1) != diskComponents
+                    .get(diskComponents.size() - 1);
         } else {
             keepDeleteTuples = mergingComponents.get(mergingComponents.size() - 1) != secondDiskComponents
                     .get(secondDiskComponents.size() - 1);
@@ -372,7 +373,8 @@ public class ExternalBTreeWithBuddy extends AbstractLSMIndex implements ITreeInd
 
         ioScheduler.scheduleOperation(new LSMBTreeWithBuddyMergeOperation(accessor, mergingComponents, cursor,
                 relMergeFileRefs.getInsertIndexFileReference(), relMergeFileRefs.getDeleteIndexFileReference(),
-                relMergeFileRefs.getBloomFilterFileReference(), callback, fileManager.getBaseDir(), keepDeleteTuples));
+                relMergeFileRefs.getBloomFilterFileReference(), relMergeFileRefs.getStatisticsFileReference(), callback,
+                fileManager.getBaseDir(), keepDeleteTuples));
     }
 
     // This method creates the appropriate opContext for the targeted version
@@ -391,8 +393,8 @@ public class ExternalBTreeWithBuddy extends AbstractLSMIndex implements ITreeInd
         search(opCtx, cursor, btreeSearchPred);
 
         LSMBTreeWithBuddyDiskComponent mergedComponent = createDiskComponent(componentFactory,
-                mergeOp.getBTreeMergeTarget(), mergeOp.getBuddyBTreeMergeTarget(), mergeOp.getBloomFilterMergeTarget(),
-                true);
+                mergeOp.getBTreeMergeTarget(), mergeOp.getBuddyBTreeMergeTarget(), mergeOp.getBloomFilterTarget(),
+                mergeOp.getStatisticsMergeTarget(), true);
 
         // In case we must keep the deleted-keys BuddyBTrees, then they must be
         // merged *before* merging the b-trees so that
@@ -410,8 +412,8 @@ public class ExternalBTreeWithBuddy extends AbstractLSMIndex implements ITreeInd
 
             long numElements = 0L;
             for (int i = 0; i < mergeOp.getMergingComponents().size(); ++i) {
-                numElements += ((LSMBTreeWithBuddyDiskComponent) mergeOp.getMergingComponents().get(i))
-                        .getBloomFilter().getNumElements();
+                numElements += ((LSMBTreeWithBuddyDiskComponent) mergeOp.getMergingComponents().get(i)).getBloomFilter()
+                        .getNumElements();
             }
 
             int maxBucketsPerElement = BloomCalculations.maxBucketsPerElement(numElements);
@@ -602,11 +604,10 @@ public class ExternalBTreeWithBuddy extends AbstractLSMIndex implements ITreeInd
 
     private LSMBTreeWithBuddyDiskComponent createDiskComponent(ILSMComponentFactory factory,
             FileReference insertFileRef, FileReference deleteFileRef, FileReference bloomFilterFileRef,
-            boolean createComponent) throws HyracksDataException, IndexException {
+            FileReference statisticsFileRef, boolean createComponent) throws HyracksDataException, IndexException {
         // Create new instance.
-        LSMBTreeWithBuddyDiskComponent component = (LSMBTreeWithBuddyDiskComponent) factory
-                .createLSMComponentInstance(new LSMComponentFileReferences(insertFileRef, deleteFileRef,
-                        bloomFilterFileRef));
+        LSMBTreeWithBuddyDiskComponent component = (LSMBTreeWithBuddyDiskComponent) factory.createLSMComponentInstance(
+                new LSMComponentFileReferences(insertFileRef, deleteFileRef, bloomFilterFileRef, statisticsFileRef));
         if (createComponent) {
             component.getBloomFilter().create();
         }
@@ -777,7 +778,8 @@ public class ExternalBTreeWithBuddy extends AbstractLSMIndex implements ITreeInd
     protected ILSMComponent createBulkLoadTarget() throws HyracksDataException, IndexException {
         LSMComponentFileReferences componentFileRefs = fileManager.getRelFlushFileReference();
         return createDiskComponent(bulkComponentFactory, componentFileRefs.getInsertIndexFileReference(),
-                componentFileRefs.getDeleteIndexFileReference(), componentFileRefs.getBloomFilterFileReference(), true);
+                componentFileRefs.getDeleteIndexFileReference(), componentFileRefs.getBloomFilterFileReference(),
+                componentFileRefs.getStatisticsFileReference(), true);
     }
 
     // This method is used to create a target for a bulk modify operation. This
@@ -790,7 +792,8 @@ public class ExternalBTreeWithBuddy extends AbstractLSMIndex implements ITreeInd
             throw new HyracksDataException("Failed to create transaction components", e);
         }
         return createDiskComponent(bulkComponentFactory, componentFileRefs.getInsertIndexFileReference(),
-                componentFileRefs.getDeleteIndexFileReference(), componentFileRefs.getBloomFilterFileReference(), true);
+                componentFileRefs.getDeleteIndexFileReference(), componentFileRefs.getBloomFilterFileReference(),
+                componentFileRefs.getStatisticsFileReference(), true);
     }
 
     @Override
@@ -828,12 +831,13 @@ public class ExternalBTreeWithBuddy extends AbstractLSMIndex implements ITreeInd
 
     @Override
     public void commitTransaction() throws HyracksDataException, IndexException {
-        LSMComponentFileReferences componentFileRefrences = fileManager.getTransactionFileReferenceForCommit();
+        LSMComponentFileReferences componentFileReferences = fileManager.getTransactionFileReferenceForCommit();
         LSMBTreeWithBuddyDiskComponent component = null;
-        if (componentFileRefrences != null) {
-            component = createDiskComponent(componentFactory, componentFileRefrences.getInsertIndexFileReference(),
-                    componentFileRefrences.getDeleteIndexFileReference(),
-                    componentFileRefrences.getBloomFilterFileReference(), false);
+        if (componentFileReferences != null) {
+            component = createDiskComponent(componentFactory, componentFileReferences.getInsertIndexFileReference(),
+                    componentFileReferences.getDeleteIndexFileReference(),
+                    componentFileReferences.getBloomFilterFileReference(),
+                    componentFileReferences.getStatisticsFileReference(), false);
         }
         ((ExternalIndexHarness) lsmHarness).addTransactionComponents(component);
     }

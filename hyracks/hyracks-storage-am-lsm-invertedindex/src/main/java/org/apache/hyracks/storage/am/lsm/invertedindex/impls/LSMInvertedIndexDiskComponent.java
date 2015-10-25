@@ -30,14 +30,12 @@ public class LSMInvertedIndexDiskComponent extends AbstractDiskLSMComponent {
 
     private final IInvertedIndex invIndex;
     private final BTree deletedKeysBTree;
-    private final BloomFilter bloomFilter;
 
     public LSMInvertedIndexDiskComponent(IInvertedIndex invIndex, BTree deletedKeysBTree, BloomFilter bloomFilter,
             ILSMComponentFilter filter) {
-        super(filter);
+        super(bloomFilter, filter);
         this.invIndex = invIndex;
         this.deletedKeysBTree = deletedKeysBTree;
-        this.bloomFilter = bloomFilter;
     }
 
     @Override
@@ -46,8 +44,7 @@ public class LSMInvertedIndexDiskComponent extends AbstractDiskLSMComponent {
         invIndex.destroy();
         deletedKeysBTree.deactivate();
         deletedKeysBTree.destroy();
-        bloomFilter.deactivate();
-        bloomFilter.destroy();
+        super.destroy();
     }
 
     public IInvertedIndex getInvIndex() {
@@ -58,16 +55,11 @@ public class LSMInvertedIndexDiskComponent extends AbstractDiskLSMComponent {
         return deletedKeysBTree;
     }
 
-    public BloomFilter getBloomFilter() {
-        return bloomFilter;
-    }
-
     @Override
     public long getComponentSize() {
-        return ((OnDiskInvertedIndex) invIndex).getInvListsFile().getFile().length()
+        return super.getComponentSize() + ((OnDiskInvertedIndex) invIndex).getInvListsFile().getFile().length()
                 + ((OnDiskInvertedIndex) invIndex).getBTree().getFileReference().getFile().length()
-                + deletedKeysBTree.getFileReference().getFile().length()
-                + bloomFilter.getFileReference().getFile().length();
+                + deletedKeysBTree.getFileReference().getFile().length();
     }
 
     @Override

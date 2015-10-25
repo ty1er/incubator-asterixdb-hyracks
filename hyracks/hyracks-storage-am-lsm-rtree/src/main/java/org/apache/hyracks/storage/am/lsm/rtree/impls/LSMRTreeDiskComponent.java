@@ -28,13 +28,11 @@ import org.apache.hyracks.storage.am.rtree.impls.RTree;
 public class LSMRTreeDiskComponent extends AbstractDiskLSMComponent {
     private final RTree rtree;
     private final BTree btree;
-    private final BloomFilter bloomFilter;
 
     public LSMRTreeDiskComponent(RTree rtree, BTree btree, BloomFilter bloomFilter, ILSMComponentFilter filter) {
-        super(filter);
+        super(bloomFilter, filter);
         this.rtree = rtree;
         this.btree = btree;
-        this.bloomFilter = bloomFilter;
     }
 
     @Override
@@ -44,8 +42,7 @@ public class LSMRTreeDiskComponent extends AbstractDiskLSMComponent {
         if (btree != null) {
             btree.deactivate();
             btree.destroy();
-            bloomFilter.deactivate();
-            bloomFilter.destroy();
+            super.destroy();
         }
     }
 
@@ -57,16 +54,12 @@ public class LSMRTreeDiskComponent extends AbstractDiskLSMComponent {
         return btree;
     }
 
-    public BloomFilter getBloomFilter() {
-        return bloomFilter;
-    }
-
     @Override
     public long getComponentSize() {
         long size = rtree.getFileReference().getFile().length();
         if (btree != null) {
             size += btree.getFileReference().getFile().length();
-            size += bloomFilter.getFileReference().getFile().length();
+            size += super.getComponentSize();
         }
         return size;
     }

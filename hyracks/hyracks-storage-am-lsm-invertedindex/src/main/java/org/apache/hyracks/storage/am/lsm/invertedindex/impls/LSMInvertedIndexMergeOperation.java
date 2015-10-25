@@ -19,75 +19,48 @@
 
 package org.apache.hyracks.storage.am.lsm.invertedindex.impls;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.api.io.FileReference;
 import org.apache.hyracks.api.io.IODeviceHandle;
-import org.apache.hyracks.storage.am.common.api.IIndexCursor;
-import org.apache.hyracks.storage.am.common.api.IndexException;
+import org.apache.hyracks.storage.am.common.api.ITreeIndexCursor;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMComponent;
-import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperation;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperationCallback;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIndexAccessorInternal;
+import org.apache.hyracks.storage.am.lsm.common.impls.AbstractLSMMergeOperation;
 import org.apache.hyracks.storage.am.lsm.invertedindex.ondisk.OnDiskInvertedIndex;
 
-public class LSMInvertedIndexMergeOperation implements ILSMIOOperation {
-    private final ILSMIndexAccessorInternal accessor;
-    private final List<ILSMComponent> mergingComponents;
-    private final IIndexCursor cursor;
+public class LSMInvertedIndexMergeOperation extends AbstractLSMMergeOperation {
     private final FileReference dictBTreeMergeTarget;
     private final FileReference deletedKeysBTreeMergeTarget;
-    private final FileReference bloomFilterMergeTarget;
-    private final ILSMIOOperationCallback callback;
-    private final String indexIdentifier;
 
     public LSMInvertedIndexMergeOperation(ILSMIndexAccessorInternal accessor, List<ILSMComponent> mergingComponents,
-            IIndexCursor cursor, FileReference dictBTreeMergeTarget, FileReference deletedKeysBTreeMergeTarget,
+            ITreeIndexCursor cursor, FileReference dictBTreeMergeTarget, FileReference deletedKeysBTreeMergeTarget,
             FileReference bloomFilterMergeTarget, ILSMIOOperationCallback callback, String indexIdentifier) {
-        this.accessor = accessor;
-        this.mergingComponents = mergingComponents;
-        this.cursor = cursor;
+        super(accessor, mergingComponents, cursor, bloomFilterMergeTarget, callback, indexIdentifier);
         this.dictBTreeMergeTarget = dictBTreeMergeTarget;
         this.deletedKeysBTreeMergeTarget = deletedKeysBTreeMergeTarget;
-        this.bloomFilterMergeTarget = bloomFilterMergeTarget;
-        this.callback = callback;
-        this.indexIdentifier = indexIdentifier;
     }
 
     @Override
     public Set<IODeviceHandle> getReadDevices() {
-        Set<IODeviceHandle> devs = new HashSet<IODeviceHandle>();
+        Set<IODeviceHandle> devs = super.getReadDevices();
         for (Object o : mergingComponents) {
             LSMInvertedIndexDiskComponent component = (LSMInvertedIndexDiskComponent) o;
             OnDiskInvertedIndex invIndex = (OnDiskInvertedIndex) component.getInvIndex();
             devs.add(invIndex.getBTree().getFileReference().getDeviceHandle());
             devs.add(component.getDeletedKeysBTree().getFileReference().getDeviceHandle());
-            devs.add(component.getBloomFilter().getFileReference().getDeviceHandle());
         }
         return devs;
     }
 
     @Override
     public Set<IODeviceHandle> getWriteDevices() {
-        Set<IODeviceHandle> devs = new HashSet<IODeviceHandle>();
+        Set<IODeviceHandle> devs = super.getWriteDevices();
         devs.add(dictBTreeMergeTarget.getDeviceHandle());
         devs.add(deletedKeysBTreeMergeTarget.getDeviceHandle());
-        devs.add(bloomFilterMergeTarget.getDeviceHandle());
         return devs;
-    }
-
-    @Override
-    public Boolean call() throws HyracksDataException, IndexException {
-        accessor.merge(this);
-        return true;
-    }
-
-    @Override
-    public ILSMIOOperationCallback getCallback() {
-        return callback;
     }
 
     public FileReference getDictBTreeMergeTarget() {
@@ -98,25 +71,4 @@ public class LSMInvertedIndexMergeOperation implements ILSMIOOperation {
         return deletedKeysBTreeMergeTarget;
     }
 
-    public FileReference getBloomFilterMergeTarget() {
-        return bloomFilterMergeTarget;
-    }
-
-    public IIndexCursor getCursor() {
-        return cursor;
-    }
-
-    public List<ILSMComponent> getMergingComponents() {
-        return mergingComponents;
-    }
-
-    @Override
-    public String getIndexUniqueIdentifier() {
-        return indexIdentifier;
-    }
-
-    @Override
-    public LSMIOOpertionType getIOOpertionType() {
-        return LSMIOOpertionType.MERGE;
-    }
 }

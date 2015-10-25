@@ -53,7 +53,7 @@ public class LSMBTreeWithBuddyDiskComponentFactory implements
 						.getInsertIndexFileReference()),
 				buddyBtreeFactory.createIndexInstance(cfr
 						.getDeleteIndexFileReference()),
-				bloomFilterFactory.createBloomFiltertInstance(cfr
+				bloomFilterFactory.createBloomFilterInstance(cfr
 						.getBloomFilterFileReference()));
 	}
 

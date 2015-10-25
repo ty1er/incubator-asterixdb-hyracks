@@ -30,12 +30,15 @@ public final class LSMComponentFileReferences {
 
     // This FileReference for the bloom filter (if any). 
     private final FileReference bloomFilterFileReference;
+    // This FileReference for the component statistics (if any). 
+    private final FileReference statisticsFileReference;
 
     public LSMComponentFileReferences(FileReference insertIndexFileReference, FileReference deleteIndexFileReference,
-            FileReference bloomFilterFileReference) {
+            FileReference bloomFilterFileReference, FileReference statisticsFileReference) {
         this.insertIndexFileReference = insertIndexFileReference;
         this.deleteIndexFileReference = deleteIndexFileReference;
         this.bloomFilterFileReference = bloomFilterFileReference;
+        this.statisticsFileReference = statisticsFileReference;
     }
 
     public FileReference getInsertIndexFileReference() {
@@ -48,5 +51,9 @@ public final class LSMComponentFileReferences {
 
     public FileReference getBloomFilterFileReference() {
         return bloomFilterFileReference;
+    }
+
+    public FileReference getStatisticsFileReference() {
+        return statisticsFileReference;
     }
 }

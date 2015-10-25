@@ -22,14 +22,14 @@ import java.util.Map;
 
 import org.apache.hyracks.api.context.IHyracksTaskContext;
 import org.apache.hyracks.storage.am.common.api.IIndexDataflowHelper;
+import org.apache.hyracks.storage.am.common.api.IPrimitiveIntegerValueProviderFactory;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexOperatorDescriptor;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperationCallbackFactory;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperationSchedulerProvider;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMMergePolicyFactory;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMOperationTrackerProvider;
-import org.apache.hyracks.storage.am.lsm.common.dataflow.AbstractLSMIndexDataflowHelperFactory;
 
-public class ExternalBTreeDataflowHelperFactory extends AbstractLSMIndexDataflowHelperFactory {
+public class ExternalBTreeDataflowHelperFactory extends AbstractLSMBTreeDataflowHelperFactory {
 
     private static final long serialVersionUID = 1L;
 
@@ -38,9 +38,11 @@ public class ExternalBTreeDataflowHelperFactory extends AbstractLSMIndexDataflow
     public ExternalBTreeDataflowHelperFactory(ILSMMergePolicyFactory mergePolicyFactory,
             Map<String, String> mergePolicyProperties, ILSMOperationTrackerProvider opTrackerFactory,
             ILSMIOOperationSchedulerProvider ioSchedulerProvider, ILSMIOOperationCallbackFactory ioOpCallbackFactory,
-            double bloomFilterFalsePositiveRate, int version, boolean durable) {
+            double bloomFilterFalsePositiveRate, int version, boolean durable, boolean collectStatistics,
+            IPrimitiveIntegerValueProviderFactory statsValueProviderFactory) {
         super(null, mergePolicyFactory, mergePolicyProperties, opTrackerFactory, ioSchedulerProvider,
-                ioOpCallbackFactory, bloomFilterFalsePositiveRate, null, null, null, durable);
+                ioOpCallbackFactory, bloomFilterFalsePositiveRate, null, null, null, durable, collectStatistics,
+                statsValueProviderFactory);
         this.version = version;
     }
 
@@ -49,7 +51,8 @@ public class ExternalBTreeDataflowHelperFactory extends AbstractLSMIndexDataflow
             int partition) {
         return new ExternalBTreeDataflowHelper(opDesc, ctx, partition, bloomFilterFalsePositiveRate,
                 mergePolicyFactory.createMergePolicy(mergePolicyProperties, ctx), opTrackerFactory,
-                ioSchedulerProvider.getIOScheduler(ctx), ioOpCallbackFactory, false, version, durable);
+                ioSchedulerProvider.getIOScheduler(ctx), ioOpCallbackFactory, false, version, durable,
+                collectStatistics, statsValueProviderFactory);
     }
 
 }

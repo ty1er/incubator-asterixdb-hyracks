@@ -21,33 +21,34 @@ package org.apache.hyracks.storage.am.lsm.btree.impls;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.storage.am.bloomfilter.impls.BloomFilter;
 import org.apache.hyracks.storage.am.btree.impls.BTree;
+import org.apache.hyracks.storage.am.common.statistics.Synopsis;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMComponentFilter;
 import org.apache.hyracks.storage.am.lsm.common.impls.AbstractDiskLSMComponent;
 
 public class LSMBTreeDiskComponent extends AbstractDiskLSMComponent {
     private final BTree btree;
-    private final BloomFilter bloomFilter;
+    private final Synopsis statistics;
 
-    public LSMBTreeDiskComponent(BTree btree, BloomFilter bloomFilter, ILSMComponentFilter filter) {
-        super(filter);
+    public LSMBTreeDiskComponent(BTree btree, BloomFilter bloomFilter, ILSMComponentFilter filter,
+            Synopsis statistics) {
+        super(bloomFilter, filter);
         this.btree = btree;
-        this.bloomFilter = bloomFilter;
+        this.statistics = statistics;
     }
 
     @Override
     public void destroy() throws HyracksDataException {
         btree.deactivate();
         btree.destroy();
-        bloomFilter.deactivate();
-        bloomFilter.destroy();
+        super.destroy();
     }
 
     public BTree getBTree() {
         return btree;
     }
 
-    public BloomFilter getBloomFilter() {
-        return bloomFilter;
+    public Synopsis getStatistics() {
+        return statistics;
     }
 
     @Override

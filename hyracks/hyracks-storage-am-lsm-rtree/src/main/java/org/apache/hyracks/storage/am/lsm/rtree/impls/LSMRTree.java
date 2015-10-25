@@ -232,7 +232,7 @@ public class LSMRTree extends AbstractLSMRTree {
         SearchPredicate rtreeNullPredicate = new SearchPredicate(null, null);
         memRTreeAccessor.search(rtreeScanCursor, rtreeNullPredicate);
         LSMRTreeDiskComponent component = createDiskComponent(componentFactory, flushOp.getRTreeFlushTarget(),
-                flushOp.getBTreeFlushTarget(), flushOp.getBloomFilterFlushTarget(), true);
+                flushOp.getBTreeFlushTarget(), flushOp.getBloomFilterTarget(), true);
         RTree diskRTree = component.getRTree();
         IIndexBulkLoader rTreeBulkloader;
         ITreeIndexCursor cursor;

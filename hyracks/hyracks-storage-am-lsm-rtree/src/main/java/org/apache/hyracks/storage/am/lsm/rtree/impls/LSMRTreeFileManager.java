@@ -73,8 +73,8 @@ public class LSMRTreeFileManager extends AbstractLSMIndexFileManager {
         String baseName = baseDir + ts + SPLIT_STRING + ts;
         // Begin timestamp and end timestamp are identical since it is a flush
         return new LSMComponentFileReferences(createFlushFile(baseName + SPLIT_STRING + RTREE_STRING),
-                createFlushFile(baseName + SPLIT_STRING + BTREE_STRING), createFlushFile(baseName + SPLIT_STRING
-                        + BLOOM_FILTER_STRING));
+                createFlushFile(baseName + SPLIT_STRING + BTREE_STRING),
+                createFlushFile(baseName + SPLIT_STRING + BLOOM_FILTER_STRING), null);
     }
 
     @Override
@@ -87,8 +87,8 @@ public class LSMRTreeFileManager extends AbstractLSMIndexFileManager {
         // Get the range of timestamps by taking the earliest and the latest
         // timestamps
         return new LSMComponentFileReferences(createMergeFile(baseName + SPLIT_STRING + RTREE_STRING),
-                createMergeFile(baseName + SPLIT_STRING + BTREE_STRING), createMergeFile(baseName + SPLIT_STRING
-                        + BLOOM_FILTER_STRING));
+                createMergeFile(baseName + SPLIT_STRING + BTREE_STRING),
+                createMergeFile(baseName + SPLIT_STRING + BLOOM_FILTER_STRING), null);
     }
 
     @Override
@@ -109,7 +109,8 @@ public class LSMRTreeFileManager extends AbstractLSMIndexFileManager {
             btreeFilesSet.add(cmpFileName.fileName.substring(0, index));
         }
         validateFiles(btreeFilesSet, allRTreeFiles, getCompoundFilter(transactionFilter, rtreeFilter), rtreeFactory);
-        validateFiles(btreeFilesSet, allBloomFilterFiles, getCompoundFilter(transactionFilter, bloomFilterFilter), null);
+        validateFiles(btreeFilesSet, allBloomFilterFiles, getCompoundFilter(transactionFilter, bloomFilterFilter),
+                null);
 
         // Sanity check.
         if (allRTreeFiles.size() != allBTreeFiles.size() || allBTreeFiles.size() != allBloomFilterFiles.size()) {
@@ -124,7 +125,7 @@ public class LSMRTreeFileManager extends AbstractLSMIndexFileManager {
 
         if (allRTreeFiles.size() == 1 && allBTreeFiles.size() == 1 && allBloomFilterFiles.size() == 1) {
             validFiles.add(new LSMComponentFileReferences(allRTreeFiles.get(0).fileRef, allBTreeFiles.get(0).fileRef,
-                    allBloomFilterFiles.get(0).fileRef));
+                    allBloomFilterFiles.get(0).fileRef, null));
             return validFiles;
         }
 
@@ -174,7 +175,8 @@ public class LSMRTreeFileManager extends AbstractLSMIndexFileManager {
                 invalidBloomFilterFile.delete();
             } else {
                 // This scenario should not be possible.
-                throw new HyracksDataException("Found LSM files with overlapping but not contained timetamp intervals.");
+                throw new HyracksDataException(
+                        "Found LSM files with overlapping but not contained timetamp intervals.");
             }
         }
 
@@ -192,7 +194,7 @@ public class LSMRTreeFileManager extends AbstractLSMIndexFileManager {
             ComparableFileName cmpBTreeFileName = btreeFileIter.next();
             ComparableFileName cmpBloomFilterFileName = bloomFilterFileIter.next();
             validFiles.add(new LSMComponentFileReferences(cmpRTreeFileName.fileRef, cmpBTreeFileName.fileRef,
-                    cmpBloomFilterFileName.fileRef));
+                    cmpBloomFilterFileName.fileRef, null));
         }
         return validFiles;
     }
@@ -205,8 +207,8 @@ public class LSMRTreeFileManager extends AbstractLSMIndexFileManager {
 
         String baseName = baseDir + ts + SPLIT_STRING + ts;
         return new LSMComponentFileReferences(createFlushFile(baseName + SPLIT_STRING + RTREE_STRING),
-                createFlushFile(baseName + SPLIT_STRING + BTREE_STRING), createFlushFile(baseName + SPLIT_STRING
-                        + BLOOM_FILTER_STRING));
+                createFlushFile(baseName + SPLIT_STRING + BTREE_STRING),
+                createFlushFile(baseName + SPLIT_STRING + BLOOM_FILTER_STRING), null);
     }
 
     @Override
@@ -250,6 +252,6 @@ public class LSMRTreeFileManager extends AbstractLSMIndexFileManager {
         FileReference rTreeFileRef = new FileReference(rTreeFile);
         FileReference bTreeFileRef = new FileReference(bTreeFile);
         FileReference bloomFilterFileRef = new FileReference(bloomFilterFile);
-        return new LSMComponentFileReferences(rTreeFileRef, bTreeFileRef, bloomFilterFileRef);
+        return new LSMComponentFileReferences(rTreeFileRef, bTreeFileRef, bloomFilterFileRef, null);
     }
 }
