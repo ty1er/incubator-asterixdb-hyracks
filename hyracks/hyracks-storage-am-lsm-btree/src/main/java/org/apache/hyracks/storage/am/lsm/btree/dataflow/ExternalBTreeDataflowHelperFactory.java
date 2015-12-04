@@ -21,8 +21,9 @@ package org.apache.hyracks.storage.am.lsm.btree.dataflow;
 import java.util.Map;
 
 import org.apache.hyracks.api.context.IHyracksTaskContext;
+import org.apache.hyracks.api.dataflow.value.ITypeTraits;
 import org.apache.hyracks.storage.am.common.api.IIndexDataflowHelper;
-import org.apache.hyracks.storage.am.common.api.IPrimitiveIntegerValueProviderFactory;
+import org.apache.hyracks.storage.am.common.api.IOrdinalPrimitiveValueProviderFactory;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexOperatorDescriptor;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperationCallbackFactory;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperationSchedulerProvider;
@@ -39,10 +40,10 @@ public class ExternalBTreeDataflowHelperFactory extends AbstractLSMBTreeDataflow
             Map<String, String> mergePolicyProperties, ILSMOperationTrackerProvider opTrackerFactory,
             ILSMIOOperationSchedulerProvider ioSchedulerProvider, ILSMIOOperationCallbackFactory ioOpCallbackFactory,
             double bloomFilterFalsePositiveRate, int version, boolean durable, boolean collectStatistics,
-            IPrimitiveIntegerValueProviderFactory statsValueProviderFactory) {
+            ITypeTraits[] statsFieldTypeTraits, IOrdinalPrimitiveValueProviderFactory statsKeyValueProviderFactory) {
         super(null, mergePolicyFactory, mergePolicyProperties, opTrackerFactory, ioSchedulerProvider,
                 ioOpCallbackFactory, bloomFilterFalsePositiveRate, null, null, null, durable, collectStatistics,
-                statsValueProviderFactory);
+                statsFieldTypeTraits, statsKeyValueProviderFactory);
         this.version = version;
     }
 
@@ -52,7 +53,7 @@ public class ExternalBTreeDataflowHelperFactory extends AbstractLSMBTreeDataflow
         return new ExternalBTreeDataflowHelper(opDesc, ctx, partition, bloomFilterFalsePositiveRate,
                 mergePolicyFactory.createMergePolicy(mergePolicyProperties, ctx), opTrackerFactory,
                 ioSchedulerProvider.getIOScheduler(ctx), ioOpCallbackFactory, false, version, durable,
-                collectStatistics, statsValueProviderFactory);
+                collectStatistics, statsFieldTypeTraits, statsFieldValueProviderFactory);
     }
 
 }

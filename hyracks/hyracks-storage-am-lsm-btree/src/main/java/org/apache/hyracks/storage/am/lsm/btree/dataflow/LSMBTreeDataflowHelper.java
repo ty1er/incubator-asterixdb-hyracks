@@ -25,7 +25,7 @@ import org.apache.hyracks.api.context.IHyracksTaskContext;
 import org.apache.hyracks.api.dataflow.value.IBinaryComparatorFactory;
 import org.apache.hyracks.api.dataflow.value.ITypeTraits;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
-import org.apache.hyracks.storage.am.common.api.IPrimitiveIntegerValueProviderFactory;
+import org.apache.hyracks.storage.am.common.api.IOrdinalPrimitiveValueProviderFactory;
 import org.apache.hyracks.storage.am.common.api.ITreeIndex;
 import org.apache.hyracks.storage.am.common.dataflow.AbstractTreeIndexOperatorDescriptor;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexOperatorDescriptor;
@@ -46,10 +46,12 @@ public class LSMBTreeDataflowHelper extends AbstractLSMBTreeDataflowHelper {
             ILSMOperationTrackerProvider opTrackerFactory, ILSMIOOperationScheduler ioScheduler,
             ILSMIOOperationCallbackFactory ioOpCallbackFactory, boolean needKeyDupCheck, ITypeTraits[] filterTypeTraits,
             IBinaryComparatorFactory[] filterCmpFactories, int[] btreeFields, int[] filterFields, boolean durable,
-            boolean collectStatistics, IPrimitiveIntegerValueProviderFactory statsValueProviderFactory) {
+            boolean collectStatistics, ITypeTraits[] statsFieldTypeTraits,
+            IOrdinalPrimitiveValueProviderFactory statsFieldValueProviderFactory) {
         this(opDesc, ctx, partition, virtualBufferCaches, DEFAULT_BLOOM_FILTER_FALSE_POSITIVE_RATE, mergePolicy,
                 opTrackerFactory, ioScheduler, ioOpCallbackFactory, needKeyDupCheck, filterTypeTraits,
-                filterCmpFactories, btreeFields, filterFields, durable, collectStatistics, statsValueProviderFactory);
+                filterCmpFactories, btreeFields, filterFields, durable, collectStatistics, statsFieldTypeTraits,
+                statsFieldValueProviderFactory);
     }
 
     public LSMBTreeDataflowHelper(IIndexOperatorDescriptor opDesc, IHyracksTaskContext ctx, int partition,
@@ -58,10 +60,10 @@ public class LSMBTreeDataflowHelper extends AbstractLSMBTreeDataflowHelper {
             ILSMIOOperationScheduler ioScheduler, ILSMIOOperationCallbackFactory ioOpCallbackFactory,
             boolean needKeyDupCheck, ITypeTraits[] filterTypeTraits, IBinaryComparatorFactory[] filterCmpFactories,
             int[] btreeFields, int[] filterFields, boolean durable, boolean collectStatistics,
-            IPrimitiveIntegerValueProviderFactory statsValueProviderFactory) {
+            ITypeTraits[] statsFieldTypeTraits, IOrdinalPrimitiveValueProviderFactory statsFieldValueProviderFactory) {
         super(opDesc, ctx, partition, virtualBufferCaches, bloomFilterFalsePositiveRate, mergePolicy, opTrackerFactory,
                 ioScheduler, ioOpCallbackFactory, filterTypeTraits, filterCmpFactories, filterFields, durable,
-                collectStatistics, statsValueProviderFactory);
+                collectStatistics, statsFieldTypeTraits, statsFieldValueProviderFactory);
         this.needKeyDupCheck = needKeyDupCheck;
         this.btreeFields = btreeFields;
     }
@@ -74,6 +76,6 @@ public class LSMBTreeDataflowHelper extends AbstractLSMBTreeDataflowHelper {
                 treeOpDesc.getTreeIndexComparatorFactories(), treeOpDesc.getTreeIndexBloomFilterKeyFields(),
                 bloomFilterFalsePositiveRate, mergePolicy, opTrackerFactory.getOperationTracker(ctx), ioScheduler,
                 ioOpCallbackFactory.createIOOperationCallback(), needKeyDupCheck, filterTypeTraits, filterCmpFactories,
-                btreeFields, filterFields, durable, collectStatistics, statsValueProviderFactory);
+                btreeFields, filterFields, durable, collectStatistics, statsFieldValueProviderFactory);
     }
 }

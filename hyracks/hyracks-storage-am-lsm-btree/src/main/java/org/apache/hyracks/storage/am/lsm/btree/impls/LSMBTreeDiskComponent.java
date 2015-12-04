@@ -21,9 +21,9 @@ package org.apache.hyracks.storage.am.lsm.btree.impls;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.storage.am.bloomfilter.impls.BloomFilter;
 import org.apache.hyracks.storage.am.btree.impls.BTree;
-import org.apache.hyracks.storage.am.common.statistics.Synopsis;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMComponentFilter;
 import org.apache.hyracks.storage.am.lsm.common.impls.AbstractDiskLSMComponent;
+import org.apache.hyracks.storage.am.statistics.common.Synopsis;
 
 public class LSMBTreeDiskComponent extends AbstractDiskLSMComponent {
     private final BTree btree;

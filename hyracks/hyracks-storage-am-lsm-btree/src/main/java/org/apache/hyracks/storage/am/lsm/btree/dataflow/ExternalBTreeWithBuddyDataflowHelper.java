@@ -19,9 +19,10 @@
 package org.apache.hyracks.storage.am.lsm.btree.dataflow;
 
 import org.apache.hyracks.api.context.IHyracksTaskContext;
+import org.apache.hyracks.api.dataflow.value.ITypeTraits;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.storage.am.common.api.IIndex;
-import org.apache.hyracks.storage.am.common.api.IPrimitiveIntegerValueProviderFactory;
+import org.apache.hyracks.storage.am.common.api.IOrdinalPrimitiveValueProviderFactory;
 import org.apache.hyracks.storage.am.common.dataflow.AbstractTreeIndexOperatorDescriptor;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexOperatorDescriptor;
 import org.apache.hyracks.storage.am.lsm.btree.util.LSMBTreeUtils;
@@ -39,19 +40,21 @@ public class ExternalBTreeWithBuddyDataflowHelper extends AbstractLSMBTreeDatafl
             ILSMMergePolicy mergePolicy, ILSMOperationTrackerProvider opTrackerFactory,
             ILSMIOOperationScheduler ioScheduler, ILSMIOOperationCallbackFactory ioOpCallbackFactory,
             int[] buddyBtreeFields, int version, boolean durable, boolean collectStatistics,
-            IPrimitiveIntegerValueProviderFactory statsValueProviderFactory) {
+            ITypeTraits[] statsFieldTypeTraits, IOrdinalPrimitiveValueProviderFactory statsFieldValueProviderFactory) {
         this(opDesc, ctx, partition, DEFAULT_BLOOM_FILTER_FALSE_POSITIVE_RATE, mergePolicy, opTrackerFactory,
                 ioScheduler, ioOpCallbackFactory, buddyBtreeFields, version, durable, collectStatistics,
-                statsValueProviderFactory);
+                statsFieldTypeTraits, statsFieldValueProviderFactory);
     }
 
     public ExternalBTreeWithBuddyDataflowHelper(IIndexOperatorDescriptor opDesc, IHyracksTaskContext ctx, int partition,
             double bloomFilterFalsePositiveRate, ILSMMergePolicy mergePolicy,
             ILSMOperationTrackerProvider opTrackerFactory, ILSMIOOperationScheduler ioScheduler,
             ILSMIOOperationCallbackFactory ioOpCallbackFactory, int[] buddyBtreeFields, int version, boolean durable,
-            boolean collectStatistics, IPrimitiveIntegerValueProviderFactory statsValueProviderFactory) {
+            boolean collectStatistics, ITypeTraits[] statsFieldTypeTraits,
+            IOrdinalPrimitiveValueProviderFactory statsFieldValueProviderFactory) {
         super(opDesc, ctx, partition, null, bloomFilterFalsePositiveRate, mergePolicy, opTrackerFactory, ioScheduler,
-                ioOpCallbackFactory, null, null, null, durable, collectStatistics, statsValueProviderFactory);
+                ioOpCallbackFactory, null, null, null, durable, collectStatistics, statsFieldTypeTraits,
+                statsFieldValueProviderFactory);
         this.buddyBtreeFields = buddyBtreeFields;
         this.version = version;
     }

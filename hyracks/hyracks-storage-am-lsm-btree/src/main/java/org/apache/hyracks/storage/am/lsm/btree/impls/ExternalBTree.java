@@ -36,8 +36,6 @@ import org.apache.hyracks.storage.am.common.api.*;
 import org.apache.hyracks.storage.am.common.api.IMetaDataPageManager;
 import org.apache.hyracks.storage.am.common.impls.NoOpOperationCallback;
 import org.apache.hyracks.storage.am.common.ophelpers.IndexOperation;
-import org.apache.hyracks.storage.am.common.statistics.StatisticsFactory;
-import org.apache.hyracks.storage.am.common.statistics.Synopsis;
 import org.apache.hyracks.storage.am.lsm.btree.tuples.LSMBTreeRefrencingTupleWriterFactory;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMComponent;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperation;
@@ -55,6 +53,8 @@ import org.apache.hyracks.storage.am.lsm.common.impls.BlockingIOOperationCallbac
 import org.apache.hyracks.storage.am.lsm.common.impls.ExternalIndexHarness;
 import org.apache.hyracks.storage.am.lsm.common.impls.LSMComponentFileReferences;
 import org.apache.hyracks.storage.am.lsm.common.impls.TreeIndexFactory;
+import org.apache.hyracks.storage.am.statistics.common.StatisticsFactory;
+import org.apache.hyracks.storage.am.statistics.common.Synopsis;
 import org.apache.hyracks.storage.common.file.IFileMapProvider;
 
 /**
