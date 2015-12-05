@@ -129,13 +129,7 @@ public class WaveletSynopsis extends Synopsis {
 
     @Override
     public IIndexBulkLoader createBuilder() throws HyracksDataException {
-        try {
-            return new SparseTransformBuilder();
-        } catch (HyracksDataException e) {
-            //            deactivate();
-            //            destroy();
-            throw e;
-        }
+        return new SparseTransformBuilder();
     }
 
     public class SparseTransformBuilder implements IIndexBulkLoader {
@@ -148,7 +142,10 @@ public class WaveletSynopsis extends Synopsis {
 
         public SparseTransformBuilder() throws HyracksDataException {
             if (fields.length > 1)
-                throw new HyracksDataException("Only statistics on non-composite fields are allowed");
+                throw new HyracksDataException("Unable to collect statistics on composite keys");
+            if (!fieldTypeTraits[fields[0]].isFixedLength() || fieldTypeTraits[fields[0]].getFixedLength() > 9)
+                throw new HyracksDataException(
+                        "Unable to collect statistics for key field with typeTrait" + fieldTypeTraits[fields[0]]);
             avgStack = new Stack<>();
             //add first dummy average
             // TODO: use object pool
