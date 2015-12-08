@@ -36,9 +36,10 @@ import org.apache.hyracks.dataflow.common.comm.io.ArrayTupleBuilder;
 import org.apache.hyracks.dataflow.common.data.accessors.ITupleReference;
 import org.apache.hyracks.dataflow.common.data.marshalling.DoubleSerializerDeserializer;
 import org.apache.hyracks.dataflow.common.data.marshalling.Integer64SerializerDeserializer;
-import org.apache.hyracks.storage.am.common.api.IIndexBulkLoader;
 import org.apache.hyracks.storage.am.common.api.IOrdinalPrimitiveValueProvider;
 import org.apache.hyracks.storage.am.common.api.IndexException;
+import org.apache.hyracks.storage.am.lsm.common.api.ILSMTreeTupleReference;
+import org.apache.hyracks.storage.am.statistics.common.ISynopsisBuilder;
 import org.apache.hyracks.storage.am.statistics.common.Synopsis;
 import org.apache.hyracks.storage.am.statistics.common.TypeTraitsDomainUtils;
 import org.apache.hyracks.storage.common.buffercache.IBufferCache;
@@ -149,11 +150,11 @@ public class WaveletSynopsis extends Synopsis {
     }
 
     @Override
-    public IIndexBulkLoader createBuilder() throws HyracksDataException {
-        return new SparseTransformBuilder();
+    public ISynopsisBuilder createBuilder() throws HyracksDataException {
+        return new SparseWaveletTransformBuilder();
     }
 
-    public class SparseTransformBuilder implements IIndexBulkLoader {
+    public class SparseWaveletTransformBuilder implements ISynopsisBuilder {
         private final Stack<WaveletCoefficient> avgStack;
         private MapObjectPool<WaveletCoefficient, Integer> avgStackObjectPool;
         private final long domainEnd;
@@ -161,8 +162,9 @@ public class WaveletSynopsis extends Synopsis {
         private final int maxLevel;
         private Long prevPosition;
         private ArrayTupleBuilder tupleBuilder = new ArrayTupleBuilder(2);
+        private boolean isAntimatterTuple = false;
 
-        public SparseTransformBuilder() throws HyracksDataException {
+        public SparseWaveletTransformBuilder() throws HyracksDataException {
             if (fields.length > 1)
                 throw new HyracksDataException("Unable to collect statistics on composite keys");
             if (!fieldTypeTraits[fields[0]].isFixedLength() || fieldTypeTraits[fields[0]].getFixedLength() > 9)
@@ -190,6 +192,11 @@ public class WaveletSynopsis extends Synopsis {
             prevPosition = null;
 
             persistWaveletSynopsisMetaData();
+        }
+
+        @Override
+        public void setAntimatterTuple(boolean isAntimatter) {
+            this.isAntimatterTuple = isAntimatter;
         }
 
         private void persistWaveletSynopsisMetaData() throws HyracksDataException {
@@ -338,9 +345,12 @@ public class WaveletSynopsis extends Synopsis {
         public void add(ITupleReference tuple) throws IndexException, HyracksDataException {
 
             WaveletCoefficient topCoeff = avgStack.pop();
+            boolean neg = false;
+            if (isAntimatterTuple)
+                neg = ((ILSMTreeTupleReference) tuple).isAntimatter();
             long currTuplePosition = fieldValueProvider.getOrdinalValue(tuple.getFieldData(fields[0]),
                     tuple.getFieldStart(fields[0]));
-            double currTupleValue = 1.0;
+            double currTupleValue = neg ? -1.0 : 1.0;
 
             // check whether tuple with this position was already seen
             if (prevPosition != null && currTuplePosition == prevPosition) {

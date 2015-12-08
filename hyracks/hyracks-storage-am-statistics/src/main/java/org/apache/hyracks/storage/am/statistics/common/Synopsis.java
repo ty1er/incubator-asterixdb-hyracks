@@ -21,7 +21,6 @@ package org.apache.hyracks.storage.am.statistics.common;
 
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.api.io.FileReference;
-import org.apache.hyracks.storage.am.common.api.IIndexBulkLoader;
 import org.apache.hyracks.storage.am.common.impls.AbstractFileManager;
 import org.apache.hyracks.storage.common.buffercache.IBufferCache;
 import org.apache.hyracks.storage.common.file.IFileMapProvider;
@@ -34,7 +33,7 @@ public abstract class Synopsis extends AbstractFileManager {
 
     public abstract void addElement(long key, double frequency);
 
-    public abstract IIndexBulkLoader createBuilder() throws HyracksDataException;
+    public abstract ISynopsisBuilder createBuilder() throws HyracksDataException;
 
     public abstract int getNumPages() throws HyracksDataException;
 

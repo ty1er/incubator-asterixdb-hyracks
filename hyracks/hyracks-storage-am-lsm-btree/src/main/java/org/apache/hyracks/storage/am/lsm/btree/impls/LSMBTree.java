@@ -84,6 +84,7 @@ import org.apache.hyracks.storage.am.lsm.common.impls.LSMComponentFilterManager;
 import org.apache.hyracks.storage.am.lsm.common.impls.LSMIndexSearchCursor;
 import org.apache.hyracks.storage.am.lsm.common.impls.LSMTreeIndexAccessor;
 import org.apache.hyracks.storage.am.lsm.common.impls.TreeIndexFactory;
+import org.apache.hyracks.storage.am.statistics.common.ISynopsisBuilder;
 import org.apache.hyracks.storage.am.statistics.common.StatisticsFactory;
 import org.apache.hyracks.storage.am.statistics.common.Synopsis;
 import org.apache.hyracks.storage.common.buffercache.IBufferCache;
@@ -476,7 +477,7 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
         IIndexBulkLoader bulkLoader = component.getBTree().createBulkLoader(1.0f, false, numElements, false, true);
         IIndexBulkLoader builder = component.getBloomFilter().createBuilder(numElements, bloomFilterSpec.getNumHashes(),
                 bloomFilterSpec.getNumBucketsPerElements());
-        IIndexBulkLoader statsBuilder = null;
+        ISynopsisBuilder statsBuilder = null;
         try {
             if (collectStatistics)
                 statsBuilder = component.getStatistics().createBuilder();
@@ -490,11 +491,14 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
         accessor.search(scanCursor, nullPred);
         try {
             while (scanCursor.hasNext()) {
+                LSMBTreeTupleReference tupleRef = (LSMBTreeTupleReference) scanCursor.getTuple();
                 scanCursor.next();
-                builder.add(scanCursor.getTuple());
-                bulkLoader.add(scanCursor.getTuple());
-                if (collectStatistics)
-                    statsBuilder.add(scanCursor.getTuple());
+                builder.add(tupleRef);
+                bulkLoader.add(tupleRef);
+                if (collectStatistics) {
+                    statsBuilder.setAntimatterTuple(tupleRef.isAntimatter());
+                    statsBuilder.add(tupleRef);
+                }
             }
         } finally {
             scanCursor.close();
@@ -565,7 +569,7 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
                 true);
         IIndexBulkLoader bloomFilterBuilder = mergedComponent.getBloomFilter().createBuilder(numElements,
                 bloomFilterSpec.getNumHashes(), bloomFilterSpec.getNumBucketsPerElements());
-        IIndexBulkLoader statsBuilder = null;
+        ISynopsisBuilder statsBuilder = null;
         try {
             if (collectStatistics)
                 statsBuilder = mergedComponent.getStatistics().createBuilder();
@@ -577,11 +581,13 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
         try {
             while (cursor.hasNext()) {
                 cursor.next();
-                ITupleReference frameTuple = cursor.getTuple();
+                LSMBTreeTupleReference frameTuple = (LSMBTreeTupleReference) cursor.getTuple();
                 bloomFilterBuilder.add(frameTuple);
                 bulkLoader.add(frameTuple);
-                if (collectStatistics)
+                if (collectStatistics) {
+                    statsBuilder.setAntimatterTuple(frameTuple.isAntimatter());
                     statsBuilder.add(frameTuple);
+                }
             }
         } finally {
             cursor.close();
