@@ -45,6 +45,8 @@ import org.apache.hyracks.storage.common.buffercache.IBufferCache;
 import org.apache.hyracks.storage.common.buffercache.ICachedPage;
 import org.apache.hyracks.storage.common.file.BufferedFileHandle;
 import org.apache.hyracks.storage.common.file.IFileMapProvider;
+import org.apache.hyracks.util.objectpool.IObjectFactory;
+import org.apache.hyracks.util.objectpool.MapObjectPool;
 
 public class WaveletSynopsis extends Synopsis {
 
@@ -153,6 +155,7 @@ public class WaveletSynopsis extends Synopsis {
 
     public class SparseTransformBuilder implements IIndexBulkLoader {
         private final Stack<WaveletCoefficient> avgStack;
+        private MapObjectPool<WaveletCoefficient, Integer> avgStackObjectPool;
         private final long domainEnd;
         private final long domainStart;
         private final int maxLevel;
@@ -165,13 +168,25 @@ public class WaveletSynopsis extends Synopsis {
             if (!fieldTypeTraits[fields[0]].isFixedLength() || fieldTypeTraits[fields[0]].getFixedLength() > 9)
                 throw new HyracksDataException(
                         "Unable to collect statistics for key field with typeTrait" + fieldTypeTraits[fields[0]]);
-            avgStack = new Stack<>();
-            //add first dummy average
-            // TODO: use object pool
-            avgStack.push(new WaveletCoefficient(0.0, -1, -1l));
             domainStart = TypeTraitsDomainUtils.minDomainValue(fieldTypeTraits[fields[0]]);
             domainEnd = TypeTraitsDomainUtils.maxDomainValue(fieldTypeTraits[fields[0]]);
             maxLevel = TypeTraitsDomainUtils.maxLevel(fieldTypeTraits[fields[0]]);
+
+            avgStack = new Stack<>();
+            avgStackObjectPool = new MapObjectPool<WaveletCoefficient, Integer>();
+            IObjectFactory<WaveletCoefficient, Integer> waveletFactory = new IObjectFactory<WaveletCoefficient, Integer>() {
+                @Override
+                public WaveletCoefficient create(Integer level) {
+                    return new WaveletCoefficient(0.0, level, -1);
+                }
+            };
+            for (int i = -1; i <= maxLevel; i++) {
+                avgStackObjectPool.register(i, waveletFactory);
+            }
+            //add first dummy average
+            WaveletCoefficient dummyCoeff = avgStackObjectPool.allocate(-1);
+            dummyCoeff.setIndex(-1);
+            avgStack.push(dummyCoeff);
             prevPosition = null;
 
             persistWaveletSynopsisMetaData();
@@ -206,9 +221,10 @@ public class WaveletSynopsis extends Synopsis {
 
         // Returns the parent wavelet coefficient for a given coefficient in the transform tree
         private WaveletCoefficient moveLevelUp(WaveletCoefficient childCoeff) {
-            // TODO: use object pool
-            return new WaveletCoefficient(childCoeff.getValue() / 2.0, childCoeff.getLevel() + 1,
-                    childCoeff.getParentCoeffIndex(domainStart, maxLevel));
+            WaveletCoefficient parentCoeff = avgStackObjectPool.allocate(childCoeff.getLevel() + 1);
+            parentCoeff.setValue(childCoeff.getValue() / 2.0);
+            parentCoeff.setIndex(childCoeff.getParentCoeffIndex(domainStart, maxLevel));
+            return parentCoeff;
         }
 
         // Calculates the position of the next tuple (on level 0) after given wavelet coefficient
@@ -223,16 +239,15 @@ public class WaveletSynopsis extends Synopsis {
         }
 
         // Combines two coeffs on the same level by averaging them and producing next level coefficient
-        private WaveletCoefficient average(WaveletCoefficient leftCoeff, WaveletCoefficient rightCoeff, long domainMin,
-                int maxLevel, boolean normalize) {
+        private void average(WaveletCoefficient leftCoeff, WaveletCoefficient rightCoeff, long domainMin, int maxLevel,
+                boolean normalize, WaveletCoefficient avgCoeff) {
             //        assert (leftCoeff.getLevel() == rightCoeff.getLevel());
             long coeffIdx = leftCoeff.getParentCoeffIndex(domainMin, maxLevel);
             // put detail wavelet coefficient to the coefficient queue
             addElement(coeffIdx, (leftCoeff.getValue() - rightCoeff.getValue()) / (2.0 * (normalize
                     ? WaveletCoefficient.getNormalizationCoefficient(maxLevel, leftCoeff.getLevel() + 1) : 1)));
-            // TODO: use object pool
-            return new WaveletCoefficient((leftCoeff.getValue() + rightCoeff.getValue()) / 2.0,
-                    leftCoeff.getLevel() + 1, coeffIdx);
+            avgCoeff.setIndex(coeffIdx);
+            avgCoeff.setValue((leftCoeff.getValue() + rightCoeff.getValue()) / 2.0);
         }
 
         // Pushes given coefficient on the stack, possibly triggering domino effect
@@ -242,8 +257,13 @@ public class WaveletSynopsis extends Synopsis {
                 WaveletCoefficient topCoeff = avgStack.pop();
                 // Guard against dummy coefficients
                 if (topCoeff.getLevel() >= 0) {
+                    //allocate next level coefficient from objectPool
+                    WaveletCoefficient avgCoeff = avgStackObjectPool.allocate(topCoeff.getLevel() + 1);
                     // combine newCoeff and topCoeff by averaging them. Result coeff's level is greater than parent's level by 1
-                    newCoeff = average(topCoeff, newCoeff, domainStart, maxLevel, true);
+                    average(topCoeff, newCoeff, domainStart, maxLevel, true, avgCoeff);
+                    avgStackObjectPool.deallocate(topCoeff.getLevel(), topCoeff);
+                    avgStackObjectPool.deallocate(newCoeff.getLevel(), newCoeff);
+                    newCoeff = avgCoeff;
                 }
             }
             // Guard against dummy coefficients
@@ -262,6 +282,7 @@ public class WaveletSynopsis extends Synopsis {
                 addElement(newCoeff.getIndex(), newCoeff.getValue());
                 newCoeff = moveLevelUp(newCoeff);
             }
+            avgStackObjectPool.deallocate(newCoeff.getLevel(), newCoeff);
             newCoeff = topCoeff;
             // put the top coefficient (possibly modified) back on to the stack
             pushToStack(newCoeff);
@@ -274,35 +295,42 @@ public class WaveletSynopsis extends Synopsis {
             // put all the coefficients, corresponding to dyadic ranges between current tuple position & transformPosition on the stack
             computeDyadicSubranges(tuplePosition, transformPosition);
             // put the last coefficient, corresponding to current tuple position on to the stack
-            // TODO: use object pool
-            pushToStack(new WaveletCoefficient(tupleValue, 0, tuplePosition));
+            newCoeff = avgStackObjectPool.allocate(0);
+            newCoeff.setValue(tupleValue);
+            newCoeff.setIndex(tuplePosition);
+            pushToStack(newCoeff);
         }
 
         // Method calculates decreasing level dyadic intervals between tuplePosition&currTransformPosition and saves corresponding coefficients in the avgStack
         private void computeDyadicSubranges(long tuplePosition, long currTransformPosition) {
             while (tuplePosition != currTransformPosition) {
-                WaveletCoefficient newCoeff;
-                if (avgStack.size() > 0)
+                WaveletCoefficient coeff;
+                if (avgStack.size() > 0) {
+                    coeff = avgStackObjectPool.allocate(avgStack.peek().getLevel());
+                    coeff.setValue(0.0);
                     // starting with the sibling of the top coefficient on the stack
-                    // TODO: use object pool
-                    newCoeff = new WaveletCoefficient(0.0, avgStack.peek().getLevel(), avgStack.peek().getIndex() + 1);
+                    coeff.setIndex(avgStack.peek().getIndex() + 1l);
+                }
                 // special case when there is no coeffs on the stack.
                 else {
+                    coeff = avgStackObjectPool.allocate(maxLevel);
+                    coeff.setValue(0.0);
                     // Starting descent from top coefficient, i.e. the one with index == 1, level == maxLevel
-                    // TODO: use object pool
-                    newCoeff = new WaveletCoefficient(0.0, maxLevel, 1l);
+                    coeff.setIndex(1l);
                 }
                 // decrease the coefficient level until it stops covering tuplePosition
-                while (newCoeff.covers(tuplePosition, maxLevel, domainStart)) {
-                    newCoeff.setLevel(newCoeff.getLevel() - 1);
+                while (coeff.covers(tuplePosition, maxLevel, domainStart)) {
+                    avgStackObjectPool.deallocate(coeff.getLevel(), coeff);
+                    WaveletCoefficient newCoeff = avgStackObjectPool.allocate(coeff.getLevel() - 1);
                     if (newCoeff.getLevel() == 0) {
-                        newCoeff.setIndex(((newCoeff.getIndex() - (1l << (maxLevel - 1))) << 1) + domainStart);
+                        newCoeff.setIndex(((coeff.getIndex() - (1l << (maxLevel - 1))) << 1) + domainStart);
                     } else
-                        newCoeff.setIndex(newCoeff.getIndex() << 1);
+                        newCoeff.setIndex(coeff.getIndex() << 1);
+                    coeff = newCoeff;
                 }
                 // we don't add newCoeff to the wavelet coefficient collection, since it's value is 0. Keep it only in average stack
-                pushToStack(newCoeff);
-                currTransformPosition = getTransformPosition(newCoeff);
+                pushToStack(coeff);
+                currTransformPosition = getTransformPosition(coeff);
             }
         }
 
