@@ -78,7 +78,7 @@ import org.apache.hyracks.control.nc.partitions.PartitionManager;
 import org.apache.hyracks.control.nc.resources.memory.MemoryManager;
 import org.apache.hyracks.control.nc.runtime.RootHyracksContext;
 import org.apache.hyracks.control.nc.work.AbortTasksWork;
-import org.apache.hyracks.control.nc.work.ApplicationMessageWork;
+import org.apache.hyracks.control.nc.work.NCApplicationMessageWork;
 import org.apache.hyracks.control.nc.work.BuildJobProfilesWork;
 import org.apache.hyracks.control.nc.work.CleanupJobletWork;
 import org.apache.hyracks.control.nc.work.DeployBinaryWork;
@@ -488,7 +488,7 @@ public class NodeControllerService implements IControllerService {
             switch (fn.getFunctionId()) {
                 case SEND_APPLICATION_MESSAGE: {
                     CCNCFunctions.SendApplicationMessageFunction amf = (CCNCFunctions.SendApplicationMessageFunction) fn;
-                    queue.schedule(new ApplicationMessageWork(NodeControllerService.this, amf.getMessage(),
+                    queue.schedule(new NCApplicationMessageWork(NodeControllerService.this, amf.getMessage(),
                             amf.getDeploymentId(), amf.getNodeId()));
                     return;
                 }

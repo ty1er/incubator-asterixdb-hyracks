@@ -28,6 +28,7 @@ import org.apache.hyracks.api.job.IOperatorDescriptorRegistry;
 import org.apache.hyracks.dataflow.std.file.IFileSplitProvider;
 import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManagerProvider;
 import org.apache.hyracks.storage.am.common.api.IModificationOperationCallbackFactory;
+import org.apache.hyracks.storage.am.common.api.IStatisticsManagerProvider;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexDataflowHelperFactory;
 import org.apache.hyracks.storage.am.common.dataflow.IndexCreateOperatorNodePushable;
 import org.apache.hyracks.storage.am.common.impls.NoOpOperationCallbackFactory;
@@ -41,16 +42,16 @@ public class LSMInvertedIndexCreateOperatorDescriptor extends AbstractLSMInverte
 
     public LSMInvertedIndexCreateOperatorDescriptor(IOperatorDescriptorRegistry spec,
             IStorageManagerInterface storageManager, IFileSplitProvider fileSplitProvider,
-            IIndexLifecycleManagerProvider lifecycleManagerProvider, ITypeTraits[] tokenTypeTraits,
-            IBinaryComparatorFactory[] tokenComparatorFactories, ITypeTraits[] invListsTypeTraits,
-            IBinaryComparatorFactory[] invListComparatorFactories, IBinaryTokenizerFactory tokenizerFactory,
-            IIndexDataflowHelperFactory btreeDataflowHelperFactory,
+            IIndexLifecycleManagerProvider lifecycleManagerProvider, IStatisticsManagerProvider statsManagerProvider,
+            ITypeTraits[] tokenTypeTraits, IBinaryComparatorFactory[] tokenComparatorFactories,
+            ITypeTraits[] invListsTypeTraits, IBinaryComparatorFactory[] invListComparatorFactories,
+            IBinaryTokenizerFactory tokenizerFactory, IIndexDataflowHelperFactory btreeDataflowHelperFactory,
             ILocalResourceFactoryProvider localResourceFactoryProvider,
             IModificationOperationCallbackFactory modificationOpCallbackFactory) {
-        super(spec, 0, 0, null, storageManager, fileSplitProvider, lifecycleManagerProvider, tokenTypeTraits,
-                tokenComparatorFactories, invListsTypeTraits, invListComparatorFactories, tokenizerFactory,
-                btreeDataflowHelperFactory, null, false, false,
-                null, localResourceFactoryProvider, NoOpOperationCallbackFactory.INSTANCE, modificationOpCallbackFactory);
+        super(spec, 0, 0, null, storageManager, fileSplitProvider, lifecycleManagerProvider, statsManagerProvider,
+                tokenTypeTraits, tokenComparatorFactories, invListsTypeTraits, invListComparatorFactories,
+                tokenizerFactory, btreeDataflowHelperFactory, null, false, false, null, localResourceFactoryProvider,
+                NoOpOperationCallbackFactory.INSTANCE, modificationOpCallbackFactory);
     }
 
     @Override

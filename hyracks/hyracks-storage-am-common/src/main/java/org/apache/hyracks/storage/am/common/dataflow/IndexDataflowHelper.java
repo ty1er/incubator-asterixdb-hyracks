@@ -28,6 +28,7 @@ import org.apache.hyracks.api.io.FileReference;
 import org.apache.hyracks.storage.am.common.api.IIndex;
 import org.apache.hyracks.storage.am.common.api.IIndexDataflowHelper;
 import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManager;
+import org.apache.hyracks.storage.am.common.api.IStatisticsManager;
 import org.apache.hyracks.storage.am.common.util.IndexFileNameUtil;
 import org.apache.hyracks.storage.common.file.ILocalResourceFactory;
 import org.apache.hyracks.storage.common.file.ILocalResourceRepository;
@@ -41,6 +42,7 @@ public abstract class IndexDataflowHelper implements IIndexDataflowHelper {
     protected final IIndexLifecycleManager lcManager;
     protected final ILocalResourceRepository localResourceRepository;
     protected final IResourceIdFactory resourceIdFactory;
+    protected final IStatisticsManager statsManager;
     protected final FileReference file;
     protected final int partition;
     protected final int ioDeviceId;
@@ -55,6 +57,7 @@ public abstract class IndexDataflowHelper implements IIndexDataflowHelper {
         this.lcManager = opDesc.getLifecycleManagerProvider().getLifecycleManager(ctx);
         this.localResourceRepository = opDesc.getStorageManager().getLocalResourceRepository(ctx);
         this.resourceIdFactory = opDesc.getStorageManager().getResourceIdFactory(ctx);
+        this.statsManager = opDesc.getStatisticsManagerProvider().getStatisticsManager(ctx);
         this.partition = partition;
         this.ioDeviceId = opDesc.getFileSplitProvider().getFileSplits()[partition].getIODeviceId();
         this.file = new FileReference(new File(IndexFileNameUtil.prepareFileName(
@@ -81,8 +84,8 @@ public abstract class IndexDataflowHelper implements IIndexDataflowHelper {
                 index = createIndexInstance();
             }
 
-            // The previous resource ID needs to be removed since calling IIndex.create() may possibly destroy 
-            // any physical artifact that the LocalResourceRepository is managing (e.g. a file containing the resource ID). 
+            // The previous resource ID needs to be removed since calling IIndex.create() may possibly destroy
+            // any physical artifact that the LocalResourceRepository is managing (e.g. a file containing the resource ID).
             // Once the index has been created, a new resource ID can be generated.
             long resourceID = getResourceID();
             if (resourceID != -1) {

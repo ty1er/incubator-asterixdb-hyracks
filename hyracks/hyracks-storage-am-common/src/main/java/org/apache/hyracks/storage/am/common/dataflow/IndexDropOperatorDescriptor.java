@@ -28,6 +28,7 @@ import org.apache.hyracks.api.job.IOperatorDescriptorRegistry;
 import org.apache.hyracks.data.std.primitive.IntegerPointable;
 import org.apache.hyracks.dataflow.std.file.IFileSplitProvider;
 import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManagerProvider;
+import org.apache.hyracks.storage.am.common.api.IStatisticsManagerProvider;
 import org.apache.hyracks.storage.am.common.impls.NoOpOperationCallbackFactory;
 import org.apache.hyracks.storage.common.IStorageManagerInterface;
 import org.apache.hyracks.storage.common.file.NoOpLocalResourceFactoryProvider;
@@ -37,16 +38,17 @@ public class IndexDropOperatorDescriptor extends AbstractTreeIndexOperatorDescri
     private static final long serialVersionUID = 1L;
 
     public IndexDropOperatorDescriptor(IOperatorDescriptorRegistry spec, IStorageManagerInterface storageManager,
-            IIndexLifecycleManagerProvider lifecycleManagerProvider, IFileSplitProvider fileSplitProvider,
-            IIndexDataflowHelperFactory dataflowHelperFactory) {
+            IIndexLifecycleManagerProvider lifecycleManagerProvider, IStatisticsManagerProvider statsManagerProvider,
+            IFileSplitProvider fileSplitProvider, IIndexDataflowHelperFactory dataflowHelperFactory) {
         // TODO: providing the type traits below is a hack to allow:
         // 1) Type traits not to be specified when creating the drop operator
         // 2) The LSMRTreeDataflowHelper to get acceptable type traits
         // This should eventually not be *hacked*, but I don't know the proper fix yet. -zheilbron
-        super(spec, 0, 0, null, storageManager, lifecycleManagerProvider, fileSplitProvider, new ITypeTraits[] {
-                IntegerPointable.TYPE_TRAITS, IntegerPointable.TYPE_TRAITS }, new IBinaryComparatorFactory[] { null }, null,
-                dataflowHelperFactory, null, false, false,
-                null, NoOpLocalResourceFactoryProvider.INSTANCE, NoOpOperationCallbackFactory.INSTANCE, NoOpOperationCallbackFactory.INSTANCE);
+        super(spec, 0, 0, null, storageManager, lifecycleManagerProvider, statsManagerProvider, fileSplitProvider,
+                new ITypeTraits[] { IntegerPointable.TYPE_TRAITS, IntegerPointable.TYPE_TRAITS },
+                new IBinaryComparatorFactory[] { null }, null, dataflowHelperFactory, null, false, false, null,
+                NoOpLocalResourceFactoryProvider.INSTANCE, NoOpOperationCallbackFactory.INSTANCE,
+                NoOpOperationCallbackFactory.INSTANCE);
     }
 
     @Override

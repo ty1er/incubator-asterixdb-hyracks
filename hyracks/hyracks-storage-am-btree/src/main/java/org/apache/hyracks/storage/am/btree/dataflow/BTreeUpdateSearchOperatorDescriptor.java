@@ -29,6 +29,7 @@ import org.apache.hyracks.api.job.IOperatorDescriptorRegistry;
 import org.apache.hyracks.dataflow.std.file.IFileSplitProvider;
 import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManagerProvider;
 import org.apache.hyracks.storage.am.common.api.ISearchOperationCallbackFactory;
+import org.apache.hyracks.storage.am.common.api.IStatisticsManagerProvider;
 import org.apache.hyracks.storage.am.common.api.ITupleUpdaterFactory;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexDataflowHelperFactory;
 import org.apache.hyracks.storage.common.IStorageManagerInterface;
@@ -41,14 +42,15 @@ public class BTreeUpdateSearchOperatorDescriptor extends BTreeSearchOperatorDesc
 
     public BTreeUpdateSearchOperatorDescriptor(IOperatorDescriptorRegistry spec, RecordDescriptor recDesc,
             IStorageManagerInterface storageManager, IIndexLifecycleManagerProvider lifecycleManagerProvider,
-            IFileSplitProvider fileSplitProvider, ITypeTraits[] typeTraits,
-            IBinaryComparatorFactory[] comparatorFactories, int[] bloomFilterKeyFields, int[] lowKeyFields,
-            int[] highKeyFields, boolean lowKeyInclusive, boolean highKeyInclusive,
+            IStatisticsManagerProvider statsManagerProvider, IFileSplitProvider fileSplitProvider,
+            ITypeTraits[] typeTraits, IBinaryComparatorFactory[] comparatorFactories, int[] bloomFilterKeyFields,
+            int[] lowKeyFields, int[] highKeyFields, boolean lowKeyInclusive, boolean highKeyInclusive,
             IIndexDataflowHelperFactory dataflowHelperFactory, boolean retainInput,
             ISearchOperationCallbackFactory searchOpCallbackProvider, ITupleUpdaterFactory tupleUpdaterFactory) {
-        super(spec, recDesc, storageManager, lifecycleManagerProvider, fileSplitProvider, typeTraits,
-                comparatorFactories, bloomFilterKeyFields, lowKeyFields, highKeyFields, lowKeyInclusive,
-                highKeyInclusive, dataflowHelperFactory, retainInput, false, null, searchOpCallbackProvider, null, null);
+        super(spec, recDesc, storageManager, lifecycleManagerProvider, statsManagerProvider, fileSplitProvider,
+                typeTraits, comparatorFactories, bloomFilterKeyFields, lowKeyFields, highKeyFields, lowKeyInclusive,
+                highKeyInclusive, dataflowHelperFactory, retainInput, false, null, searchOpCallbackProvider, null,
+                null);
         this.tupleUpdaterFactory = tupleUpdaterFactory;
     }
 

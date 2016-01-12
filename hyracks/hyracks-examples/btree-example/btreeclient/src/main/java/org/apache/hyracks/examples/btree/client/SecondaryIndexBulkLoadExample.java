@@ -18,9 +18,6 @@
  */
 package org.apache.hyracks.examples.btree.client;
 
-import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.Option;
-
 import org.apache.hyracks.api.client.HyracksConnection;
 import org.apache.hyracks.api.client.IHyracksClientConnection;
 import org.apache.hyracks.api.dataflow.value.IBinaryComparatorFactory;
@@ -47,6 +44,8 @@ import org.apache.hyracks.storage.am.common.dataflow.TreeIndexBulkLoadOperatorDe
 import org.apache.hyracks.storage.am.common.dataflow.TreeIndexDiskOrderScanOperatorDescriptor;
 import org.apache.hyracks.storage.am.common.impls.NoOpOperationCallbackFactory;
 import org.apache.hyracks.storage.common.IStorageManagerInterface;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
 
 // This example will load a secondary index with <key, primary-index key> pairs
 // We require an existing primary index built with PrimaryIndexBulkLoadExample
@@ -101,14 +100,14 @@ public class SecondaryIndexBulkLoadExample {
         IStorageManagerInterface storageManager = StorageManagerInterface.INSTANCE;
 
         // schema of tuples that we are retrieving from the primary index
-        RecordDescriptor recDesc = new RecordDescriptor(new ISerializerDeserializer[] {
-                IntegerSerializerDeserializer.INSTANCE, // we will use this as
-                                                        // payload in secondary
-                                                        // index
-                new UTF8StringSerializerDeserializer(), // we will use this
-                                                           // ask key in
-                                                           // secondary index
-                IntegerSerializerDeserializer.INSTANCE, new UTF8StringSerializerDeserializer() });
+        RecordDescriptor recDesc = new RecordDescriptor(
+                new ISerializerDeserializer[] { IntegerSerializerDeserializer.INSTANCE, // we will use this as
+                        // payload in secondary
+                        // index
+                        new UTF8StringSerializerDeserializer(), // we will use this
+                        // ask key in
+                        // secondary index
+                        IntegerSerializerDeserializer.INSTANCE, new UTF8StringSerializerDeserializer() });
 
         int primaryFieldCount = 4;
         ITypeTraits[] primaryTypeTraits = new ITypeTraits[primaryFieldCount];
@@ -126,7 +125,7 @@ public class SecondaryIndexBulkLoadExample {
         IFileSplitProvider primarySplitProvider = JobHelper.createFileSplitProvider(splitNCs, options.primaryBTreeName);
         IIndexDataflowHelperFactory dataflowHelperFactory = new BTreeDataflowHelperFactory(true);
         TreeIndexDiskOrderScanOperatorDescriptor btreeScanOp = new TreeIndexDiskOrderScanOperatorDescriptor(spec,
-                recDesc, storageManager, lcManagerProvider, primarySplitProvider, primaryTypeTraits,
+                recDesc, storageManager, lcManagerProvider, null, primarySplitProvider, primaryTypeTraits,
                 dataflowHelperFactory, NoOpOperationCallbackFactory.INSTANCE);
         JobHelper.createPartitionConstraint(spec, btreeScanOp, splitNCs);
 
@@ -148,8 +147,8 @@ public class SecondaryIndexBulkLoadExample {
         int[] fieldPermutation = { 1, 0 };
         IFileSplitProvider btreeSplitProvider = JobHelper.createFileSplitProvider(splitNCs, options.secondaryBTreeName);
         TreeIndexBulkLoadOperatorDescriptor btreeBulkLoad = new TreeIndexBulkLoadOperatorDescriptor(spec, null,
-                storageManager, lcManagerProvider, btreeSplitProvider, secondaryTypeTraits, comparatorFactories, null,
-                fieldPermutation, 0.7f, false, 1000L, true, dataflowHelperFactory);
+                storageManager, lcManagerProvider, null, btreeSplitProvider, secondaryTypeTraits, comparatorFactories,
+                null, fieldPermutation, 0.7f, false, 1000L, true, dataflowHelperFactory);
         JobHelper.createPartitionConstraint(spec, btreeBulkLoad, splitNCs);
         NullSinkOperatorDescriptor nsOpDesc = new NullSinkOperatorDescriptor(spec);
         JobHelper.createPartitionConstraint(spec, nsOpDesc, splitNCs);

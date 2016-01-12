@@ -22,9 +22,6 @@ package org.apache.hyracks.tests.am.rtree;
 import java.io.DataOutput;
 import java.io.File;
 
-import org.junit.After;
-import org.junit.Before;
-
 import org.apache.hyracks.api.constraints.PartitionConstraintHelper;
 import org.apache.hyracks.api.dataflow.value.IBinaryComparatorFactory;
 import org.apache.hyracks.api.dataflow.value.ILinearizeComparatorFactory;
@@ -74,6 +71,8 @@ import org.apache.hyracks.test.support.TestStorageManagerComponentHolder;
 import org.apache.hyracks.test.support.TestStorageManagerInterface;
 import org.apache.hyracks.tests.am.common.ITreeIndexOperatorTestHelper;
 import org.apache.hyracks.tests.integration.AbstractIntegrationTest;
+import org.junit.After;
+import org.junit.Before;
 
 public abstract class AbstractRTreeOperatorTest extends AbstractIntegrationTest {
     static {
@@ -116,10 +115,10 @@ public abstract class AbstractRTreeOperatorTest extends AbstractIntegrationTest 
     protected final int secondaryKeyFieldCount = 4;
     protected final IBinaryComparatorFactory[] secondaryComparatorFactories = new IBinaryComparatorFactory[secondaryKeyFieldCount];
 
-    protected final RecordDescriptor secondaryRecDesc = new RecordDescriptor(new ISerializerDeserializer[] {
-            DoubleSerializerDeserializer.INSTANCE, DoubleSerializerDeserializer.INSTANCE,
-            DoubleSerializerDeserializer.INSTANCE, DoubleSerializerDeserializer.INSTANCE,
-            new UTF8StringSerializerDeserializer() });
+    protected final RecordDescriptor secondaryRecDesc = new RecordDescriptor(
+            new ISerializerDeserializer[] { DoubleSerializerDeserializer.INSTANCE,
+                    DoubleSerializerDeserializer.INSTANCE, DoubleSerializerDeserializer.INSTANCE,
+                    DoubleSerializerDeserializer.INSTANCE, new UTF8StringSerializerDeserializer() });
 
     // This is only used for the LSMRTree. We need a comparator Factories for
     // the BTree component of the LSMRTree.
@@ -140,11 +139,11 @@ public abstract class AbstractRTreeOperatorTest extends AbstractIntegrationTest 
         testHelper = createTestHelper();
 
         primaryFileName = testHelper.getPrimaryIndexName();
-        primarySplitProvider = new ConstantFileSplitProvider(new FileSplit[] { new FileSplit(NC1_ID, new FileReference(
-                new File(primaryFileName))) });
+        primarySplitProvider = new ConstantFileSplitProvider(
+                new FileSplit[] { new FileSplit(NC1_ID, new FileReference(new File(primaryFileName))) });
         secondaryFileName = testHelper.getSecondaryIndexName();
-        secondarySplitProvider = new ConstantFileSplitProvider(new FileSplit[] { new FileSplit(NC1_ID,
-                new FileReference(new File(secondaryFileName))) });
+        secondarySplitProvider = new ConstantFileSplitProvider(
+                new FileSplit[] { new FileSplit(NC1_ID, new FileReference(new File(secondaryFileName))) });
 
         // field, type and key declarations for primary index
         primaryTypeTraits[0] = UTF8StringPointable.TYPE_TRAITS;
@@ -206,7 +205,7 @@ public abstract class AbstractRTreeOperatorTest extends AbstractIntegrationTest 
         JobSpecification spec = new JobSpecification();
         TransientLocalResourceFactoryProvider localResourceFactoryProvider = new TransientLocalResourceFactoryProvider();
         TreeIndexCreateOperatorDescriptor primaryCreateOp = new TreeIndexCreateOperatorDescriptor(spec, storageManager,
-                lcManagerProvider, primarySplitProvider, primaryTypeTraits, primaryComparatorFactories, null,
+                lcManagerProvider, null, primarySplitProvider, primaryTypeTraits, primaryComparatorFactories, null,
                 btreeDataflowHelperFactory, localResourceFactoryProvider, NoOpOperationCallbackFactory.INSTANCE);
         PartitionConstraintHelper.addAbsoluteLocationConstraint(spec, primaryCreateOp, NC1_ID);
         spec.addRoot(primaryCreateOp);
@@ -216,17 +215,17 @@ public abstract class AbstractRTreeOperatorTest extends AbstractIntegrationTest 
     protected void loadPrimaryIndex() throws Exception {
         JobSpecification spec = new JobSpecification();
 
-        FileSplit[] ordersSplits = new FileSplit[] { new FileSplit(NC1_ID, new FileReference(new File(
-                "data/orders-with-locations-part1.txt"))) };
+        FileSplit[] ordersSplits = new FileSplit[] {
+                new FileSplit(NC1_ID, new FileReference(new File("data/orders-with-locations-part1.txt"))) };
         IFileSplitProvider ordersSplitProvider = new ConstantFileSplitProvider(ordersSplits);
-        RecordDescriptor ordersDesc = new RecordDescriptor(new ISerializerDeserializer[] {
-                new UTF8StringSerializerDeserializer(), new UTF8StringSerializerDeserializer(),
-                new UTF8StringSerializerDeserializer(), new UTF8StringSerializerDeserializer(),
-                new UTF8StringSerializerDeserializer(), new UTF8StringSerializerDeserializer(),
-                new UTF8StringSerializerDeserializer(), new UTF8StringSerializerDeserializer(),
-                new UTF8StringSerializerDeserializer(), DoubleSerializerDeserializer.INSTANCE,
-                DoubleSerializerDeserializer.INSTANCE, DoubleSerializerDeserializer.INSTANCE,
-                DoubleSerializerDeserializer.INSTANCE });
+        RecordDescriptor ordersDesc = new RecordDescriptor(
+                new ISerializerDeserializer[] { new UTF8StringSerializerDeserializer(),
+                        new UTF8StringSerializerDeserializer(), new UTF8StringSerializerDeserializer(),
+                        new UTF8StringSerializerDeserializer(), new UTF8StringSerializerDeserializer(),
+                        new UTF8StringSerializerDeserializer(), new UTF8StringSerializerDeserializer(),
+                        new UTF8StringSerializerDeserializer(), new UTF8StringSerializerDeserializer(),
+                        DoubleSerializerDeserializer.INSTANCE, DoubleSerializerDeserializer.INSTANCE,
+                        DoubleSerializerDeserializer.INSTANCE, DoubleSerializerDeserializer.INSTANCE });
 
         FileScanOperatorDescriptor ordScanner = new FileScanOperatorDescriptor(spec, ordersSplitProvider,
                 new DelimitedDataTupleParserFactory(new IValueParserFactory[] { UTF8StringParserFactory.INSTANCE,
@@ -235,7 +234,8 @@ public abstract class AbstractRTreeOperatorTest extends AbstractIntegrationTest 
                         UTF8StringParserFactory.INSTANCE, UTF8StringParserFactory.INSTANCE,
                         UTF8StringParserFactory.INSTANCE, UTF8StringParserFactory.INSTANCE,
                         DoubleParserFactory.INSTANCE, DoubleParserFactory.INSTANCE, DoubleParserFactory.INSTANCE,
-                        DoubleParserFactory.INSTANCE }, '|'), ordersDesc);
+                        DoubleParserFactory.INSTANCE }, '|'),
+                ordersDesc);
         PartitionConstraintHelper.addAbsoluteLocationConstraint(spec, ordScanner, NC1_ID);
 
         ExternalSortOperatorDescriptor sorter = new ExternalSortOperatorDescriptor(spec, 1000, new int[] { 0 },
@@ -245,7 +245,7 @@ public abstract class AbstractRTreeOperatorTest extends AbstractIntegrationTest 
 
         int[] fieldPermutation = { 0, 1, 2, 4, 5, 7, 9, 10, 11, 12 };
         TreeIndexBulkLoadOperatorDescriptor primaryBulkLoad = new TreeIndexBulkLoadOperatorDescriptor(spec,
-                primaryRecDesc, storageManager, lcManagerProvider, primarySplitProvider, primaryTypeTraits,
+                primaryRecDesc, storageManager, lcManagerProvider, null, primarySplitProvider, primaryTypeTraits,
                 primaryComparatorFactories, null, fieldPermutation, 0.7f, false, 1000L, true,
                 btreeDataflowHelperFactory);
         PartitionConstraintHelper.addAbsoluteLocationConstraint(spec, primaryBulkLoad, NC1_ID);
@@ -267,7 +267,7 @@ public abstract class AbstractRTreeOperatorTest extends AbstractIntegrationTest 
         JobSpecification spec = new JobSpecification();
         TransientLocalResourceFactoryProvider localResourceFactoryProvider = new TransientLocalResourceFactoryProvider();
         TreeIndexCreateOperatorDescriptor secondaryCreateOp = new TreeIndexCreateOperatorDescriptor(spec,
-                storageManager, lcManagerProvider, secondarySplitProvider, secondaryTypeTraits,
+                storageManager, lcManagerProvider, null, secondarySplitProvider, secondaryTypeTraits,
                 secondaryComparatorFactories, null, rtreeDataflowHelperFactory, localResourceFactoryProvider,
                 NoOpOperationCallbackFactory.INSTANCE);
         PartitionConstraintHelper.addAbsoluteLocationConstraint(spec, secondaryCreateOp, NC1_ID);
@@ -299,15 +299,15 @@ public abstract class AbstractRTreeOperatorTest extends AbstractIntegrationTest 
 
         // scan primary index
         BTreeSearchOperatorDescriptor primarySearchOp = new BTreeSearchOperatorDescriptor(spec, primaryRecDesc,
-                storageManager, lcManagerProvider, primarySplitProvider, primaryTypeTraits, primaryComparatorFactories,
-                null, lowKeyFields, highKeyFields, true, true, btreeDataflowHelperFactory, false, false, null,
-                NoOpOperationCallbackFactory.INSTANCE, null, null);
+                storageManager, lcManagerProvider, null, primarySplitProvider, primaryTypeTraits,
+                primaryComparatorFactories, null, lowKeyFields, highKeyFields, true, true, btreeDataflowHelperFactory,
+                false, false, null, NoOpOperationCallbackFactory.INSTANCE, null, null);
         PartitionConstraintHelper.addAbsoluteLocationConstraint(spec, primarySearchOp, NC1_ID);
 
         // load secondary index
         int[] fieldPermutation = { 6, 7, 8, 9, 0 };
         TreeIndexBulkLoadOperatorDescriptor secondaryBulkLoad = new TreeIndexBulkLoadOperatorDescriptor(spec,
-                secondaryRecDesc, storageManager, lcManagerProvider, secondarySplitProvider, secondaryTypeTraits,
+                secondaryRecDesc, storageManager, lcManagerProvider, null, secondarySplitProvider, secondaryTypeTraits,
                 secondaryComparatorFactories, null, fieldPermutation, 0.7f, false, 1000L, true,
                 rtreeDataflowHelperFactory);
         PartitionConstraintHelper.addAbsoluteLocationConstraint(spec, secondaryBulkLoad, NC1_ID);
@@ -327,17 +327,17 @@ public abstract class AbstractRTreeOperatorTest extends AbstractIntegrationTest 
 
         JobSpecification spec = new JobSpecification();
 
-        FileSplit[] ordersSplits = new FileSplit[] { new FileSplit(NC1_ID, new FileReference(new File(
-                "data/orders-with-locations-part2.txt"))) };
+        FileSplit[] ordersSplits = new FileSplit[] {
+                new FileSplit(NC1_ID, new FileReference(new File("data/orders-with-locations-part2.txt"))) };
         IFileSplitProvider ordersSplitProvider = new ConstantFileSplitProvider(ordersSplits);
-        RecordDescriptor ordersDesc = new RecordDescriptor(new ISerializerDeserializer[] {
-                new UTF8StringSerializerDeserializer(), new UTF8StringSerializerDeserializer(),
-                new UTF8StringSerializerDeserializer(), new UTF8StringSerializerDeserializer(),
-                new UTF8StringSerializerDeserializer(), new UTF8StringSerializerDeserializer(),
-                new UTF8StringSerializerDeserializer(), new UTF8StringSerializerDeserializer(),
-                new UTF8StringSerializerDeserializer(), DoubleSerializerDeserializer.INSTANCE,
-                DoubleSerializerDeserializer.INSTANCE, DoubleSerializerDeserializer.INSTANCE,
-                DoubleSerializerDeserializer.INSTANCE });
+        RecordDescriptor ordersDesc = new RecordDescriptor(
+                new ISerializerDeserializer[] { new UTF8StringSerializerDeserializer(),
+                        new UTF8StringSerializerDeserializer(), new UTF8StringSerializerDeserializer(),
+                        new UTF8StringSerializerDeserializer(), new UTF8StringSerializerDeserializer(),
+                        new UTF8StringSerializerDeserializer(), new UTF8StringSerializerDeserializer(),
+                        new UTF8StringSerializerDeserializer(), new UTF8StringSerializerDeserializer(),
+                        DoubleSerializerDeserializer.INSTANCE, DoubleSerializerDeserializer.INSTANCE,
+                        DoubleSerializerDeserializer.INSTANCE, DoubleSerializerDeserializer.INSTANCE });
 
         FileScanOperatorDescriptor ordScanner = new FileScanOperatorDescriptor(spec, ordersSplitProvider,
                 new DelimitedDataTupleParserFactory(new IValueParserFactory[] { UTF8StringParserFactory.INSTANCE,
@@ -346,13 +346,14 @@ public abstract class AbstractRTreeOperatorTest extends AbstractIntegrationTest 
                         UTF8StringParserFactory.INSTANCE, UTF8StringParserFactory.INSTANCE,
                         UTF8StringParserFactory.INSTANCE, UTF8StringParserFactory.INSTANCE,
                         DoubleParserFactory.INSTANCE, DoubleParserFactory.INSTANCE, DoubleParserFactory.INSTANCE,
-                        DoubleParserFactory.INSTANCE }, '|'), ordersDesc);
+                        DoubleParserFactory.INSTANCE }, '|'),
+                ordersDesc);
         PartitionConstraintHelper.addAbsoluteLocationConstraint(spec, ordScanner, NC1_ID);
 
         // insert into primary index
         int[] primaryFieldPermutation = { 0, 1, 2, 4, 5, 7, 9, 10, 11, 12 };
         TreeIndexInsertUpdateDeleteOperatorDescriptor primaryInsertOp = new TreeIndexInsertUpdateDeleteOperatorDescriptor(
-                spec, ordersDesc, storageManager, lcManagerProvider, primarySplitProvider, primaryTypeTraits,
+                spec, ordersDesc, storageManager, lcManagerProvider, null, primarySplitProvider, primaryTypeTraits,
                 primaryComparatorFactories, null, primaryFieldPermutation, IndexOperation.INSERT,
                 btreeDataflowHelperFactory, null, NoOpOperationCallbackFactory.INSTANCE);
         PartitionConstraintHelper.addAbsoluteLocationConstraint(spec, primaryInsertOp, NC1_ID);
@@ -360,7 +361,7 @@ public abstract class AbstractRTreeOperatorTest extends AbstractIntegrationTest 
         // secondary index
         int[] secondaryFieldPermutation = { 9, 10, 11, 12, 0 };
         TreeIndexInsertUpdateDeleteOperatorDescriptor secondaryInsertOp = new TreeIndexInsertUpdateDeleteOperatorDescriptor(
-                spec, ordersDesc, storageManager, lcManagerProvider, secondarySplitProvider, secondaryTypeTraits,
+                spec, ordersDesc, storageManager, lcManagerProvider, null, secondarySplitProvider, secondaryTypeTraits,
                 secondaryComparatorFactories, null, secondaryFieldPermutation, IndexOperation.INSERT,
                 rtreeDataflowHelperFactory, null, NoOpOperationCallbackFactory.INSTANCE);
         PartitionConstraintHelper.addAbsoluteLocationConstraint(spec, secondaryInsertOp, NC1_ID);
@@ -381,7 +382,7 @@ public abstract class AbstractRTreeOperatorTest extends AbstractIntegrationTest 
     protected void destroyPrimaryIndex() throws Exception {
         JobSpecification spec = new JobSpecification();
         IndexDropOperatorDescriptor primaryDropOp = new IndexDropOperatorDescriptor(spec, storageManager,
-                lcManagerProvider, primarySplitProvider, btreeDataflowHelperFactory);
+                lcManagerProvider, null, primarySplitProvider, btreeDataflowHelperFactory);
         PartitionConstraintHelper.addAbsoluteLocationConstraint(spec, primaryDropOp, NC1_ID);
         spec.addRoot(primaryDropOp);
         runTest(spec);
@@ -390,7 +391,7 @@ public abstract class AbstractRTreeOperatorTest extends AbstractIntegrationTest 
     protected void destroySecondaryIndex() throws Exception {
         JobSpecification spec = new JobSpecification();
         IndexDropOperatorDescriptor secondaryDropOp = new IndexDropOperatorDescriptor(spec, storageManager,
-                lcManagerProvider, secondarySplitProvider, rtreeDataflowHelperFactory);
+                lcManagerProvider, null, secondarySplitProvider, rtreeDataflowHelperFactory);
         PartitionConstraintHelper.addAbsoluteLocationConstraint(spec, secondaryDropOp, NC1_ID);
         spec.addRoot(secondaryDropOp);
         runTest(spec);

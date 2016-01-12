@@ -49,6 +49,7 @@ public class RuntimeContext {
     private IIndexLifecycleManager lcManager;
     private ResourceIdFactory resourceIdFactory;
     private ThreadFactory threadFactory = new ThreadFactory() {
+        @Override
         public Thread newThread(Runnable r) {
             return new Thread(r);
         }

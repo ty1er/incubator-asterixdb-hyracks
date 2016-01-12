@@ -23,17 +23,17 @@ import org.apache.hyracks.storage.am.bloomfilter.impls.BloomFilter;
 import org.apache.hyracks.storage.am.btree.impls.BTree;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMComponentFilter;
 import org.apache.hyracks.storage.am.lsm.common.impls.AbstractDiskLSMComponent;
-import org.apache.hyracks.storage.am.statistics.common.Synopsis;
+import org.apache.hyracks.storage.am.statistics.common.StatisticsCollector;
 
 public class LSMBTreeDiskComponent extends AbstractDiskLSMComponent {
     private final BTree btree;
-    private final Synopsis statistics;
+    private final StatisticsCollector statisticsCollector;
 
     public LSMBTreeDiskComponent(BTree btree, BloomFilter bloomFilter, ILSMComponentFilter filter,
-            Synopsis statistics) {
+            StatisticsCollector statsCollector) {
         super(bloomFilter, filter);
         this.btree = btree;
-        this.statistics = statistics;
+        this.statisticsCollector = statsCollector;
     }
 
     @Override
@@ -47,8 +47,8 @@ public class LSMBTreeDiskComponent extends AbstractDiskLSMComponent {
         return btree;
     }
 
-    public Synopsis getStatistics() {
-        return statistics;
+    public StatisticsCollector getStatisticsCollector() {
+        return statisticsCollector;
     }
 
     @Override

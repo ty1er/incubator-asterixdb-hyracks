@@ -18,9 +18,6 @@
  */
 package org.apache.hyracks.examples.btree.client;
 
-import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.Option;
-
 import org.apache.hyracks.api.client.HyracksConnection;
 import org.apache.hyracks.api.client.IHyracksClientConnection;
 import org.apache.hyracks.api.constraints.PartitionConstraintHelper;
@@ -52,6 +49,8 @@ import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManagerProvider;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexDataflowHelperFactory;
 import org.apache.hyracks.storage.am.common.dataflow.TreeIndexBulkLoadOperatorDescriptor;
 import org.apache.hyracks.storage.common.IStorageManagerInterface;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
 
 // This example will load a primary index from randomly generated data
 
@@ -104,18 +103,18 @@ public class PrimaryIndexBulkLoadExample {
         // schema of tuples to be generated: 5 fields with string, string, int,
         // int, string
         // we will use field-index 2 as primary key to fill a clustered index
-        RecordDescriptor recDesc = new RecordDescriptor(new ISerializerDeserializer[] {
-                new UTF8StringSerializerDeserializer(), // this field will
-                                                           // not go into B-Tree
-                new UTF8StringSerializerDeserializer(), // we will use this
-                                                           // as payload
-                IntegerSerializerDeserializer.INSTANCE, // we will use this
-                                                        // field as key
-                IntegerSerializerDeserializer.INSTANCE, // we will use this as
-                                                        // payload
-                new UTF8StringSerializerDeserializer() // we will use this as
-                                                          // payload
-                });
+        RecordDescriptor recDesc = new RecordDescriptor(
+                new ISerializerDeserializer[] { new UTF8StringSerializerDeserializer(), // this field will
+                        // not go into B-Tree
+                        new UTF8StringSerializerDeserializer(), // we will use this
+                        // as payload
+                        IntegerSerializerDeserializer.INSTANCE, // we will use this
+                        // field as key
+                        IntegerSerializerDeserializer.INSTANCE, // we will use this as
+                        // payload
+                        new UTF8StringSerializerDeserializer() // we will use this as
+                                                               // payload
+        });
 
         // generate numRecords records with field 2 being unique, integer values
         // in [0, 100000], and strings with max length of 10 characters, and
@@ -155,7 +154,7 @@ public class PrimaryIndexBulkLoadExample {
         IFileSplitProvider btreeSplitProvider = JobHelper.createFileSplitProvider(splitNCs, options.btreeName);
         IIndexDataflowHelperFactory dataflowHelperFactory = new BTreeDataflowHelperFactory(true);
         TreeIndexBulkLoadOperatorDescriptor btreeBulkLoad = new TreeIndexBulkLoadOperatorDescriptor(spec, recDesc,
-                storageManager, lcManagerProvider, btreeSplitProvider, typeTraits, comparatorFactories, null,
+                storageManager, lcManagerProvider, null, btreeSplitProvider, typeTraits, comparatorFactories, null,
                 fieldPermutation, 0.7f, false, 1000L, true, dataflowHelperFactory);
 
         JobHelper.createPartitionConstraint(spec, btreeBulkLoad, splitNCs);

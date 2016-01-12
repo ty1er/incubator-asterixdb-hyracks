@@ -28,6 +28,7 @@ import org.apache.hyracks.dataflow.std.file.IFileSplitProvider;
 import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManagerProvider;
 import org.apache.hyracks.storage.am.common.api.IModificationOperationCallbackFactory;
 import org.apache.hyracks.storage.am.common.api.ISearchOperationCallbackFactory;
+import org.apache.hyracks.storage.am.common.api.IStatisticsManagerProvider;
 import org.apache.hyracks.storage.am.common.api.ITupleFilterFactory;
 import org.apache.hyracks.storage.am.common.dataflow.AbstractIndexOperatorDescriptor;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexDataflowHelperFactory;
@@ -36,8 +37,8 @@ import org.apache.hyracks.storage.am.lsm.invertedindex.tokenizers.IBinaryTokeniz
 import org.apache.hyracks.storage.common.IStorageManagerInterface;
 import org.apache.hyracks.storage.common.file.ILocalResourceFactoryProvider;
 
-public abstract class AbstractLSMInvertedIndexOperatorDescriptor extends AbstractIndexOperatorDescriptor implements
-        IInvertedIndexOperatorDescriptor {
+public abstract class AbstractLSMInvertedIndexOperatorDescriptor extends AbstractIndexOperatorDescriptor
+        implements IInvertedIndexOperatorDescriptor {
 
     private static final long serialVersionUID = 1L;
 
@@ -47,9 +48,9 @@ public abstract class AbstractLSMInvertedIndexOperatorDescriptor extends Abstrac
     protected final IBinaryComparatorFactory[] tokenComparatorFactories;
     protected final IBinaryTokenizerFactory tokenizerFactory;
 
-    public AbstractLSMInvertedIndexOperatorDescriptor(IOperatorDescriptorRegistry spec, int inputArity,
-            int outputArity, RecordDescriptor recDesc, IStorageManagerInterface storageManager,
-            IFileSplitProvider fileSplitProvider, IIndexLifecycleManagerProvider lifecycleManagerProvider,
+    public AbstractLSMInvertedIndexOperatorDescriptor(IOperatorDescriptorRegistry spec, int inputArity, int outputArity,
+            RecordDescriptor recDesc, IStorageManagerInterface storageManager, IFileSplitProvider fileSplitProvider,
+            IIndexLifecycleManagerProvider lifecycleManagerProvider, IStatisticsManagerProvider statsManagerProvider,
             ITypeTraits[] tokenTypeTraits, IBinaryComparatorFactory[] tokenComparatorFactories,
             ITypeTraits[] invListsTypeTraits, IBinaryComparatorFactory[] invListComparatorFactories,
             IBinaryTokenizerFactory tokenizerFactory, IIndexDataflowHelperFactory dataflowHelperFactory,
@@ -57,9 +58,10 @@ public abstract class AbstractLSMInvertedIndexOperatorDescriptor extends Abstrac
             INullWriterFactory nullWriterFactory, ILocalResourceFactoryProvider localResourceFactoryProvider,
             ISearchOperationCallbackFactory searchOpCallbackFactory,
             IModificationOperationCallbackFactory modificationOpCallbackFactory) {
-        super(spec, inputArity, outputArity, recDesc, storageManager, lifecycleManagerProvider, fileSplitProvider,
-                dataflowHelperFactory, tupleFilterFactory, retainInput, retainNull, nullWriterFactory,
-                localResourceFactoryProvider, searchOpCallbackFactory, modificationOpCallbackFactory);
+        super(spec, inputArity, outputArity, recDesc, storageManager, lifecycleManagerProvider, statsManagerProvider,
+                fileSplitProvider, dataflowHelperFactory, tupleFilterFactory, retainInput, retainNull,
+                nullWriterFactory, localResourceFactoryProvider, searchOpCallbackFactory,
+                modificationOpCallbackFactory);
         this.invListsTypeTraits = invListsTypeTraits;
         this.invListComparatorFactories = invListComparatorFactories;
         this.tokenTypeTraits = tokenTypeTraits;

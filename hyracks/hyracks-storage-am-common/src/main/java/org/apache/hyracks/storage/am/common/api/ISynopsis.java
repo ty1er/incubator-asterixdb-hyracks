@@ -16,13 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.hyracks.storage.am.common.api;
 
-package org.apache.hyracks.storage.am.statistics.common;
+import java.util.Map;
 
-import org.apache.hyracks.storage.am.common.api.IIndexBulkLoader;
+public interface ISynopsis extends Iterable<Map.Entry<Long, Double>> {
 
-public interface ISynopsisBuilder extends IIndexBulkLoader {
+    void addElement(long key, double frequency);
 
-    public void setAntimatterTuple(boolean isAntimatter);
+    long size();
+
+    void merge(ISynopsis mergeSynopsis);
 
 }

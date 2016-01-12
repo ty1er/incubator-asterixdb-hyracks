@@ -16,19 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.hyracks.examples.btree.helper;
+package org.apache.hyracks.storage.am.common.api;
 
-import org.apache.hyracks.api.context.IHyracksTaskContext;
-import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManager;
-import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManagerProvider;
-import org.apache.hyracks.storage.am.common.api.IStatisticsManager;
+import java.nio.file.Path;
+import java.util.List;
 
-public enum IndexLifecycleManagerProvider implements IIndexLifecycleManagerProvider {
-    INSTANCE;
+import org.apache.hyracks.api.exceptions.HyracksDataException;
 
-    @Override
-    public IIndexLifecycleManager getLifecycleManager(IHyracksTaskContext ctx) {
-        return RuntimeContext.get(ctx).getIndexLifecycleManager();
-    }
+public interface IStatisticsManager {
+
+    void sendFlushStatistics(ISynopsis stats, Path flushCompomentPath) throws HyracksDataException;
+
+    void sendMergeStatistics(ISynopsis stats, Path componentPath, List<Path> mergeCompomentIds)
+            throws HyracksDataException;
 
 }

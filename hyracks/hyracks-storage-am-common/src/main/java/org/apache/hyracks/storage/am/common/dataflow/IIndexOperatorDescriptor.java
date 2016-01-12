@@ -26,6 +26,7 @@ import org.apache.hyracks.dataflow.std.file.IFileSplitProvider;
 import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManagerProvider;
 import org.apache.hyracks.storage.am.common.api.IModificationOperationCallbackFactory;
 import org.apache.hyracks.storage.am.common.api.ISearchOperationCallbackFactory;
+import org.apache.hyracks.storage.am.common.api.IStatisticsManagerProvider;
 import org.apache.hyracks.storage.am.common.api.ITupleFilterFactory;
 import org.apache.hyracks.storage.common.IStorageManagerInterface;
 import org.apache.hyracks.storage.common.file.ILocalResourceFactoryProvider;
@@ -36,6 +37,8 @@ public interface IIndexOperatorDescriptor extends IActivity {
     public IStorageManagerInterface getStorageManager();
 
     public IIndexLifecycleManagerProvider getLifecycleManagerProvider();
+
+    public IStatisticsManagerProvider getStatisticsManagerProvider();
 
     public RecordDescriptor getRecordDescriptor();
 

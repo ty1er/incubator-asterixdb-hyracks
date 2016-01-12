@@ -28,6 +28,7 @@ import org.apache.hyracks.api.job.IOperatorDescriptorRegistry;
 import org.apache.hyracks.dataflow.std.file.IFileSplitProvider;
 import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManagerProvider;
 import org.apache.hyracks.storage.am.common.api.ISearchOperationCallbackFactory;
+import org.apache.hyracks.storage.am.common.api.IStatisticsManagerProvider;
 import org.apache.hyracks.storage.am.common.impls.NoOpOperationCallbackFactory;
 import org.apache.hyracks.storage.common.IStorageManagerInterface;
 import org.apache.hyracks.storage.common.file.NoOpLocalResourceFactoryProvider;
@@ -38,11 +39,13 @@ public class TreeIndexDiskOrderScanOperatorDescriptor extends AbstractTreeIndexO
 
     public TreeIndexDiskOrderScanOperatorDescriptor(IOperatorDescriptorRegistry spec, RecordDescriptor recDesc,
             IStorageManagerInterface storageManager, IIndexLifecycleManagerProvider lifecycleManagerProvider,
-            IFileSplitProvider fileSplitProvider, ITypeTraits[] typeTraits,
-            IIndexDataflowHelperFactory dataflowHelperFactory, ISearchOperationCallbackFactory searchOpCallbackProvider) {
-        super(spec, 0, 1, recDesc, storageManager, lifecycleManagerProvider, fileSplitProvider, typeTraits, null, null,
-                dataflowHelperFactory, null, false, false,
-                null, NoOpLocalResourceFactoryProvider.INSTANCE, searchOpCallbackProvider, NoOpOperationCallbackFactory.INSTANCE);
+            IStatisticsManagerProvider statsManagerProvider, IFileSplitProvider fileSplitProvider,
+            ITypeTraits[] typeTraits, IIndexDataflowHelperFactory dataflowHelperFactory,
+            ISearchOperationCallbackFactory searchOpCallbackProvider) {
+        super(spec, 0, 1, recDesc, storageManager, lifecycleManagerProvider, statsManagerProvider, fileSplitProvider,
+                typeTraits, null, null, dataflowHelperFactory, null, false, false, null,
+                NoOpLocalResourceFactoryProvider.INSTANCE, searchOpCallbackProvider,
+                NoOpOperationCallbackFactory.INSTANCE);
     }
 
     @Override

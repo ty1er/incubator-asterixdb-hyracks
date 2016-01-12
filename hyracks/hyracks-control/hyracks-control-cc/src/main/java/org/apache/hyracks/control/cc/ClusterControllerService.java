@@ -55,7 +55,7 @@ import org.apache.hyracks.control.cc.dataset.DatasetDirectoryService;
 import org.apache.hyracks.control.cc.dataset.IDatasetDirectoryService;
 import org.apache.hyracks.control.cc.job.JobRun;
 import org.apache.hyracks.control.cc.web.WebServer;
-import org.apache.hyracks.control.cc.work.ApplicationMessageWork;
+import org.apache.hyracks.control.cc.work.CCApplicationMessageWork;
 import org.apache.hyracks.control.cc.work.CliDeployBinaryWork;
 import org.apache.hyracks.control.cc.work.CliUnDeployBinaryWork;
 import org.apache.hyracks.control.cc.work.ClusterShutdownWork;
@@ -560,7 +560,7 @@ public class ClusterControllerService implements IControllerService {
 
                 case SEND_APPLICATION_MESSAGE: {
                     CCNCFunctions.SendApplicationMessageFunction rsf = (CCNCFunctions.SendApplicationMessageFunction) fn;
-                    workQueue.schedule(new ApplicationMessageWork(ClusterControllerService.this, rsf.getMessage(),
+                    workQueue.schedule(new CCApplicationMessageWork(ClusterControllerService.this, rsf.getMessage(),
                             rsf.getDeploymentId(), rsf.getNodeId()));
                     return;
                 }

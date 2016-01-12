@@ -16,54 +16,47 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.hyracks.control.cc.work;
+package org.apache.hyracks.control.nc.work;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.hyracks.api.application.ICCApplicationContext;
 import org.apache.hyracks.api.deployment.DeploymentId;
 import org.apache.hyracks.api.messages.IMessage;
-import org.apache.hyracks.control.cc.ClusterControllerService;
 import org.apache.hyracks.control.common.deployment.DeploymentUtils;
+import org.apache.hyracks.control.common.work.AbstractWork;
+import org.apache.hyracks.control.nc.NodeControllerService;
+import org.apache.hyracks.control.nc.application.NCApplicationContext;
 
 /**
  * @author rico
  */
-public class ApplicationMessageWork extends AbstractHeartbeatWork {
-
-    private static final Logger LOGGER = Logger.getLogger(ApplicationMessageWork.class.getName());
+public class NCApplicationMessageWork extends AbstractWork {
+    private static final Logger LOGGER = Logger.getLogger(NCApplicationMessageWork.class.getName());
     private byte[] message;
     private DeploymentId deploymentId;
     private String nodeId;
-    private ClusterControllerService ccs;
+    private NodeControllerService ncs;
 
-    public ApplicationMessageWork(ClusterControllerService ccs, byte[] message, DeploymentId deploymentId,
-            String nodeId) {
-        super(ccs, nodeId, null);
-        this.ccs = ccs;
+    public NCApplicationMessageWork(NodeControllerService ncs, byte[] message, DeploymentId deploymentId, String nodeId) {
+        this.ncs = ncs;
         this.deploymentId = deploymentId;
         this.nodeId = nodeId;
         this.message = message;
     }
 
     @Override
-    public void runWork() {
-        final ICCApplicationContext ctx = ccs.getApplicationContext();
+    public void run() {
+        NCApplicationContext ctx = ncs.getApplicationContext();
         try {
-            final IMessage data = (IMessage) DeploymentUtils.deserialize(message, deploymentId, ctx);
-            ccs.getExecutor().execute(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        ctx.getMessageBroker().receivedMessage(data, nodeId);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            });
+            IMessage data = (IMessage) DeploymentUtils.deserialize(message, deploymentId, ctx);;
+            if (ctx.getMessageBroker() != null) {
+                ctx.getMessageBroker().receivedMessage(data, nodeId);
+            } else {
+                LOGGER.log(Level.WARNING, "Messsage was sent, but no Message Broker set!");
+            }
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Error in stats reporting", e);
+            Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Error in application message delivery!", e);
             throw new RuntimeException(e);
         }
     }

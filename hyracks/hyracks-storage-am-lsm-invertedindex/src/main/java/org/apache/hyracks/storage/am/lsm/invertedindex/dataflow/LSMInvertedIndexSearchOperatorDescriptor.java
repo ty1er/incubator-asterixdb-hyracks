@@ -31,6 +31,7 @@ import org.apache.hyracks.api.job.IOperatorDescriptorRegistry;
 import org.apache.hyracks.dataflow.std.file.IFileSplitProvider;
 import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManagerProvider;
 import org.apache.hyracks.storage.am.common.api.ISearchOperationCallbackFactory;
+import org.apache.hyracks.storage.am.common.api.IStatisticsManagerProvider;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexDataflowHelperFactory;
 import org.apache.hyracks.storage.am.common.impls.NoOpOperationCallbackFactory;
 import org.apache.hyracks.storage.am.lsm.invertedindex.api.IInvertedIndexSearchModifier;
@@ -49,18 +50,18 @@ public class LSMInvertedIndexSearchOperatorDescriptor extends AbstractLSMInverte
 
     public LSMInvertedIndexSearchOperatorDescriptor(IOperatorDescriptorRegistry spec, int queryField,
             IStorageManagerInterface storageManager, IFileSplitProvider fileSplitProvider,
-            IIndexLifecycleManagerProvider lifecycleManagerProvider, ITypeTraits[] tokenTypeTraits,
-            IBinaryComparatorFactory[] tokenComparatorFactories, ITypeTraits[] invListsTypeTraits,
-            IBinaryComparatorFactory[] invListComparatorFactories,
+            IIndexLifecycleManagerProvider lifecycleManagerProvider, IStatisticsManagerProvider statsManagerProvider,
+            ITypeTraits[] tokenTypeTraits, IBinaryComparatorFactory[] tokenComparatorFactories,
+            ITypeTraits[] invListsTypeTraits, IBinaryComparatorFactory[] invListComparatorFactories,
             IIndexDataflowHelperFactory btreeDataflowHelperFactory, IBinaryTokenizerFactory queryTokenizerFactory,
             IInvertedIndexSearchModifierFactory searchModifierFactory, RecordDescriptor recDesc, boolean retainInput,
             boolean retainNull, INullWriterFactory nullWriterFactory,
             ISearchOperationCallbackFactory searchOpCallbackProvider, int[] minFilterFieldIndexes,
             int[] maxFilterFieldIndexes) {
 
-        super(spec, 1, 1, recDesc, storageManager, fileSplitProvider, lifecycleManagerProvider, tokenTypeTraits,
-                tokenComparatorFactories, invListsTypeTraits, invListComparatorFactories, queryTokenizerFactory,
-                btreeDataflowHelperFactory, null, retainInput, retainNull, nullWriterFactory,
+        super(spec, 1, 1, recDesc, storageManager, fileSplitProvider, lifecycleManagerProvider, statsManagerProvider,
+                tokenTypeTraits, tokenComparatorFactories, invListsTypeTraits, invListComparatorFactories,
+                queryTokenizerFactory, btreeDataflowHelperFactory, null, retainInput, retainNull, nullWriterFactory,
                 NoOpLocalResourceFactoryProvider.INSTANCE, searchOpCallbackProvider,
                 NoOpOperationCallbackFactory.INSTANCE);
         this.queryField = queryField;

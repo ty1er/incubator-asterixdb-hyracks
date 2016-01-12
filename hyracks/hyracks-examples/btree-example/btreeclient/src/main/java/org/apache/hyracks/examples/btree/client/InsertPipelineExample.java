@@ -19,9 +19,6 @@
 
 package org.apache.hyracks.examples.btree.client;
 
-import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.Option;
-
 import org.apache.hyracks.api.client.HyracksConnection;
 import org.apache.hyracks.api.client.IHyracksClientConnection;
 import org.apache.hyracks.api.constraints.PartitionConstraintHelper;
@@ -54,6 +51,8 @@ import org.apache.hyracks.storage.am.common.dataflow.TreeIndexInsertUpdateDelete
 import org.apache.hyracks.storage.am.common.impls.NoOpOperationCallbackFactory;
 import org.apache.hyracks.storage.am.common.ophelpers.IndexOperation;
 import org.apache.hyracks.storage.common.IStorageManagerInterface;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
 
 // This example will insert tuples into the primary and secondary index using an insert pipeline
 
@@ -106,18 +105,18 @@ public class InsertPipelineExample {
         // schema of tuples to be generated: 4 fields with int, string, string,
         // string
         // we will use field 2 as primary key to fill a clustered index
-        RecordDescriptor recDesc = new RecordDescriptor(new ISerializerDeserializer[] {
-                new UTF8StringSerializerDeserializer(), // this field will
-                                                           // not go into B-Tree
-                new UTF8StringSerializerDeserializer(), // we will use this
-                                                           // as payload
-                IntegerSerializerDeserializer.INSTANCE, // we will use this
-                                                        // field as key
-                IntegerSerializerDeserializer.INSTANCE, // we will use this as
-                                                        // payload
-                new UTF8StringSerializerDeserializer() // we will use this as
-                                                          // payload
-                });
+        RecordDescriptor recDesc = new RecordDescriptor(
+                new ISerializerDeserializer[] { new UTF8StringSerializerDeserializer(), // this field will
+                        // not go into B-Tree
+                        new UTF8StringSerializerDeserializer(), // we will use this
+                        // as payload
+                        IntegerSerializerDeserializer.INSTANCE, // we will use this
+                        // field as key
+                        IntegerSerializerDeserializer.INSTANCE, // we will use this as
+                        // payload
+                        new UTF8StringSerializerDeserializer() // we will use this as
+                                                               // payload
+        });
 
         // generate numRecords records with field 2 being unique, integer values
         // in [0, 100000], and strings with max length of 10 characters, and
@@ -147,16 +146,16 @@ public class InsertPipelineExample {
         // tuple
         int[] primaryFieldPermutation = { 2, 1, 3, 4 }; // map field 2 of input
                                                         // tuple to field 0 of
-                                                        // B-Tree tuple, etc.        
+                                                        // B-Tree tuple, etc.
         IFileSplitProvider primarySplitProvider = JobHelper.createFileSplitProvider(splitNCs, options.primaryBTreeName);
 
         IIndexDataflowHelperFactory dataflowHelperFactory = new BTreeDataflowHelperFactory(true);
 
         // create operator descriptor
         TreeIndexInsertUpdateDeleteOperatorDescriptor primaryInsert = new TreeIndexInsertUpdateDeleteOperatorDescriptor(
-                spec, recDesc, storageManager, lcManagerProvider, primarySplitProvider, primaryTypeTraits,
-                primaryComparatorFactories, null, primaryFieldPermutation, IndexOperation.INSERT,
-                dataflowHelperFactory, null, NoOpOperationCallbackFactory.INSTANCE);
+                spec, recDesc, storageManager, lcManagerProvider, null, primarySplitProvider, primaryTypeTraits,
+                primaryComparatorFactories, null, primaryFieldPermutation, IndexOperation.INSERT, dataflowHelperFactory,
+                null, NoOpOperationCallbackFactory.INSTANCE);
         JobHelper.createPartitionConstraint(spec, primaryInsert, splitNCs);
 
         // prepare insertion into secondary index
@@ -178,7 +177,7 @@ public class InsertPipelineExample {
                 options.secondaryBTreeName);
         // create operator descriptor
         TreeIndexInsertUpdateDeleteOperatorDescriptor secondaryInsert = new TreeIndexInsertUpdateDeleteOperatorDescriptor(
-                spec, recDesc, storageManager, lcManagerProvider, secondarySplitProvider, secondaryTypeTraits,
+                spec, recDesc, storageManager, lcManagerProvider, null, secondarySplitProvider, secondaryTypeTraits,
                 secondaryComparatorFactories, null, secondaryFieldPermutation, IndexOperation.INSERT,
                 dataflowHelperFactory, null, NoOpOperationCallbackFactory.INSTANCE);
         JobHelper.createPartitionConstraint(spec, secondaryInsert, splitNCs);

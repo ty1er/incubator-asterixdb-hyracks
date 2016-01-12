@@ -20,9 +20,6 @@ package org.apache.hyracks.tests.am.btree;
 
 import java.io.DataOutput;
 
-import org.junit.Before;
-import org.junit.Test;
-
 import org.apache.hyracks.api.constraints.PartitionConstraintHelper;
 import org.apache.hyracks.api.dataflow.IOperatorDescriptor;
 import org.apache.hyracks.api.dataflow.value.ISerializerDeserializer;
@@ -39,9 +36,12 @@ import org.apache.hyracks.dataflow.std.misc.ConstantTupleSourceOperatorDescripto
 import org.apache.hyracks.storage.am.btree.dataflow.BTreeSearchOperatorDescriptor;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexDataflowHelperFactory;
 import org.apache.hyracks.storage.am.common.impls.NoOpOperationCallbackFactory;
+import org.junit.Before;
+import org.junit.Test;
 
 public class BTreeSecondaryIndexUpsertOperatorTest extends AbstractBTreeOperatorTest {
 
+    @Override
     @Before
     public void setup() throws Exception {
         super.setup();
@@ -81,8 +81,8 @@ public class BTreeSecondaryIndexUpsertOperatorTest extends AbstractBTreeOperator
         int[] secondaryHighKeyFields = { 1 };
 
         // search secondary index
-        BTreeSearchOperatorDescriptor secondaryBtreeSearchOp = new BTreeSearchOperatorDescriptor(spec,
-                secondaryRecDesc, storageManager, lcManagerProvider, secondarySplitProvider, secondaryTypeTraits,
+        BTreeSearchOperatorDescriptor secondaryBtreeSearchOp = new BTreeSearchOperatorDescriptor(spec, secondaryRecDesc,
+                storageManager, lcManagerProvider, null, secondarySplitProvider, secondaryTypeTraits,
                 secondaryComparatorFactories, secondaryBloomFilterKeyFields, secondaryLowKeyFields,
                 secondaryHighKeyFields, true, true, dataflowHelperFactory, false, false, null,
                 NoOpOperationCallbackFactory.INSTANCE, null, null);
@@ -96,13 +96,14 @@ public class BTreeSecondaryIndexUpsertOperatorTest extends AbstractBTreeOperator
 
         // search primary index
         BTreeSearchOperatorDescriptor primaryBtreeSearchOp = new BTreeSearchOperatorDescriptor(spec, primaryRecDesc,
-                storageManager, lcManagerProvider, primarySplitProvider, primaryTypeTraits, primaryComparatorFactories,
-                primaryBloomFilterKeyFields, primaryLowKeyFields, primaryHighKeyFields, true, true,
-                dataflowHelperFactory, false, false, null, NoOpOperationCallbackFactory.INSTANCE, null, null);
+                storageManager, lcManagerProvider, null, primarySplitProvider, primaryTypeTraits,
+                primaryComparatorFactories, primaryBloomFilterKeyFields, primaryLowKeyFields, primaryHighKeyFields,
+                true, true, dataflowHelperFactory, false, false, null, NoOpOperationCallbackFactory.INSTANCE, null,
+                null);
         PartitionConstraintHelper.addAbsoluteLocationConstraint(spec, primaryBtreeSearchOp, NC1_ID);
 
-        IFileSplitProvider outSplits = new ConstantFileSplitProvider(new FileSplit[] { new FileSplit(NC1_ID,
-                createTempFile().getAbsolutePath()) });
+        IFileSplitProvider outSplits = new ConstantFileSplitProvider(
+                new FileSplit[] { new FileSplit(NC1_ID, createTempFile().getAbsolutePath()) });
         IOperatorDescriptor printer = new PlainFileWriterOperatorDescriptor(spec, outSplits, ",");
         PartitionConstraintHelper.addAbsoluteLocationConstraint(spec, printer, NC1_ID);
 

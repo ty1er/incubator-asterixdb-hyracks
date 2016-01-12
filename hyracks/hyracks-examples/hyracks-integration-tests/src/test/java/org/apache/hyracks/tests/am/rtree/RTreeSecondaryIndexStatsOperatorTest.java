@@ -19,9 +19,6 @@
 
 package org.apache.hyracks.tests.am.rtree;
 
-import org.junit.Before;
-import org.junit.Test;
-
 import org.apache.hyracks.api.constraints.PartitionConstraintHelper;
 import org.apache.hyracks.api.dataflow.IOperatorDescriptor;
 import org.apache.hyracks.api.dataflow.value.IBinaryComparatorFactory;
@@ -37,6 +34,8 @@ import org.apache.hyracks.storage.am.common.dataflow.IIndexDataflowHelperFactory
 import org.apache.hyracks.storage.am.common.dataflow.TreeIndexStatsOperatorDescriptor;
 import org.apache.hyracks.storage.am.common.impls.NoOpOperationCallbackFactory;
 import org.apache.hyracks.storage.am.rtree.frames.RTreePolicyType;
+import org.junit.Before;
+import org.junit.Test;
 
 public class RTreeSecondaryIndexStatsOperatorTest extends AbstractRTreeOperatorTest {
     public RTreeSecondaryIndexStatsOperatorTest() {
@@ -58,11 +57,11 @@ public class RTreeSecondaryIndexStatsOperatorTest extends AbstractRTreeOperatorT
         JobSpecification spec = new JobSpecification();
 
         TreeIndexStatsOperatorDescriptor secondaryStatsOp = new TreeIndexStatsOperatorDescriptor(spec, storageManager,
-                lcManagerProvider, secondarySplitProvider, secondaryTypeTraits, secondaryComparatorFactories, null,
-                rtreeDataflowHelperFactory, NoOpOperationCallbackFactory.INSTANCE);
+                lcManagerProvider, null, secondarySplitProvider, secondaryTypeTraits, secondaryComparatorFactories,
+                null, rtreeDataflowHelperFactory, NoOpOperationCallbackFactory.INSTANCE);
         PartitionConstraintHelper.addAbsoluteLocationConstraint(spec, secondaryStatsOp, NC1_ID);
-        IFileSplitProvider outSplits = new ConstantFileSplitProvider(new FileSplit[] { new FileSplit(NC1_ID,
-                createTempFile().getAbsolutePath()) });
+        IFileSplitProvider outSplits = new ConstantFileSplitProvider(
+                new FileSplit[] { new FileSplit(NC1_ID, createTempFile().getAbsolutePath()) });
         IOperatorDescriptor printer = new PlainFileWriterOperatorDescriptor(spec, outSplits, ",");
         PartitionConstraintHelper.addAbsoluteLocationConstraint(spec, printer, NC1_ID);
 

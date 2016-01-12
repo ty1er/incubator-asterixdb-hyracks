@@ -32,8 +32,20 @@ import org.apache.hyracks.storage.am.bloomfilter.impls.BloomFilterFactory;
 import org.apache.hyracks.storage.am.bloomfilter.impls.BloomFilterSpecification;
 import org.apache.hyracks.storage.am.btree.impls.BTree;
 import org.apache.hyracks.storage.am.btree.impls.BTree.BTreeBulkLoader;
-import org.apache.hyracks.storage.am.common.api.*;
+import org.apache.hyracks.storage.am.common.api.IIndexBulkLoader;
+import org.apache.hyracks.storage.am.common.api.IIndexCursor;
+import org.apache.hyracks.storage.am.common.api.IIndexOperationContext;
 import org.apache.hyracks.storage.am.common.api.IMetaDataPageManager;
+import org.apache.hyracks.storage.am.common.api.IModificationOperationCallback;
+import org.apache.hyracks.storage.am.common.api.ISearchOperationCallback;
+import org.apache.hyracks.storage.am.common.api.ISearchPredicate;
+import org.apache.hyracks.storage.am.common.api.IStatisticsManager;
+import org.apache.hyracks.storage.am.common.api.ITreeIndexCursor;
+import org.apache.hyracks.storage.am.common.api.ITreeIndexFrameFactory;
+import org.apache.hyracks.storage.am.common.api.ITreeIndexTupleWriterFactory;
+import org.apache.hyracks.storage.am.common.api.ITwoPCIndexBulkLoader;
+import org.apache.hyracks.storage.am.common.api.IndexException;
+import org.apache.hyracks.storage.am.common.api.TreeIndexException;
 import org.apache.hyracks.storage.am.common.impls.NoOpOperationCallback;
 import org.apache.hyracks.storage.am.common.ophelpers.IndexOperation;
 import org.apache.hyracks.storage.am.lsm.btree.tuples.LSMBTreeRefrencingTupleWriterFactory;
@@ -54,7 +66,7 @@ import org.apache.hyracks.storage.am.lsm.common.impls.ExternalIndexHarness;
 import org.apache.hyracks.storage.am.lsm.common.impls.LSMComponentFileReferences;
 import org.apache.hyracks.storage.am.lsm.common.impls.TreeIndexFactory;
 import org.apache.hyracks.storage.am.statistics.common.StatisticsFactory;
-import org.apache.hyracks.storage.am.statistics.common.Synopsis;
+import org.apache.hyracks.storage.am.statistics.common.StatisticsCollector;
 import org.apache.hyracks.storage.common.file.IFileMapProvider;
 
 /**
@@ -87,11 +99,12 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
             double bloomFilterFalsePositiveRate, IFileMapProvider diskFileMapProvider, int fieldCount,
             IBinaryComparatorFactory[] cmpFactories, ILSMMergePolicy mergePolicy, ILSMOperationTracker opTracker,
             ILSMIOOperationScheduler ioScheduler, ILSMIOOperationCallback ioOpCallback,
-            TreeIndexFactory<BTree> transactionBTreeFactory, int version, boolean durable, boolean collectStatistics) {
+            TreeIndexFactory<BTree> transactionBTreeFactory, int version, boolean durable, boolean collectStatistics,
+            IStatisticsManager statsManager) {
         super(interiorFrameFactory, insertLeafFrameFactory, deleteLeafFrameFactory, fileManager, diskBTreeFactory,
                 bulkLoadBTreeFactory, bloomFilterFactory, statisticsFactory, bloomFilterFalsePositiveRate,
                 diskFileMapProvider, fieldCount, cmpFactories, mergePolicy, opTracker, ioScheduler, ioOpCallback, false,
-                durable, collectStatistics);
+                durable, collectStatistics, statsManager);
         this.transactionComponentFactory = new LSMBTreeDiskComponentFactory(transactionBTreeFactory, bloomFilterFactory,
                 null, null);
         this.secondDiskComponents = new LinkedList<ILSMComponent>();
@@ -275,7 +288,7 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
                 BloomFilter bloomFilter = component.getBloomFilter();
                 btree.activate();
                 bloomFilter.activate();
-                Synopsis stats = component.getStatistics();
+                StatisticsCollector stats = component.getStatisticsCollector();
                 if (stats != null) {
                     stats.activate();
                 }
@@ -288,7 +301,7 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
                     BloomFilter bloomFilter = component.getBloomFilter();
                     btree.activate();
                     bloomFilter.activate();
-                    Synopsis stats = component.getStatistics();
+                    StatisticsCollector stats = component.getStatisticsCollector();
                     if (stats != null) {
                         stats.activate();
                     }
@@ -319,7 +332,7 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
             BloomFilter bloomFilter = component.getBloomFilter();
             btree.deactivate();
             bloomFilter.deactivate();
-            Synopsis stats = component.getStatistics();
+            StatisticsCollector stats = component.getStatisticsCollector();
             if (stats != null) {
                 stats.deactivate();
             }
@@ -332,7 +345,7 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
                 BloomFilter bloomFilter = component.getBloomFilter();
                 btree.deactivate();
                 bloomFilter.deactivate();
-                Synopsis stats = component.getStatistics();
+                StatisticsCollector stats = component.getStatisticsCollector();
                 if (stats != null) {
                     stats.deactivate();
                 }
@@ -356,7 +369,7 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
             component.getBTree().destroy();
             component.getBloomFilter().destroy();
             component.getBloomFilter().deactivate();
-            Synopsis stats = component.getStatistics();
+            StatisticsCollector stats = component.getStatisticsCollector();
             if (stats != null) {
                 stats.deactivate();
                 stats.destroy();
@@ -371,7 +384,7 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
             component.getBTree().destroy();
             component.getBloomFilter().deactivate();
             component.getBloomFilter().destroy();
-            Synopsis stats = component.getStatistics();
+            StatisticsCollector stats = component.getStatisticsCollector();
             if (stats != null) {
                 stats.deactivate();
                 stats.destroy();
@@ -391,7 +404,7 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
             LSMBTreeDiskComponent component = (LSMBTreeDiskComponent) c;
             component.getBTree().destroy();
             component.getBloomFilter().destroy();
-            Synopsis stats = component.getStatistics();
+            StatisticsCollector stats = component.getStatisticsCollector();
             if (stats != null) {
                 stats.destroy();
             }
@@ -402,7 +415,7 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
             LSMBTreeDiskComponent component = (LSMBTreeDiskComponent) c;
             component.getBTree().destroy();
             component.getBloomFilter().destroy();
-            Synopsis stats = component.getStatistics();
+            StatisticsCollector stats = component.getStatisticsCollector();
             if (stats != null) {
                 stats.destroy();
             }

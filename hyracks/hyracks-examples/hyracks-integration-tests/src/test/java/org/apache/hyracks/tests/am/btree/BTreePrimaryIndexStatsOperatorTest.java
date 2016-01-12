@@ -19,9 +19,6 @@
 
 package org.apache.hyracks.tests.am.btree;
 
-import org.junit.Before;
-import org.junit.Test;
-
 import org.apache.hyracks.api.constraints.PartitionConstraintHelper;
 import org.apache.hyracks.api.dataflow.IOperatorDescriptor;
 import org.apache.hyracks.api.job.JobSpecification;
@@ -33,9 +30,12 @@ import org.apache.hyracks.dataflow.std.file.PlainFileWriterOperatorDescriptor;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexDataflowHelperFactory;
 import org.apache.hyracks.storage.am.common.dataflow.TreeIndexStatsOperatorDescriptor;
 import org.apache.hyracks.storage.am.common.impls.NoOpOperationCallbackFactory;
+import org.junit.Before;
+import org.junit.Test;
 
 public class BTreePrimaryIndexStatsOperatorTest extends AbstractBTreeOperatorTest {
 
+    @Override
     @Before
     public void setup() throws Exception {
         super.setup();
@@ -48,11 +48,11 @@ public class BTreePrimaryIndexStatsOperatorTest extends AbstractBTreeOperatorTes
         JobSpecification spec = new JobSpecification();
 
         TreeIndexStatsOperatorDescriptor primaryStatsOp = new TreeIndexStatsOperatorDescriptor(spec, storageManager,
-                lcManagerProvider, primarySplitProvider, primaryTypeTraits, primaryComparatorFactories,
+                lcManagerProvider, null, primarySplitProvider, primaryTypeTraits, primaryComparatorFactories,
                 primaryBloomFilterKeyFields, dataflowHelperFactory, NoOpOperationCallbackFactory.INSTANCE);
         PartitionConstraintHelper.addAbsoluteLocationConstraint(spec, primaryStatsOp, NC1_ID);
-        IFileSplitProvider outSplits = new ConstantFileSplitProvider(new FileSplit[] { new FileSplit(NC1_ID,
-                createTempFile().getAbsolutePath()) });
+        IFileSplitProvider outSplits = new ConstantFileSplitProvider(
+                new FileSplit[] { new FileSplit(NC1_ID, createTempFile().getAbsolutePath()) });
         IOperatorDescriptor printer = new PlainFileWriterOperatorDescriptor(spec, outSplits, ",");
         PartitionConstraintHelper.addAbsoluteLocationConstraint(spec, printer, NC1_ID);
 

@@ -20,9 +20,6 @@ package org.apache.hyracks.examples.btree.client;
 
 import java.io.DataOutput;
 
-import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.Option;
-
 import org.apache.hyracks.api.client.HyracksConnection;
 import org.apache.hyracks.api.client.IHyracksClientConnection;
 import org.apache.hyracks.api.dataflow.value.IBinaryComparatorFactory;
@@ -50,6 +47,8 @@ import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManagerProvider;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexDataflowHelperFactory;
 import org.apache.hyracks.storage.am.common.impls.NoOpOperationCallbackFactory;
 import org.apache.hyracks.storage.common.IStorageManagerInterface;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
 
 // This example will perform range search on the secondary index
 // and then retrieve the corresponding source records from the primary index
@@ -146,10 +145,10 @@ public class SecondaryIndexSearchExample {
 
         tb.reset();
         new UTF8StringSerializerDeserializer().serialize("0", dos); // low
-                                                                       // key
+                                                                    // key
         tb.addFieldEndOffset();
         new UTF8StringSerializerDeserializer().serialize("f", dos); // high
-                                                                       // key
+                                                                    // key
         tb.addFieldEndOffset();
 
         ISerializerDeserializer[] keyRecDescSers = { new UTF8StringSerializerDeserializer(),
@@ -171,7 +170,7 @@ public class SecondaryIndexSearchExample {
                 options.secondaryBTreeName);
         IIndexDataflowHelperFactory dataflowHelperFactory = new BTreeDataflowHelperFactory(true);
         BTreeSearchOperatorDescriptor secondarySearchOp = new BTreeSearchOperatorDescriptor(spec, secondaryRecDesc,
-                storageManager, lcManagerProvider, secondarySplitProvider, secondaryTypeTraits,
+                storageManager, lcManagerProvider, null, secondarySplitProvider, secondaryTypeTraits,
                 searchComparatorFactories, null, secondaryLowKeyFields, secondaryHighKeyFields, true, true,
                 dataflowHelperFactory, false, false, null, NoOpOperationCallbackFactory.INSTANCE, null, null);
 
@@ -188,9 +187,9 @@ public class SecondaryIndexSearchExample {
 
         IFileSplitProvider primarySplitProvider = JobHelper.createFileSplitProvider(splitNCs, options.primaryBTreeName);
         BTreeSearchOperatorDescriptor primarySearchOp = new BTreeSearchOperatorDescriptor(spec, primaryRecDesc,
-                storageManager, lcManagerProvider, primarySplitProvider, primaryTypeTraits, primaryComparatorFactories,
-                null, primaryLowKeyFields, primaryHighKeyFields, true, true, dataflowHelperFactory, false, false, null,
-                NoOpOperationCallbackFactory.INSTANCE, null, null);
+                storageManager, lcManagerProvider, null, primarySplitProvider, primaryTypeTraits,
+                primaryComparatorFactories, null, primaryLowKeyFields, primaryHighKeyFields, true, true,
+                dataflowHelperFactory, false, false, null, NoOpOperationCallbackFactory.INSTANCE, null, null);
 
         JobHelper.createPartitionConstraint(spec, primarySearchOp, splitNCs);
 

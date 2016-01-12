@@ -27,18 +27,20 @@ import org.apache.hyracks.dataflow.std.file.IFileSplitProvider;
 import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManagerProvider;
 import org.apache.hyracks.storage.am.common.api.IModificationOperationCallbackFactory;
 import org.apache.hyracks.storage.am.common.api.ISearchOperationCallbackFactory;
+import org.apache.hyracks.storage.am.common.api.IStatisticsManagerProvider;
 import org.apache.hyracks.storage.am.common.api.ITupleFilterFactory;
 import org.apache.hyracks.storage.common.IStorageManagerInterface;
 import org.apache.hyracks.storage.common.file.ILocalResourceFactoryProvider;
 
-public abstract class AbstractIndexOperatorDescriptor extends AbstractSingleActivityOperatorDescriptor implements
-        IIndexOperatorDescriptor {
+public abstract class AbstractIndexOperatorDescriptor extends AbstractSingleActivityOperatorDescriptor
+        implements IIndexOperatorDescriptor {
 
     private static final long serialVersionUID = 1L;
 
     protected final IFileSplitProvider fileSplitProvider;
     protected final IStorageManagerInterface storageManager;
     protected final IIndexLifecycleManagerProvider lifecycleManagerProvider;
+    protected final IStatisticsManagerProvider statisticsManagerProvider;
     protected final IIndexDataflowHelperFactory dataflowHelperFactory;
     protected final ITupleFilterFactory tupleFilterFactory;
     protected final boolean retainInput;
@@ -50,16 +52,17 @@ public abstract class AbstractIndexOperatorDescriptor extends AbstractSingleActi
 
     public AbstractIndexOperatorDescriptor(IOperatorDescriptorRegistry spec, int inputArity, int outputArity,
             RecordDescriptor recDesc, IStorageManagerInterface storageManager,
-            IIndexLifecycleManagerProvider lifecycleManagerProvider, IFileSplitProvider fileSplitProvider,
-            IIndexDataflowHelperFactory dataflowHelperFactory, ITupleFilterFactory tupleFilterFactory,
-            boolean retainInput, boolean retainNull, INullWriterFactory nullWriterFactory,
-            ILocalResourceFactoryProvider localResourceFactoryProvider,
+            IIndexLifecycleManagerProvider lifecycleManagerProvider, IStatisticsManagerProvider statsManagerProvider,
+            IFileSplitProvider fileSplitProvider, IIndexDataflowHelperFactory dataflowHelperFactory,
+            ITupleFilterFactory tupleFilterFactory, boolean retainInput, boolean retainNull,
+            INullWriterFactory nullWriterFactory, ILocalResourceFactoryProvider localResourceFactoryProvider,
             ISearchOperationCallbackFactory searchOpCallbackFactory,
             IModificationOperationCallbackFactory modificationOpCallbackFactory) {
         super(spec, inputArity, outputArity);
         this.fileSplitProvider = fileSplitProvider;
         this.storageManager = storageManager;
         this.lifecycleManagerProvider = lifecycleManagerProvider;
+        this.statisticsManagerProvider = statsManagerProvider;
         this.dataflowHelperFactory = dataflowHelperFactory;
         this.retainInput = retainInput;
         this.retainNull = retainNull;
@@ -86,6 +89,11 @@ public abstract class AbstractIndexOperatorDescriptor extends AbstractSingleActi
     @Override
     public IIndexLifecycleManagerProvider getLifecycleManagerProvider() {
         return lifecycleManagerProvider;
+    }
+
+    @Override
+    public IStatisticsManagerProvider getStatisticsManagerProvider() {
+        return statisticsManagerProvider;
     }
 
     @Override

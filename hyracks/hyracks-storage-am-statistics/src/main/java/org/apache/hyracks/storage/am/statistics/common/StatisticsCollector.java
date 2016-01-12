@@ -21,20 +21,19 @@ package org.apache.hyracks.storage.am.statistics.common;
 
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.api.io.FileReference;
+import org.apache.hyracks.storage.am.common.api.ISynopsis;
+import org.apache.hyracks.storage.am.common.api.ISynopsisBuilder;
 import org.apache.hyracks.storage.am.common.impls.AbstractFileManager;
 import org.apache.hyracks.storage.common.buffercache.IBufferCache;
 import org.apache.hyracks.storage.common.file.IFileMapProvider;
 
-public abstract class Synopsis extends AbstractFileManager {
+public abstract class StatisticsCollector extends AbstractFileManager {
 
-    public Synopsis(IBufferCache bufferCache, IFileMapProvider fileMapProvider, FileReference file) {
+    public StatisticsCollector(IBufferCache bufferCache, IFileMapProvider fileMapProvider, FileReference file) {
         super(bufferCache, fileMapProvider, file);
     }
 
-    public abstract void addElement(long key, double frequency);
+    public abstract ISynopsisBuilder createSynopsisBuilder() throws HyracksDataException;
 
-    public abstract ISynopsisBuilder createBuilder() throws HyracksDataException;
-
-    public abstract int getNumPages() throws HyracksDataException;
-
+    public abstract ISynopsis getSynopsis();
 }

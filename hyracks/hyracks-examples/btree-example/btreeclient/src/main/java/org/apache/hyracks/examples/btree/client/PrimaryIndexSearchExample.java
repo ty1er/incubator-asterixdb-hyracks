@@ -20,9 +20,6 @@ package org.apache.hyracks.examples.btree.client;
 
 import java.io.DataOutput;
 
-import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.Option;
-
 import org.apache.hyracks.api.client.HyracksConnection;
 import org.apache.hyracks.api.client.IHyracksClientConnection;
 import org.apache.hyracks.api.dataflow.value.IBinaryComparatorFactory;
@@ -50,6 +47,8 @@ import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManagerProvider;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexDataflowHelperFactory;
 import org.apache.hyracks.storage.am.common.impls.NoOpOperationCallbackFactory;
 import org.apache.hyracks.storage.common.IStorageManagerInterface;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
 
 // This example will perform an ordered scan on the primary index
 // i.e. a range-search for [-infinity, +infinity]
@@ -105,7 +104,7 @@ public class PrimaryIndexSearchExample {
         IBinaryComparatorFactory[] comparatorFactories = new IBinaryComparatorFactory[1];
         comparatorFactories[0] = PointableBinaryComparatorFactory.of(IntegerPointable.FACTORY);
 
-        // create roviders for B-Tree
+        // create providers for B-Tree
         IIndexLifecycleManagerProvider lcManagerProvider = IndexLifecycleManagerProvider.INSTANCE;
         IStorageManagerInterface storageManager = StorageManagerInterface.INSTANCE;
 
@@ -145,7 +144,7 @@ public class PrimaryIndexSearchExample {
         IFileSplitProvider btreeSplitProvider = JobHelper.createFileSplitProvider(splitNCs, options.btreeName);
         IIndexDataflowHelperFactory dataflowHelperFactory = new BTreeDataflowHelperFactory(true);
         BTreeSearchOperatorDescriptor btreeSearchOp = new BTreeSearchOperatorDescriptor(spec, recDesc, storageManager,
-                lcManagerProvider, btreeSplitProvider, typeTraits, comparatorFactories, null, lowKeyFields,
+                lcManagerProvider, null, btreeSplitProvider, typeTraits, comparatorFactories, null, lowKeyFields,
                 highKeyFields, true, true, dataflowHelperFactory, false, false, null,
                 NoOpOperationCallbackFactory.INSTANCE, null, null);
 

@@ -28,6 +28,7 @@ import org.apache.hyracks.dataflow.std.file.IFileSplitProvider;
 import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManagerProvider;
 import org.apache.hyracks.storage.am.common.api.IModificationOperationCallbackFactory;
 import org.apache.hyracks.storage.am.common.api.ISearchOperationCallbackFactory;
+import org.apache.hyracks.storage.am.common.api.IStatisticsManagerProvider;
 import org.apache.hyracks.storage.am.common.api.ITupleFilterFactory;
 import org.apache.hyracks.storage.common.IStorageManagerInterface;
 import org.apache.hyracks.storage.common.file.ILocalResourceFactoryProvider;
@@ -42,16 +43,18 @@ public abstract class AbstractTreeIndexOperatorDescriptor extends AbstractIndexO
 
     public AbstractTreeIndexOperatorDescriptor(IOperatorDescriptorRegistry spec, int inputArity, int outputArity,
             RecordDescriptor recDesc, IStorageManagerInterface storageManager,
-            IIndexLifecycleManagerProvider lifecycleManagerProvider, IFileSplitProvider fileSplitProvider,
-            ITypeTraits[] typeTraits, IBinaryComparatorFactory[] comparatorFactories, int[] bloomFilterKeyFields,
+            IIndexLifecycleManagerProvider lifecycleManagerProvider, IStatisticsManagerProvider statsManagerProvider,
+            IFileSplitProvider fileSplitProvider, ITypeTraits[] typeTraits,
+            IBinaryComparatorFactory[] comparatorFactories, int[] bloomFilterKeyFields,
             IIndexDataflowHelperFactory dataflowHelperFactory, ITupleFilterFactory tupleFilterFactory,
             boolean retainInput, boolean retainNull, INullWriterFactory nullWriterFactory,
             ILocalResourceFactoryProvider localResourceFactoryProvider,
             ISearchOperationCallbackFactory searchOpCallbackFactory,
             IModificationOperationCallbackFactory modificationOpCallbackFactory) {
-        super(spec, inputArity, outputArity, recDesc, storageManager, lifecycleManagerProvider, fileSplitProvider,
-                dataflowHelperFactory, tupleFilterFactory, retainInput, retainNull, nullWriterFactory,
-                localResourceFactoryProvider, searchOpCallbackFactory, modificationOpCallbackFactory);
+        super(spec, inputArity, outputArity, recDesc, storageManager, lifecycleManagerProvider, statsManagerProvider,
+                fileSplitProvider, dataflowHelperFactory, tupleFilterFactory, retainInput, retainNull,
+                nullWriterFactory, localResourceFactoryProvider, searchOpCallbackFactory,
+                modificationOpCallbackFactory);
         this.typeTraits = typeTraits;
         this.comparatorFactories = comparatorFactories;
         this.bloomFilterKeyFields = bloomFilterKeyFields;

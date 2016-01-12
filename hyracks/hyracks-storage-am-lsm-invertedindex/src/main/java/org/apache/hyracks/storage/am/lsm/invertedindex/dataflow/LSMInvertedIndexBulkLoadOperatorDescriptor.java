@@ -28,6 +28,7 @@ import org.apache.hyracks.api.dataflow.value.RecordDescriptor;
 import org.apache.hyracks.api.job.IOperatorDescriptorRegistry;
 import org.apache.hyracks.dataflow.std.file.IFileSplitProvider;
 import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManagerProvider;
+import org.apache.hyracks.storage.am.common.api.IStatisticsManagerProvider;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexDataflowHelperFactory;
 import org.apache.hyracks.storage.am.common.dataflow.IndexBulkLoadOperatorNodePushable;
 import org.apache.hyracks.storage.am.common.impls.NoOpOperationCallbackFactory;
@@ -47,13 +48,13 @@ public class LSMInvertedIndexBulkLoadOperatorDescriptor extends AbstractLSMInver
     public LSMInvertedIndexBulkLoadOperatorDescriptor(IOperatorDescriptorRegistry spec, RecordDescriptor recDesc,
             int[] fieldPermutation, boolean verifyInput, long numElementsHint, boolean checkIfEmptyIndex,
             IStorageManagerInterface storageManager, IFileSplitProvider fileSplitProvider,
-            IIndexLifecycleManagerProvider lifecycleManagerProvider, ITypeTraits[] tokenTypeTraits,
-            IBinaryComparatorFactory[] tokenComparatorFactories, ITypeTraits[] invListsTypeTraits,
-            IBinaryComparatorFactory[] invListComparatorFactories, IBinaryTokenizerFactory tokenizerFactory,
-            IIndexDataflowHelperFactory invertedIndexDataflowHelperFactory) {
-        super(spec, 1, 1, recDesc, storageManager, fileSplitProvider, lifecycleManagerProvider, tokenTypeTraits,
-                tokenComparatorFactories, invListsTypeTraits, invListComparatorFactories, tokenizerFactory,
-                invertedIndexDataflowHelperFactory, null, false, false, null,
+            IIndexLifecycleManagerProvider lifecycleManagerProvider, IStatisticsManagerProvider statsManagerProvider,
+            ITypeTraits[] tokenTypeTraits, IBinaryComparatorFactory[] tokenComparatorFactories,
+            ITypeTraits[] invListsTypeTraits, IBinaryComparatorFactory[] invListComparatorFactories,
+            IBinaryTokenizerFactory tokenizerFactory, IIndexDataflowHelperFactory invertedIndexDataflowHelperFactory) {
+        super(spec, 1, 1, recDesc, storageManager, fileSplitProvider, lifecycleManagerProvider, statsManagerProvider,
+                tokenTypeTraits, tokenComparatorFactories, invListsTypeTraits, invListComparatorFactories,
+                tokenizerFactory, invertedIndexDataflowHelperFactory, null, false, false, null,
                 NoOpLocalResourceFactoryProvider.INSTANCE, NoOpOperationCallbackFactory.INSTANCE,
                 NoOpOperationCallbackFactory.INSTANCE);
         this.fieldPermutation = fieldPermutation;

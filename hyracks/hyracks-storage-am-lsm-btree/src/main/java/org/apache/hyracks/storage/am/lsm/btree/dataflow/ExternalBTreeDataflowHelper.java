@@ -64,8 +64,9 @@ public class ExternalBTreeDataflowHelper extends LSMBTreeDataflowHelper {
 
     @Override
     public IIndex getIndexInstance() {
-        if (index != null)
+        if (index != null) {
             return index;
+        }
         synchronized (lcManager) {
             try {
                 index = lcManager.getIndex(resourceName);
@@ -84,7 +85,7 @@ public class ExternalBTreeDataflowHelper extends LSMBTreeDataflowHelper {
                 treeOpDesc.getTreeIndexComparatorFactories(), treeOpDesc.getTreeIndexBloomFilterKeyFields(),
                 bloomFilterFalsePositiveRate, mergePolicy, opTrackerFactory.getOperationTracker(ctx), ioScheduler,
                 ioOpCallbackFactory.createIOOperationCallback(), getVersion(), durable, collectStatistics,
-                statsFieldValueProviderFactory);
+                opDesc.getStatisticsManagerProvider().getStatisticsManager(ctx), statsFieldValueProviderFactory);
     }
 
     public int getVersion() {

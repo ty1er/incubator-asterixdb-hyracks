@@ -19,15 +19,40 @@
 
 package org.apache.hyracks.storage.am.statistics.wavelet;
 
+import java.io.Serializable;
+import java.util.Comparator;
+import java.util.Map;
 import java.util.Objects;
 
 import org.apache.hyracks.data.std.primitive.DoublePointable;
 
-public class WaveletCoefficient /*implements Comparable<WaveletCoefficient>*/ {
+public class WaveletCoefficient
+        implements Map.Entry<Long, Double>, Serializable /*implements Comparable<WaveletCoefficient>*/ {
+
+    private static final long serialVersionUID = 1L;
 
     private double value;
-    private int level;
+    private transient int level;
     private long index;
+
+    static class KeyComparator implements Comparator<WaveletCoefficient>, Serializable {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public int compare(WaveletCoefficient o1, WaveletCoefficient o2) {
+            return Long.compare(o1.getKey(), o2.getKey());
+        }
+    };
+
+    static class ValueComparator implements Comparator<WaveletCoefficient>, Serializable {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        // default comparator based on absolute coefficient value
+        public int compare(WaveletCoefficient o1, WaveletCoefficient o2) {
+            return Double.compare(Math.abs(o1.getValue()), Math.abs(o2.getValue()));
+        }
+    };
 
     public WaveletCoefficient(double value, int level, long index) {
         this.value = value;
@@ -35,11 +60,13 @@ public class WaveletCoefficient /*implements Comparable<WaveletCoefficient>*/ {
         this.index = index;
     }
 
-    public long getIndex() {
+    @Override
+    public Long getKey() {
         return index;
     }
 
-    public double getValue() {
+    @Override
+    public Double getValue() {
         return value;
     }
 
@@ -47,8 +74,11 @@ public class WaveletCoefficient /*implements Comparable<WaveletCoefficient>*/ {
         return level;
     }
 
-    public void setValue(Double value) {
+    @Override
+    public Double setValue(Double value) {
+        Double oldValue = this.value;
         this.value = value;
+        return oldValue;
     }
 
     public void setLevel(int level) {
@@ -61,8 +91,9 @@ public class WaveletCoefficient /*implements Comparable<WaveletCoefficient>*/ {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof WaveletCoefficient))
+        if (!(o instanceof WaveletCoefficient)) {
             return false;
+        }
         WaveletCoefficient coeff = (WaveletCoefficient) o;
         return (coeff.value - value) < DoublePointable.getEpsilon() && (coeff.level == level) && (coeff.index == index);
     }
@@ -79,21 +110,23 @@ public class WaveletCoefficient /*implements Comparable<WaveletCoefficient>*/ {
     // Returns index of the parent coefficient
     public long getParentCoeffIndex(long domainMin, long maxLevel) {
         // Special case for values on level 0
-        if (level == 0)
+        if (level == 0) {
             // Convert position to proper coefficient index
             return (index >> 1) - (domainMin >> 1) + (1l << (maxLevel - 1));
-        else
+        } else {
             return index >>> 1;
+        }
     }
 
     // Returns true if the coefficient's dyadic range covers tuple with the given position
     public boolean covers(long tuplePosition, long maxLevel, long domainMin) {
-        if (level < 0)
+        if (level < 0) {
             return true;
-        else if (level == 0)
+        } else if (level == 0) {
             return index == tuplePosition;
-        else
+        } else {
             return index == (((tuplePosition - domainMin) >>> 1) + (1l << (maxLevel - 1))) >>> (level - 1);
+        }
     }
 
     //    public static <K extends INumeric> int getLevel(K coeffPointable, int maxLevel) {
