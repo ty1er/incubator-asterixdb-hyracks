@@ -70,7 +70,7 @@ public class WaveletSynopsis implements ISynopsis, Serializable {
     @Override
     // Method implements naive synopsis merge, which just picks largest coefficients from the synopsis sum
     public void merge(ISynopsis mergedSynopsis) {
-        Collection<? extends Map.Entry<Long, Double>> newCoefficients = new PriorityQueue<WaveletCoefficient>(threshold,
+        Collection<? extends Map.Entry<Long, Double>> newCoefficients = new PriorityQueue<WaveletCoefficient>(
                 new WaveletCoefficient.ValueComparator());
         //method assumes that the synopsis coefficients are already sorted on key
         Iterator<Map.Entry<Long, Double>> mergedIt = mergedSynopsis.iterator();
@@ -84,14 +84,16 @@ public class WaveletSynopsis implements ISynopsis, Serializable {
             entry = it.next();
         }
         while (mergedIt.hasNext() || it.hasNext()) {
-            if ((mergedEntry != null && entry == null) || mergedEntry.getKey() < entry.getKey()) {
+            if ((mergedEntry != null && entry == null)
+                    || (mergedEntry != null && entry != null && mergedEntry.getKey() < entry.getKey())) {
                 ((Collection<Map.Entry<Long, Double>>) newCoefficients).add(mergedEntry);
                 if (mergedIt.hasNext()) {
                     mergedEntry = mergedIt.next();
                 } else {
                     mergedEntry = null;
                 }
-            } else if ((entry != null && mergedEntry == null) || entry.getKey() < mergedEntry.getKey()) {
+            } else if ((entry != null && mergedEntry == null)
+                    || (mergedEntry != null && entry != null && entry.getKey() < mergedEntry.getKey())) {
                 ((Collection<Map.Entry<Long, Double>>) newCoefficients).add(entry);
                 if (it.hasNext()) {
                     entry = it.next();
@@ -114,6 +116,13 @@ public class WaveletSynopsis implements ISynopsis, Serializable {
             }
         }
         coefficients = newCoefficients;
+    }
+
+    @Override
+    public void merge(List<ISynopsis> synopsisList) {
+        for (ISynopsis s : synopsisList) {
+            merge(s);
+        }
     }
 
     private Double findCoeffValue(PeekingIterator<? extends Entry<Long, Double>> coeffIt, Long coeffIdx) {

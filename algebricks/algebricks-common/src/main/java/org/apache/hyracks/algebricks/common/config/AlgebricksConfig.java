@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.hyracks.algebricks.core.config;
+package org.apache.hyracks.algebricks.common.config;
 
 import java.util.logging.Logger;
 

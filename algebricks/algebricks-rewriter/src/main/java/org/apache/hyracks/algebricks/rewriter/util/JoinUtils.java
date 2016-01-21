@@ -24,7 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.lang3.mutable.Mutable;
-
+import org.apache.hyracks.algebricks.common.config.AlgebricksConfig;
 import org.apache.hyracks.algebricks.common.exceptions.AlgebricksException;
 import org.apache.hyracks.algebricks.core.algebra.base.ILogicalExpression;
 import org.apache.hyracks.algebricks.core.algebra.base.ILogicalOperator;
@@ -46,7 +46,6 @@ import org.apache.hyracks.algebricks.core.algebra.operators.physical.HybridHashJ
 import org.apache.hyracks.algebricks.core.algebra.operators.physical.InMemoryHashJoinPOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.physical.NLJoinPOperator;
 import org.apache.hyracks.algebricks.core.algebra.properties.ILogicalPropertiesVector;
-import org.apache.hyracks.algebricks.core.config.AlgebricksConfig;
 
 public class JoinUtils {
 

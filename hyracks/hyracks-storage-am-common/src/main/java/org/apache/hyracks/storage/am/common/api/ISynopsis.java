@@ -18,6 +18,7 @@
  */
 package org.apache.hyracks.storage.am.common.api;
 
+import java.util.List;
 import java.util.Map;
 
 public interface ISynopsis extends Iterable<Map.Entry<Long, Double>> {
@@ -27,5 +28,7 @@ public interface ISynopsis extends Iterable<Map.Entry<Long, Double>> {
     long size();
 
     void merge(ISynopsis mergeSynopsis);
+
+    void merge(List<ISynopsis> synopsisList);
 
 }

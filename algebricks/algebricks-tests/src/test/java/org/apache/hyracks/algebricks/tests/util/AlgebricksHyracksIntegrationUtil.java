@@ -20,7 +20,7 @@ package org.apache.hyracks.algebricks.tests.util;
 
 import java.util.EnumSet;
 
-import org.apache.hyracks.algebricks.core.config.AlgebricksConfig;
+import org.apache.hyracks.algebricks.common.config.AlgebricksConfig;
 import org.apache.hyracks.api.client.HyracksConnection;
 import org.apache.hyracks.api.client.IHyracksClientConnection;
 import org.apache.hyracks.api.job.JobFlag;

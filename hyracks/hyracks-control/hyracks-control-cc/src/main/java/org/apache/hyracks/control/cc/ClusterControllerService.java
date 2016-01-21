@@ -646,4 +646,8 @@ public class ClusterControllerService implements IControllerService {
         return shutdownCallback;
     }
 
+    public Timer getTimer() {
+        return timer;
+    }
+
 }
