@@ -31,20 +31,22 @@ public class StatisticsFactory {
     private final IBufferCache bufferCache;
     private final IFileMapProvider fileMapProvider;
     private final int[] statsFields;
+    private final int statsSize;
     private final ITypeTraits[] statsFieldTypeTraits;
     private final IOrdinalPrimitiveValueProvider statsFieldValueProvider;
 
     public StatisticsFactory(IBufferCache bufferCache, IFileMapProvider fileMapProvider, int[] statsFields,
-            ITypeTraits[] statsFieldTypeTraits, IOrdinalPrimitiveValueProvider statsFieldValueProvider) {
+            int statsSize, ITypeTraits[] statsFieldTypeTraits, IOrdinalPrimitiveValueProvider statsFieldValueProvider) {
         this.bufferCache = bufferCache;
         this.fileMapProvider = fileMapProvider;
         this.statsFields = statsFields;
+        this.statsSize = statsSize;
         this.statsFieldTypeTraits = statsFieldTypeTraits;
         this.statsFieldValueProvider = statsFieldValueProvider;
     }
 
     public WaveletTransform createWaveletStatistics(FileReference file) throws HyracksDataException {
-        return new WaveletTransform(bufferCache, fileMapProvider, file, statsFields, 10, statsFieldTypeTraits,
+        return new WaveletTransform(bufferCache, fileMapProvider, file, statsFields, statsSize, statsFieldTypeTraits,
                 statsFieldValueProvider);
     }
 }

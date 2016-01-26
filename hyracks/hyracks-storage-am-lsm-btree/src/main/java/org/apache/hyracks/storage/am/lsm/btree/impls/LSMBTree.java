@@ -50,7 +50,7 @@ import org.apache.hyracks.storage.am.common.api.IMetaDataPageManager;
 import org.apache.hyracks.storage.am.common.api.IModificationOperationCallback;
 import org.apache.hyracks.storage.am.common.api.ISearchOperationCallback;
 import org.apache.hyracks.storage.am.common.api.ISearchPredicate;
-import org.apache.hyracks.storage.am.common.api.IStatisticsManager;
+import org.apache.hyracks.storage.am.common.api.IStatisticsMessageManager;
 import org.apache.hyracks.storage.am.common.api.ISynopsisBuilder;
 import org.apache.hyracks.storage.am.common.api.ITreeIndex;
 import org.apache.hyracks.storage.am.common.api.ITreeIndexCursor;
@@ -107,7 +107,7 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
     protected final ITreeIndexFrameFactory deleteLeafFrameFactory;
     protected final IBinaryComparatorFactory[] cmpFactories;
     protected boolean collectStatistics;
-    protected IStatisticsManager statisticsManager;
+    protected IStatisticsMessageManager statisticsManager;
 
     private final boolean needKeyDupCheck;
     private final int[] btreeFields;
@@ -122,7 +122,7 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
             IBinaryComparatorFactory[] cmpFactories, ILSMMergePolicy mergePolicy, ILSMOperationTracker opTracker,
             ILSMIOOperationScheduler ioScheduler, ILSMIOOperationCallback ioOpCallback, boolean needKeyDupCheck,
             int[] btreeFields, int[] filterFields, boolean durable, boolean collectStatistics,
-            IStatisticsManager statsManager) {
+            IStatisticsMessageManager statsManager) {
         super(virtualBufferCaches, diskBTreeFactory.getBufferCache(), fileManager, diskFileMapProvider,
                 bloomFilterFalsePositiveRate, mergePolicy, opTracker, ioScheduler, ioOpCallback, filterFrameFactory,
                 filterManager, filterFields, durable);
@@ -160,7 +160,7 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
             double bloomFilterFalsePositiveRate, IFileMapProvider diskFileMapProvider, int fieldCount,
             IBinaryComparatorFactory[] cmpFactories, ILSMMergePolicy mergePolicy, ILSMOperationTracker opTracker,
             ILSMIOOperationScheduler ioScheduler, ILSMIOOperationCallback ioOpCallback, boolean needKeyDupCheck,
-            boolean durable, boolean collectStatistics, IStatisticsManager statsManager) {
+            boolean durable, boolean collectStatistics, IStatisticsMessageManager statsManager) {
         super(diskBTreeFactory.getBufferCache(), fileManager, diskFileMapProvider, bloomFilterFalsePositiveRate,
                 mergePolicy, opTracker, ioScheduler, ioOpCallback, durable);
         this.insertLeafFrameFactory = insertLeafFrameFactory;
@@ -718,8 +718,8 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
                             .createSynopsisBuilder();
                 }
             } catch (HyracksDataException e) {
-                if (LOGGER.isLoggable(Level.INFO)) {
-                    LOGGER.info("Statistics collection failed: " + e.getMessage());
+                if (LOGGER.isLoggable(Level.FINE)) {
+                    LOGGER.fine("Statistics collection failed: " + e.getMessage());
                 }
                 collectStatistics = false;
             }

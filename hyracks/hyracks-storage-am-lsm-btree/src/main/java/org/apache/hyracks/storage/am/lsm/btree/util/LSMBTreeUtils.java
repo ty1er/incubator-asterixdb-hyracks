@@ -30,7 +30,7 @@ import org.apache.hyracks.storage.am.btree.frames.BTreeNSMLeafFrameFactory;
 import org.apache.hyracks.storage.am.btree.impls.BTree;
 import org.apache.hyracks.storage.am.common.api.IMetadataManagerFactory;
 import org.apache.hyracks.storage.am.common.api.IOrdinalPrimitiveValueProviderFactory;
-import org.apache.hyracks.storage.am.common.api.IStatisticsManager;
+import org.apache.hyracks.storage.am.common.api.IStatisticsMessageManager;
 import org.apache.hyracks.storage.am.common.api.ITreeIndexFrameFactory;
 import org.apache.hyracks.storage.am.common.api.ITreeIndexMetaDataFrameFactory;
 import org.apache.hyracks.storage.am.common.frames.LIFOMetaDataFrameFactory;
@@ -66,8 +66,8 @@ public class LSMBTreeUtils {
             ILSMMergePolicy mergePolicy, ILSMOperationTracker opTracker, ILSMIOOperationScheduler ioScheduler,
             ILSMIOOperationCallback ioOpCallback, boolean needKeyDupCheck, ITypeTraits[] filterTypeTraits,
             IBinaryComparatorFactory[] filterCmpFactories, int[] btreeFields, int[] filterFields, boolean durable,
-            boolean collectStatistics, IOrdinalPrimitiveValueProviderFactory statsFieldProviderFactory,
-            IStatisticsManager statsManager) {
+            boolean collectStatistics, int statsSize, IOrdinalPrimitiveValueProviderFactory statsFieldProviderFactory,
+            IStatisticsMessageManager statsManager) {
         LSMBTreeTupleWriterFactory insertTupleWriterFactory = new LSMBTreeTupleWriterFactory(typeTraits,
                 cmpFactories.length, false);
         LSMBTreeTupleWriterFactory deleteTupleWriterFactory = new LSMBTreeTupleWriterFactory(typeTraits,
@@ -105,7 +105,7 @@ public class LSMBTreeUtils {
         StatisticsFactory statisticsFactory = null;
         if (collectStatistics) {
             statisticsFactory = new StatisticsFactory(diskBufferCache, diskFileMapProvider, bloomFilterKeyFields,
-                    typeTraits, statsFieldProviderFactory.createOrdinalPrimitiveValueProvider());
+                    statsSize, typeTraits, statsFieldProviderFactory.createOrdinalPrimitiveValueProvider());
         }
 
         ILSMIndexFileManager fileNameManager = new LSMBTreeFileManager(diskFileMapProvider, file, diskBTreeFactory);
@@ -122,8 +122,8 @@ public class LSMBTreeUtils {
             IFileMapProvider diskFileMapProvider, ITypeTraits[] typeTraits, IBinaryComparatorFactory[] cmpFactories,
             int[] bloomFilterKeyFields, double bloomFilterFalsePositiveRate, ILSMMergePolicy mergePolicy,
             ILSMOperationTracker opTracker, ILSMIOOperationScheduler ioScheduler, ILSMIOOperationCallback ioOpCallback,
-            int startWithVersion, boolean durable, boolean collectStatistics, IStatisticsManager statsManager,
-            IOrdinalPrimitiveValueProviderFactory statsKeyValueProviderFactory) {
+            int startWithVersion, boolean durable, boolean collectStatistics, int statsSize,
+            IStatisticsMessageManager statsManager, IOrdinalPrimitiveValueProviderFactory statsKeyValueProviderFactory) {
         LSMBTreeTupleWriterFactory insertTupleWriterFactory = new LSMBTreeTupleWriterFactory(typeTraits,
                 cmpFactories.length, false);
         LSMBTreeTupleWriterFactory deleteTupleWriterFactory = new LSMBTreeTupleWriterFactory(typeTraits,
@@ -162,7 +162,7 @@ public class LSMBTreeUtils {
         StatisticsFactory statisticsFactory = null;
         if (collectStatistics) {
             statisticsFactory = new StatisticsFactory(diskBufferCache, diskFileMapProvider, bloomFilterKeyFields,
-                    typeTraits, statsKeyValueProviderFactory.createOrdinalPrimitiveValueProvider());
+                    statsSize, typeTraits, statsKeyValueProviderFactory.createOrdinalPrimitiveValueProvider());
         }
 
         // the disk only index uses an empty ArrayList for virtual buffer caches

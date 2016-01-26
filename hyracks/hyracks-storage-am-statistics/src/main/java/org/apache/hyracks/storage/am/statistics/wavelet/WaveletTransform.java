@@ -116,15 +116,16 @@ public class WaveletTransform extends StatisticsCollector {
     }
 
     // Appends value to the coefficient with given index. If such coefficient is not found creates a new coeff
-    public void apendToElement(long index, double appendValue) {
+    public void apendToElement(long index, double appendValue, int maxLevel) {
         // TODO: do something better than linear search
         for (Map.Entry<Long, Double> coeff : synopsis) {
             if (coeff.getKey() == index) {
-                coeff.setValue(coeff.getValue() + appendValue);
+                coeff.setValue(coeff.getValue() + appendValue / WaveletCoefficient.getNormalizationCoefficient(maxLevel,
+                        WaveletCoefficient.getLevel(index, maxLevel)));
                 return;
             }
         }
-        synopsis.addElement(index, appendValue);
+        synopsis.addElement(index, appendValue, maxLevel);
     }
 
     @Override
@@ -197,7 +198,7 @@ public class WaveletTransform extends StatisticsCollector {
             long rightCoeffId = topCoeff.getKey();
             for (long i = topCoeff.getLevel(); i > 0; i--) {
                 // update coefficients, corresponding to all subranges having current position as they right end
-                apendToElement(rightCoeffId, (i == 0 ? 1 : -1) * tupleValue / (1l << i));
+                apendToElement(rightCoeffId, (i == 0 ? 1 : -1) * tupleValue / (1l << i), maxLevel);
                 rightCoeffId = rightCoeffId << 1 | 1;
             }
             // put modified top coefficient back to the stack
@@ -227,12 +228,11 @@ public class WaveletTransform extends StatisticsCollector {
 
         // Combines two coeffs on the same level by averaging them and producing next level coefficient
         private void average(WaveletCoefficient leftCoeff, WaveletCoefficient rightCoeff, long domainMin, int maxLevel,
-                boolean normalize, WaveletCoefficient avgCoeff) {
+                WaveletCoefficient avgCoeff) {
             //        assert (leftCoeff.getLevel() == rightCoeff.getLevel());
             long coeffIdx = leftCoeff.getParentCoeffIndex(domainMin, maxLevel);
             // put detail wavelet coefficient to the coefficient queue
-            synopsis.addElement(coeffIdx, (leftCoeff.getValue() - rightCoeff.getValue()) / (2.0 * (normalize
-                    ? WaveletCoefficient.getNormalizationCoefficient(maxLevel, leftCoeff.getLevel() + 1) : 1)));
+            synopsis.addElement(coeffIdx, (leftCoeff.getValue() - rightCoeff.getValue()) / 2.0, maxLevel);
             avgCoeff.setIndex(coeffIdx);
             avgCoeff.setValue((leftCoeff.getValue() + rightCoeff.getValue()) / 2.0);
         }
@@ -247,7 +247,7 @@ public class WaveletTransform extends StatisticsCollector {
                     //allocate next level coefficient from objectPool
                     WaveletCoefficient avgCoeff = avgStackObjectPool.allocate(topCoeff.getLevel() + 1);
                     // combine newCoeff and topCoeff by averaging them. Result coeff's level is greater than parent's level by 1
-                    average(topCoeff, newCoeff, domainStart, maxLevel, true, avgCoeff);
+                    average(topCoeff, newCoeff, domainStart, maxLevel, avgCoeff);
                     avgStackObjectPool.deallocate(topCoeff.getLevel(), topCoeff);
                     avgStackObjectPool.deallocate(newCoeff.getLevel(), newCoeff);
                     newCoeff = avgCoeff;
@@ -266,8 +266,9 @@ public class WaveletTransform extends StatisticsCollector {
             while (!newCoeff.covers(tuplePosition, maxLevel, domainStart)
                     && (avgStack.size() > 0 ? avgStack.peek().getLevel() > (newCoeff.getLevel() - 1) : true)
                     && topCoeff.getLevel() >= 0) {
+                synopsis.addElement(newCoeff.getKey(), ((topCoeff.getKey() & 0x01) == 0 ? 1 : -1) * newCoeff.getValue(),
+                        maxLevel);
                 topCoeff = newCoeff;
-                synopsis.addElement(newCoeff.getKey(), newCoeff.getValue());
                 newCoeff = moveLevelUp(newCoeff);
             }
             avgStackObjectPool.deallocate(newCoeff.getLevel(), newCoeff);
@@ -311,6 +312,7 @@ public class WaveletTransform extends StatisticsCollector {
                 while (coeff.covers(tuplePosition, maxLevel, domainStart)) {
                     avgStackObjectPool.deallocate(coeff.getLevel(), coeff);
                     WaveletCoefficient newCoeff = avgStackObjectPool.allocate(coeff.getLevel() - 1);
+                    newCoeff.setValue(0.0);
                     if (newCoeff.getLevel() == 0) {
                         newCoeff.setIndex(((coeff.getKey() - (1l << (maxLevel - 1))) << 1) + domainStart);
                     } else {
@@ -356,7 +358,7 @@ public class WaveletTransform extends StatisticsCollector {
                 }
                 //assert(avgStack.size() == 1);
                 // now the transform is complete the top coefficient on the stack is global average, i.e. coefficient with index==0
-                synopsis.addElement(0l, topCoeff.getValue());
+                synopsis.addElement(0l, topCoeff.getValue(), maxLevel);
 
                 persistStatistics();
             }

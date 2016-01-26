@@ -23,12 +23,14 @@ import java.util.Map;
 
 public interface ISynopsis extends Iterable<Map.Entry<Long, Double>> {
 
-    void addElement(long key, double frequency);
+    void addElement(long key, double frequency, int maxLevel);
 
-    long size();
+    int size();
 
     void merge(ISynopsis mergeSynopsis);
 
     void merge(List<ISynopsis> synopsisList);
+
+    Double pointQuery(Long position, int maxLevel);
 
 }

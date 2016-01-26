@@ -39,7 +39,7 @@ import org.apache.hyracks.storage.am.common.api.IMetaDataPageManager;
 import org.apache.hyracks.storage.am.common.api.IModificationOperationCallback;
 import org.apache.hyracks.storage.am.common.api.ISearchOperationCallback;
 import org.apache.hyracks.storage.am.common.api.ISearchPredicate;
-import org.apache.hyracks.storage.am.common.api.IStatisticsManager;
+import org.apache.hyracks.storage.am.common.api.IStatisticsMessageManager;
 import org.apache.hyracks.storage.am.common.api.ITreeIndexCursor;
 import org.apache.hyracks.storage.am.common.api.ITreeIndexFrameFactory;
 import org.apache.hyracks.storage.am.common.api.ITreeIndexTupleWriterFactory;
@@ -100,7 +100,7 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
             IBinaryComparatorFactory[] cmpFactories, ILSMMergePolicy mergePolicy, ILSMOperationTracker opTracker,
             ILSMIOOperationScheduler ioScheduler, ILSMIOOperationCallback ioOpCallback,
             TreeIndexFactory<BTree> transactionBTreeFactory, int version, boolean durable, boolean collectStatistics,
-            IStatisticsManager statsManager) {
+            IStatisticsMessageManager statsManager) {
         super(interiorFrameFactory, insertLeafFrameFactory, deleteLeafFrameFactory, fileManager, diskBTreeFactory,
                 bulkLoadBTreeFactory, bloomFilterFactory, statisticsFactory, bloomFilterFalsePositiveRate,
                 diskFileMapProvider, fieldCount, cmpFactories, mergePolicy, opTracker, ioScheduler, ioOpCallback, false,

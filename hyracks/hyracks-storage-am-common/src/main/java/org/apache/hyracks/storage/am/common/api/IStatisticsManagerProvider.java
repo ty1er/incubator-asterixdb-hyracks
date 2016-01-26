@@ -22,5 +22,5 @@ import org.apache.hyracks.api.context.IHyracksTaskContext;
 
 public interface IStatisticsManagerProvider {
 
-    IStatisticsManager getStatisticsManager(IHyracksTaskContext ctx);
+    IStatisticsMessageManager getStatisticsManager(IHyracksTaskContext ctx);
 }

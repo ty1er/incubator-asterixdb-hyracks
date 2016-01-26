@@ -108,7 +108,7 @@ public class WaveletCoefficient
     }
 
     // Returns index of the parent coefficient
-    public long getParentCoeffIndex(long domainMin, long maxLevel) {
+    public long getParentCoeffIndex(long domainMin, int maxLevel) {
         // Special case for values on level 0
         if (level == 0) {
             // Convert position to proper coefficient index
@@ -119,7 +119,7 @@ public class WaveletCoefficient
     }
 
     // Returns true if the coefficient's dyadic range covers tuple with the given position
-    public boolean covers(long tuplePosition, long maxLevel, long domainMin) {
+    public boolean covers(long tuplePosition, int maxLevel, long domainMin) {
         if (level < 0) {
             return true;
         } else if (level == 0) {
@@ -129,15 +129,18 @@ public class WaveletCoefficient
         }
     }
 
-    //    public static <K extends INumeric> int getLevel(K coeffPointable, int maxLevel) {
-    //        long coeffIdx = coeffPointable.longValue();
-    //        if (coeffIdx == 0)
-    //            return maxLevel;
-    //        int level = -1;
-    //        while (coeffIdx > 0) {
-    //            coeffIdx = coeffIdx >> 1;
-    //            level++;
-    //        }
-    //        return maxLevel - level;
-    //    }
+    public static int getLevel(long coeffIdx, int maxLevel) {
+        if (coeffIdx < 0) {
+            return 0;
+        }
+        if (coeffIdx == 0) {
+            return maxLevel;
+        }
+        int level = -1;
+        while (coeffIdx > 0) {
+            coeffIdx = coeffIdx >> 1;
+            level++;
+        }
+        return maxLevel - level;
+    }
 }

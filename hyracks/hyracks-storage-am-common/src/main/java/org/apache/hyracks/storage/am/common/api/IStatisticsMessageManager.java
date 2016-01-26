@@ -23,7 +23,7 @@ import java.util.List;
 
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 
-public interface IStatisticsManager {
+public interface IStatisticsMessageManager {
 
     void sendFlushStatistics(ISynopsis stats, Path flushCompomentPath) throws HyracksDataException;
 

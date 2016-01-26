@@ -39,10 +39,10 @@ public class ExternalBTreeWithBuddyDataflowHelper extends AbstractLSMBTreeDatafl
     public ExternalBTreeWithBuddyDataflowHelper(IIndexOperatorDescriptor opDesc, IHyracksTaskContext ctx, int partition,
             ILSMMergePolicy mergePolicy, ILSMOperationTrackerProvider opTrackerFactory,
             ILSMIOOperationScheduler ioScheduler, ILSMIOOperationCallbackFactory ioOpCallbackFactory,
-            int[] buddyBtreeFields, int version, boolean durable, boolean collectStatistics,
+            int[] buddyBtreeFields, int version, boolean durable, boolean collectStatistics, int statsSize,
             ITypeTraits[] statsFieldTypeTraits, IOrdinalPrimitiveValueProviderFactory statsFieldValueProviderFactory) {
         this(opDesc, ctx, partition, DEFAULT_BLOOM_FILTER_FALSE_POSITIVE_RATE, mergePolicy, opTrackerFactory,
-                ioScheduler, ioOpCallbackFactory, buddyBtreeFields, version, durable, collectStatistics,
+                ioScheduler, ioOpCallbackFactory, buddyBtreeFields, version, durable, collectStatistics, statsSize,
                 statsFieldTypeTraits, statsFieldValueProviderFactory);
     }
 
@@ -50,10 +50,10 @@ public class ExternalBTreeWithBuddyDataflowHelper extends AbstractLSMBTreeDatafl
             double bloomFilterFalsePositiveRate, ILSMMergePolicy mergePolicy,
             ILSMOperationTrackerProvider opTrackerFactory, ILSMIOOperationScheduler ioScheduler,
             ILSMIOOperationCallbackFactory ioOpCallbackFactory, int[] buddyBtreeFields, int version, boolean durable,
-            boolean collectStatistics, ITypeTraits[] statsFieldTypeTraits,
+            boolean collectStatistics, int statsSize, ITypeTraits[] statsFieldTypeTraits,
             IOrdinalPrimitiveValueProviderFactory statsFieldValueProviderFactory) {
         super(opDesc, ctx, partition, null, bloomFilterFalsePositiveRate, mergePolicy, opTrackerFactory, ioScheduler,
-                ioOpCallbackFactory, null, null, null, durable, collectStatistics, statsFieldTypeTraits,
+                ioOpCallbackFactory, null, null, null, durable, collectStatistics, statsSize, statsFieldTypeTraits,
                 statsFieldValueProviderFactory);
         this.buddyBtreeFields = buddyBtreeFields;
         this.version = version;
@@ -61,8 +61,9 @@ public class ExternalBTreeWithBuddyDataflowHelper extends AbstractLSMBTreeDatafl
 
     @Override
     public IIndex getIndexInstance() {
-        if (index != null)
+        if (index != null) {
             return index;
+        }
         synchronized (lcManager) {
             try {
                 index = lcManager.getIndex(resourceName);

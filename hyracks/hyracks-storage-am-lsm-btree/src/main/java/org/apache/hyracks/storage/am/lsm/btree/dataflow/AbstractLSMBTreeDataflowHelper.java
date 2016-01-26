@@ -38,17 +38,19 @@ public abstract class AbstractLSMBTreeDataflowHelper extends AbstractLSMIndexDat
     protected final boolean collectStatistics;
     protected final IOrdinalPrimitiveValueProviderFactory statsFieldValueProviderFactory;
     protected final ITypeTraits[] statsFieldTypeTraits;
+    protected final int statsSize;
 
     public AbstractLSMBTreeDataflowHelper(IIndexOperatorDescriptor opDesc, IHyracksTaskContext ctx, int partition,
             List<IVirtualBufferCache> virtualBufferCaches, double bloomFilterFalsePositiveRate,
             ILSMMergePolicy mergePolicy, ILSMOperationTrackerProvider opTrackerFactory,
             ILSMIOOperationScheduler ioScheduler, ILSMIOOperationCallbackFactory ioOpCallbackFactory,
             ITypeTraits[] filterTypeTraits, IBinaryComparatorFactory[] filterCmpFactories, int[] filterFields,
-            boolean durable, boolean collectStatistics, ITypeTraits[] statsFieldTypeTraits,
+            boolean durable, boolean collectStatistics, int statsSize, ITypeTraits[] statsFieldTypeTraits,
             IOrdinalPrimitiveValueProviderFactory statsFieldValueProviderFactory) {
         super(opDesc, ctx, partition, virtualBufferCaches, bloomFilterFalsePositiveRate, mergePolicy, opTrackerFactory,
                 ioScheduler, ioOpCallbackFactory, filterTypeTraits, filterCmpFactories, filterFields, durable);
         this.collectStatistics = collectStatistics;
+        this.statsSize = statsSize;
         this.statsFieldValueProviderFactory = statsFieldValueProviderFactory;
         this.statsFieldTypeTraits = statsFieldTypeTraits;
     }

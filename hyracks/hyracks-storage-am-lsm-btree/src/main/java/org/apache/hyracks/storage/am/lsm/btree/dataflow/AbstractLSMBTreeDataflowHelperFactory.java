@@ -35,6 +35,7 @@ public abstract class AbstractLSMBTreeDataflowHelperFactory extends AbstractLSMI
 
     private static final long serialVersionUID = 1L;
     protected final boolean collectStatistics;
+    protected final int statsSize;
     protected final IOrdinalPrimitiveValueProviderFactory statsFieldValueProviderFactory;
     protected final ITypeTraits[] statsFieldTypeTraits;
 
@@ -43,12 +44,13 @@ public abstract class AbstractLSMBTreeDataflowHelperFactory extends AbstractLSMI
             ILSMOperationTrackerProvider opTrackerFactory, ILSMIOOperationSchedulerProvider ioSchedulerProvider,
             ILSMIOOperationCallbackFactory ioOpCallbackFactory, double bloomFilterFalsePositiveRate,
             ITypeTraits[] filterTypeTraits, IBinaryComparatorFactory[] filterCmpFactories, int[] filterFields,
-            boolean durable, boolean collectStatistics, ITypeTraits[] statsFieldTypeTraits,
+            boolean durable, boolean collectStatistics, int statsSize, ITypeTraits[] statsFieldTypeTraits,
             IOrdinalPrimitiveValueProviderFactory statsKeyValueProviderFactory) {
         super(virtualBufferCacheProvider, mergePolicyFactory, mergePolicyProperties, opTrackerFactory,
                 ioSchedulerProvider, ioOpCallbackFactory, bloomFilterFalsePositiveRate, filterTypeTraits,
                 filterCmpFactories, filterFields, durable);
         this.collectStatistics = collectStatistics;
+        this.statsSize = statsSize;
         this.statsFieldValueProviderFactory = statsKeyValueProviderFactory;
         this.statsFieldTypeTraits = statsFieldTypeTraits;
     }

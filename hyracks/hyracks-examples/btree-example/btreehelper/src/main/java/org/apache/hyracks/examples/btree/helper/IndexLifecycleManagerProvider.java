@@ -21,7 +21,7 @@ package org.apache.hyracks.examples.btree.helper;
 import org.apache.hyracks.api.context.IHyracksTaskContext;
 import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManager;
 import org.apache.hyracks.storage.am.common.api.IIndexLifecycleManagerProvider;
-import org.apache.hyracks.storage.am.common.api.IStatisticsManager;
+import org.apache.hyracks.storage.am.common.api.IStatisticsMessageManager;
 
 public enum IndexLifecycleManagerProvider implements IIndexLifecycleManagerProvider {
     INSTANCE;

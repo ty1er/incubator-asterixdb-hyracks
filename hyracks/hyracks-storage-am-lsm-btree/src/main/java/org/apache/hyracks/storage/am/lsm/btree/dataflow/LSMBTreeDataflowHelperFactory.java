@@ -44,11 +44,11 @@ public class LSMBTreeDataflowHelperFactory extends AbstractLSMBTreeDataflowHelpe
             ILSMOperationTrackerProvider opTrackerFactory, ILSMIOOperationSchedulerProvider ioSchedulerProvider,
             ILSMIOOperationCallbackFactory ioOpCallbackFactory, double bloomFilterFalsePositiveRate,
             boolean needKeyDupCheck, ITypeTraits[] filterTypeTraits, IBinaryComparatorFactory[] filterCmpFactories,
-            int[] btreeFields, int[] filterFields, boolean durable, boolean collectStatistics,
+            int[] btreeFields, int[] filterFields, boolean durable, boolean collectStatistics, int statsSize,
             ITypeTraits[] statsFieldTypeTraits, IOrdinalPrimitiveValueProviderFactory statsFieldValueProviderFactory) {
         super(virtualBufferCacheProvider, mergePolicyFactory, mergePolicyProperties, opTrackerFactory,
                 ioSchedulerProvider, ioOpCallbackFactory, bloomFilterFalsePositiveRate, filterTypeTraits,
-                filterCmpFactories, filterFields, durable, collectStatistics, statsFieldTypeTraits,
+                filterCmpFactories, filterFields, durable, collectStatistics, statsSize, statsFieldTypeTraits,
                 statsFieldValueProviderFactory);
         this.needKeyDupCheck = needKeyDupCheck;
         this.btreeFields = btreeFields;
@@ -61,7 +61,7 @@ public class LSMBTreeDataflowHelperFactory extends AbstractLSMBTreeDataflowHelpe
                 virtualBufferCacheProvider.getVirtualBufferCaches(ctx), bloomFilterFalsePositiveRate,
                 mergePolicyFactory.createMergePolicy(mergePolicyProperties, ctx), opTrackerFactory,
                 ioSchedulerProvider.getIOScheduler(ctx), ioOpCallbackFactory, needKeyDupCheck, filterTypeTraits,
-                filterCmpFactories, btreeFields, filterFields, durable, collectStatistics, statsFieldTypeTraits,
-                statsFieldValueProviderFactory);
+                filterCmpFactories, btreeFields, filterFields, durable, collectStatistics, statsSize,
+                statsFieldTypeTraits, statsFieldValueProviderFactory);
     }
 }

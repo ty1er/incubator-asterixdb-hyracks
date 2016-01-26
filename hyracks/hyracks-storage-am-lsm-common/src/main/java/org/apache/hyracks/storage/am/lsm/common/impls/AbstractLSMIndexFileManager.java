@@ -24,12 +24,11 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.Format;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
@@ -51,11 +50,12 @@ public abstract class AbstractLSMIndexFileManager implements ILSMIndexFileManage
     protected static final String TRANSACTION_PREFIX = ".T";
     protected static final String STATISTICS_STRING = "s";
 
+    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-SSS");
+
     protected final IFileMapProvider fileMapProvider;
 
     // baseDir should reflect dataset name and partition name.
     protected String baseDir;
-    protected final Format formatter = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS");
     protected final Comparator<String> cmp = new FileNameComparator();
     protected final Comparator<ComparableFileName> recencyCmp = new RecencyComparator();
     protected final TreeIndexFactory<? extends ITreeIndex> treeFactory;
@@ -84,11 +84,10 @@ public abstract class AbstractLSMIndexFileManager implements ILSMIndexFileManage
         treeIndex.activate();
         try {
             int metadataPage = treeIndex.getMetaManager().getFirstMetadataPage();
-            if(metadataPage <0 ){
+            if (metadataPage < 0) {
                 return false;
             }
-            ITreeIndexMetaDataFrame metadataFrame = treeIndex.getMetaManager().getMetaDataFrameFactory()
-                    .createFrame();
+            ITreeIndexMetaDataFrame metadataFrame = treeIndex.getMetaManager().getMetaDataFrameFactory().createFrame();
             ICachedPage page = bufferCache.pin(BufferedFileHandle.getDiskPageId(treeIndex.getFileId(), metadataPage),
                     false);
             page.acquireReadLatch();
@@ -418,16 +417,16 @@ public abstract class AbstractLSMIndexFileManager implements ILSMIndexFileManage
      *         The returned results of this method are guaranteed to not have duplicates.
      */
     protected String getCurrentTimestamp() {
-        Date date = new Date();
-        String ts = formatter.format(date);
+        LocalDateTime date = LocalDateTime.now();
+        String ts = FORMATTER.format(date);
         /**
          * prevent a corner case where the same timestamp can be given.
          */
         while (prevTimestamp != null && ts.compareTo(prevTimestamp) == 0) {
             try {
                 Thread.sleep(1);
-                date = new Date();
-                ts = formatter.format(date);
+                date = LocalDateTime.now();
+                ts = FORMATTER.format(date);
             } catch (InterruptedException e) {
                 //ignore
             }

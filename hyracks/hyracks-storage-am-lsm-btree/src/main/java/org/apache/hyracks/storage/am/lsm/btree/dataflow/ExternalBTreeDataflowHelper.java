@@ -43,11 +43,11 @@ public class ExternalBTreeDataflowHelper extends LSMBTreeDataflowHelper {
             double bloomFilterFalsePositiveRate, ILSMMergePolicy mergePolicy,
             ILSMOperationTrackerProvider opTrackerFactory, ILSMIOOperationScheduler ioScheduler,
             ILSMIOOperationCallbackFactory ioOpCallbackFactory, boolean needKeyDupCheck, int version, boolean durable,
-            boolean collectStatistics, ITypeTraits[] statsFieldTypeTraits,
+            boolean collectStatistics, int statsSize, ITypeTraits[] statsFieldTypeTraits,
             IOrdinalPrimitiveValueProviderFactory statsFieldValueProviderFactory) {
         super(opDesc, ctx, partition, null, bloomFilterFalsePositiveRate, mergePolicy, opTrackerFactory, ioScheduler,
-                ioOpCallbackFactory, false, null, null, null, null, durable, collectStatistics, statsFieldTypeTraits,
-                statsFieldValueProviderFactory);
+                ioOpCallbackFactory, false, null, null, null, null, durable, collectStatistics, statsSize,
+                statsFieldTypeTraits, statsFieldValueProviderFactory);
         this.version = version;
     }
 
@@ -55,10 +55,10 @@ public class ExternalBTreeDataflowHelper extends LSMBTreeDataflowHelper {
             List<IVirtualBufferCache> virtualBufferCaches, ILSMMergePolicy mergePolicy,
             ILSMOperationTrackerProvider opTrackerFactory, ILSMIOOperationScheduler ioScheduler,
             ILSMIOOperationCallbackFactory ioOpCallbackFactory, boolean needKeyDupCheck, int version, boolean durable,
-            boolean collectStatistics, ITypeTraits[] statsFieldTypeTraits,
+            boolean collectStatistics, int statsSize, ITypeTraits[] statsFieldTypeTraits,
             IOrdinalPrimitiveValueProviderFactory statsFieldValueProviderFactory) {
         this(opDesc, ctx, partition, DEFAULT_BLOOM_FILTER_FALSE_POSITIVE_RATE, mergePolicy, opTrackerFactory,
-                ioScheduler, ioOpCallbackFactory, needKeyDupCheck, version, durable, collectStatistics,
+                ioScheduler, ioOpCallbackFactory, needKeyDupCheck, version, durable, collectStatistics, statsSize,
                 statsFieldTypeTraits, statsFieldValueProviderFactory);
     }
 
@@ -84,7 +84,7 @@ public class ExternalBTreeDataflowHelper extends LSMBTreeDataflowHelper {
                 opDesc.getStorageManager().getFileMapProvider(ctx), treeOpDesc.getTreeIndexTypeTraits(),
                 treeOpDesc.getTreeIndexComparatorFactories(), treeOpDesc.getTreeIndexBloomFilterKeyFields(),
                 bloomFilterFalsePositiveRate, mergePolicy, opTrackerFactory.getOperationTracker(ctx), ioScheduler,
-                ioOpCallbackFactory.createIOOperationCallback(), getVersion(), durable, collectStatistics,
+                ioOpCallbackFactory.createIOOperationCallback(), getVersion(), durable, collectStatistics, statsSize,
                 opDesc.getStatisticsManagerProvider().getStatisticsManager(ctx), statsFieldValueProviderFactory);
     }
 

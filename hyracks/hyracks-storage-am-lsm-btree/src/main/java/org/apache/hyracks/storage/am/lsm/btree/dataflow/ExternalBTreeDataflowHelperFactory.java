@@ -39,11 +39,11 @@ public class ExternalBTreeDataflowHelperFactory extends AbstractLSMBTreeDataflow
     public ExternalBTreeDataflowHelperFactory(ILSMMergePolicyFactory mergePolicyFactory,
             Map<String, String> mergePolicyProperties, ILSMOperationTrackerProvider opTrackerFactory,
             ILSMIOOperationSchedulerProvider ioSchedulerProvider, ILSMIOOperationCallbackFactory ioOpCallbackFactory,
-            double bloomFilterFalsePositiveRate, int version, boolean durable, boolean collectStatistics,
+            double bloomFilterFalsePositiveRate, int version, boolean durable, boolean collectStatistics, int statsSize,
             ITypeTraits[] statsFieldTypeTraits, IOrdinalPrimitiveValueProviderFactory statsKeyValueProviderFactory) {
         super(null, mergePolicyFactory, mergePolicyProperties, opTrackerFactory, ioSchedulerProvider,
                 ioOpCallbackFactory, bloomFilterFalsePositiveRate, null, null, null, durable, collectStatistics,
-                statsFieldTypeTraits, statsKeyValueProviderFactory);
+                statsSize, statsFieldTypeTraits, statsKeyValueProviderFactory);
         this.version = version;
     }
 
@@ -53,7 +53,7 @@ public class ExternalBTreeDataflowHelperFactory extends AbstractLSMBTreeDataflow
         return new ExternalBTreeDataflowHelper(opDesc, ctx, partition, bloomFilterFalsePositiveRate,
                 mergePolicyFactory.createMergePolicy(mergePolicyProperties, ctx), opTrackerFactory,
                 ioSchedulerProvider.getIOScheduler(ctx), ioOpCallbackFactory, false, version, durable,
-                collectStatistics, statsFieldTypeTraits, statsFieldValueProviderFactory);
+                collectStatistics, statsSize, statsFieldTypeTraits, statsFieldValueProviderFactory);
     }
 
 }
