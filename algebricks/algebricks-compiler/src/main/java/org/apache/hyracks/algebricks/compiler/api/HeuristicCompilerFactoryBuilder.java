@@ -18,6 +18,7 @@
  */
 package org.apache.hyracks.algebricks.compiler.api;
 
+import org.apache.hyracks.algebricks.common.config.AlgebricksConfig;
 import org.apache.hyracks.algebricks.common.exceptions.AlgebricksException;
 import org.apache.hyracks.algebricks.core.algebra.base.ILogicalPlan;
 import org.apache.hyracks.algebricks.core.algebra.base.IOptimizationContext;
@@ -27,7 +28,6 @@ import org.apache.hyracks.algebricks.core.algebra.expressions.IMergeAggregationE
 import org.apache.hyracks.algebricks.core.algebra.expressions.INullableTypeComputer;
 import org.apache.hyracks.algebricks.core.algebra.metadata.IMetadataProvider;
 import org.apache.hyracks.algebricks.core.algebra.prettyprint.LogicalOperatorPrettyPrintVisitor;
-import org.apache.hyracks.algebricks.core.config.AlgebricksConfig;
 import org.apache.hyracks.algebricks.core.jobgen.impl.JobGenContext;
 import org.apache.hyracks.algebricks.core.jobgen.impl.PlanCompiler;
 import org.apache.hyracks.algebricks.core.rewriter.base.AlgebricksOptimizationContext;
@@ -92,13 +92,13 @@ public class HeuristicCompilerFactoryBuilder extends AbstractCompilerFactoryBuil
                             IJobletEventListenerFactory jobEventListenerFactory) throws AlgebricksException {
                         AlgebricksConfig.ALGEBRICKS_LOGGER.fine("Starting Job Generation.\n");
                         JobGenContext context = new JobGenContext(null, metadata, appContext,
-                                serializerDeserializerProvider, hashFunctionFactoryProvider,
-                                hashFunctionFamilyProvider, comparatorFactoryProvider, typeTraitProvider,
-                                binaryBooleanInspectorFactory, binaryIntegerInspectorFactory, printerProvider,
-                                nullWriterFactory, normalizedKeyComputerFactoryProvider, expressionRuntimeProvider,
-                                expressionTypeComputer, nullableTypeComputer, oc, expressionEvalSizeComputer,
-                                partialAggregationTypeComputer, predEvaluatorFactoryProvider,
-                                physicalOptimizationConfig.getFrameSize(), clusterLocations);
+                                serializerDeserializerProvider, hashFunctionFactoryProvider, hashFunctionFamilyProvider,
+                                comparatorFactoryProvider, typeTraitProvider, binaryBooleanInspectorFactory,
+                                binaryIntegerInspectorFactory, printerProvider, nullWriterFactory,
+                                normalizedKeyComputerFactoryProvider, expressionRuntimeProvider, expressionTypeComputer,
+                                nullableTypeComputer, oc, expressionEvalSizeComputer, partialAggregationTypeComputer,
+                                predEvaluatorFactoryProvider, physicalOptimizationConfig.getFrameSize(),
+                                clusterLocations);
 
                         PlanCompiler pc = new PlanCompiler(context);
                         return pc.compilePlan(plan, null, jobEventListenerFactory);
