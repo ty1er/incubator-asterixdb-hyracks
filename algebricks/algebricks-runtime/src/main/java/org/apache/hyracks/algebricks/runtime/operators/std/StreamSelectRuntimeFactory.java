@@ -119,11 +119,7 @@ public class StreamSelectRuntimeFactory extends AbstractOneInputOneOutputRuntime
             @Override
             public void close() throws HyracksDataException {
                 if (isOpen) {
-                    try {
-                        flushIfNotFailed();
-                    } finally {
-                        writer.close();
-                    }
+                    super.close();
                 }
             }
 

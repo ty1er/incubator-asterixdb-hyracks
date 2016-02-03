@@ -120,8 +120,8 @@ public class WaveletTransform extends StatisticsCollector {
         // TODO: do something better than linear search
         for (Map.Entry<Long, Double> coeff : synopsis) {
             if (coeff.getKey() == index) {
-                coeff.setValue(coeff.getValue() + appendValue / WaveletCoefficient.getNormalizationCoefficient(maxLevel,
-                        WaveletCoefficient.getLevel(index, maxLevel)));
+                coeff.setValue(coeff.getValue() + appendValue /* / WaveletCoefficient.getNormalizationCoefficient(maxLevel,
+                                                              WaveletCoefficient.getLevel(index, maxLevel))*/);
                 return;
             }
         }

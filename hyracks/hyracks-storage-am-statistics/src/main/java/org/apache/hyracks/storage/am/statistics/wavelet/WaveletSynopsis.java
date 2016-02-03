@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
@@ -167,55 +168,51 @@ public class WaveletSynopsis implements ISynopsis, Serializable {
         return value;
     }
 
-    //    public Double rangeQuery(Long startPosition, Long endPosition, int maxLevel, boolean normalize) {
-    //        Double value = 0.0;
-    //        PeekingIterator<? extends Entry<Long, Double>> it = new PeekingIterator<>(coefficients.iterator());
-    //        Double mainAvg = findCoeffValue(it, 0l);
-    //        List<DyadicTupleRange<Double>> workingSet = Lists.newArrayList(new DyadicTupleRange<Double>(
-    //                startPosition + (1l << maxLevel), endPosition + (1l << maxLevel), mainAvg));
-    //        int level = maxLevel - 1;
-    //        while (!workingSet.isEmpty()) {
-    //            ListIterator<DyadicTupleRange<Double>> rangeIt = workingSet.listIterator();
-    //
-    //            while (rangeIt.hasNext()) {
-    //                DyadicTupleRange<Double> range = rangeIt.next();
-    //                Double coeff = findCoeffValue(it, range.getStart() >> (level + 1))
-    //                        * (normalize ? WaveletCoefficient.getNormalizationCoefficient(maxLevel, level + 1) : 1);
-    //                if (range.getEnd() - range.getStart() + 1 == (1l << (level + 1))) {
-    //                    //range is a full dyadic subrange
-    //                    rangeIt.remove();
-    //                    Double rangeValue = 0.0;
-    //                    if (level == -1) {
-    //                        rangeValue = (((range.getStart() - (1l << maxLevel)) & 0x1) == 0) ? range.getValue() + coeff
-    //                                : range.getValue() - coeff;
-    //                    } else {
-    //                        rangeValue = range.getValue() * (1l << (level + 1));
-    //                    }
-    //                    value += rangeValue;
-    //                } else {
-    //                    long startCoeff = range.getStart() >> level;
-    //                    long endCoeff = range.getEnd() >> level;
-    //                    //split the range
-    //                    if (startCoeff != endCoeff) {
-    //                        rangeIt.remove();
-    //                        rangeIt.add(new DyadicTupleRange<Double>(range.getStart(), (endCoeff << level) - 1,
-    //                                range.getValue() + coeff));
-    //                        rangeIt.add(new DyadicTupleRange<Double>(endCoeff << level, range.getEnd(),
-    //                                range.getValue() - coeff));
-    //                        //                        rangeIt.previous();
-    //                        //                        rangeIt.previous();
-    //                    } else {
-    //                        rangeIt.remove();
-    //                        rangeIt.add(new DyadicTupleRange<Double>(range.getStart(), range.getEnd(),
-    //                                range.getValue() + coeff * (((startCoeff & 0x1) == 0) ? 1 : -1)));
-    //                    }
-    //                }
-    //            }
-    //            //            workingSet.addAll(newWorkingSet);
-    //            //            newWorkingSet.clear();
-    //            level--;
-    //        }
-    //        return value;
-    //    }
+    @Override
+    public Double rangeQuery(Long startPosition, Long endPosition, int maxLevel) {
+        Double value = 0.0;
+        PeekingIterator<? extends Entry<Long, Double>> it = new PeekingIterator<>(coefficients.iterator());
+        Double mainAvg = findCoeffValue(it, 0l);
+        List<DyadicTupleRange> workingSet = new ArrayList<>();
+        workingSet.add(new DyadicTupleRange(startPosition, endPosition, mainAvg));
+        int level = maxLevel;
+        while (!workingSet.isEmpty()) {
+            ListIterator<DyadicTupleRange> rangeIt = workingSet.listIterator();
+
+            while (rangeIt.hasNext()) {
+                DyadicTupleRange range = rangeIt.next();
+                long startIdx = (range.getStart() >> level) + (1l << (maxLevel - level));
+                Double coeff = findCoeffValue(it, startIdx)
+                        * WaveletCoefficient.getNormalizationCoefficient(maxLevel, level);
+                if (range.getEnd() - range.getStart() + 1 == (1l << level)) {
+                    //range is a full dyadic subrange
+                    rangeIt.remove();
+                    Double rangeValue = 0.0;
+                    if (level == 0) {
+                        rangeValue = ((startIdx & 0x1) == 0) ? range.getValue() + coeff : range.getValue() - coeff;
+                    } else {
+                        rangeValue = range.getValue() * (1l << level);
+                    }
+                    value += rangeValue;
+                } else {
+                    long startPos = (range.getStart() >> (level - 1)) + (1l << (maxLevel - level + 1));
+                    long endPos = (range.getEnd() >> (level - 1)) + (1l << (maxLevel - level + 1));
+                    long splitPos = (endPos - (1l << (maxLevel - level + 1))) << (level - 1);
+                    //split the range
+                    if (startPos != endPos) {
+                        rangeIt.remove();
+                        rangeIt.add(new DyadicTupleRange(range.getStart(), splitPos - 1, range.getValue() + coeff));
+                        rangeIt.add(new DyadicTupleRange(splitPos, range.getEnd(), range.getValue() - coeff));
+                    } else {
+                        rangeIt.remove();
+                        rangeIt.add(new DyadicTupleRange(range.getStart(), range.getEnd(),
+                                range.getValue() + coeff * (((startPos & 0x1) == 0) ? 1 : -1)));
+                    }
+                }
+            }
+            level--;
+        }
+        return value;
+    }
 
 }

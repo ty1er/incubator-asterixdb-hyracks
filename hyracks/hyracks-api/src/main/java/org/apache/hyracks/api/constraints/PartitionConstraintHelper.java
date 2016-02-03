@@ -18,7 +18,7 @@
  */
 package org.apache.hyracks.api.constraints;
 
-import org.apache.hyracks.api.constraints.expressions.ConstantExpression;
+import org.apache.hyracks.api.constraints.expressions.ConstantConstraintExpression;
 import org.apache.hyracks.api.constraints.expressions.PartitionCountExpression;
 import org.apache.hyracks.api.constraints.expressions.PartitionLocationExpression;
 import org.apache.hyracks.api.dataflow.IOperatorDescriptor;
@@ -26,7 +26,7 @@ import org.apache.hyracks.api.job.JobSpecification;
 
 public class PartitionConstraintHelper {
     public static void addPartitionCountConstraint(JobSpecification spec, IOperatorDescriptor op, int count) {
-        spec.addUserConstraint(new Constraint(new PartitionCountExpression(op.getOperatorId()), new ConstantExpression(
+        spec.addUserConstraint(new Constraint(new PartitionCountExpression(op.getOperatorId()), new ConstantConstraintExpression(
                 count)));
     }
 
@@ -34,7 +34,7 @@ public class PartitionConstraintHelper {
         addPartitionCountConstraint(spec, op, choices.length);
         for (int i = 0; i < choices.length; ++i) {
             spec.addUserConstraint(new Constraint(new PartitionLocationExpression(op.getOperatorId(), i),
-                    new ConstantExpression(choices[i])));
+                    new ConstantConstraintExpression(choices[i])));
         }
     }
 
@@ -42,7 +42,7 @@ public class PartitionConstraintHelper {
         addPartitionCountConstraint(spec, op, locations.length);
         for (int i = 0; i < locations.length; ++i) {
             spec.addUserConstraint(new Constraint(new PartitionLocationExpression(op.getOperatorId(), i),
-                    new ConstantExpression(locations[i])));
+                    new ConstantConstraintExpression(locations[i])));
         }
     }
 }

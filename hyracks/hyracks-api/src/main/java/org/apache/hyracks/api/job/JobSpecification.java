@@ -33,7 +33,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.apache.hyracks.api.constraints.Constraint;
-import org.apache.hyracks.api.constraints.expressions.ConstantExpression;
+import org.apache.hyracks.api.constraints.expressions.ConstantConstraintExpression;
 import org.apache.hyracks.api.constraints.expressions.PartitionCountExpression;
 import org.apache.hyracks.api.constraints.expressions.PartitionLocationExpression;
 import org.apache.hyracks.api.dataflow.ConnectorDescriptorId;
@@ -404,7 +404,7 @@ public class JobSpecification implements Serializable, IOperatorDescriptorRegist
     private static String getConstraintExpressionRValue(Constraint constraint) {
         switch (constraint.getRValue().getTag()) {
             case CONSTANT:
-                ConstantExpression ce = (ConstantExpression) constraint.getRValue();
+                ConstantConstraintExpression ce = (ConstantConstraintExpression) constraint.getRValue();
                 return ce.getValue().toString();
             default:
                 return constraint.getRValue().toString();

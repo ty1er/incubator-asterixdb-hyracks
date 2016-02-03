@@ -33,4 +33,6 @@ public interface ISynopsis extends Iterable<Map.Entry<Long, Double>> {
 
     Double pointQuery(Long position, int maxLevel);
 
+    Double rangeQuery(Long startPosition, Long endPosition, int maxLevel);
+
 }

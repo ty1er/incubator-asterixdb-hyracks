@@ -20,12 +20,12 @@ package org.apache.hyracks.api.constraints.expressions;
 
 import java.util.Collection;
 
-public class ConstantExpression extends ConstraintExpression {
+public class ConstantConstraintExpression extends ConstraintExpression {
     private static final long serialVersionUID = 1L;
 
     private final Object value;
 
-    public ConstantExpression(Object value) {
+    public ConstantConstraintExpression(Object value) {
         this.value = value;
     }
 

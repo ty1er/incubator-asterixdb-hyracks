@@ -30,6 +30,7 @@ import org.apache.hyracks.algebricks.core.algebra.expressions.INullableTypeCompu
 import org.apache.hyracks.algebricks.core.algebra.expressions.IPartialAggregationTypeComputer;
 import org.apache.hyracks.algebricks.core.rewriter.base.AbstractRuleController;
 import org.apache.hyracks.algebricks.core.rewriter.base.IAlgebraicRewriteRule;
+import org.apache.hyracks.algebricks.core.rewriter.base.ICardinalityEstimator;
 import org.apache.hyracks.algebricks.core.rewriter.base.PhysicalOptimizationConfig;
 import org.apache.hyracks.algebricks.data.IBinaryBooleanInspectorFactory;
 import org.apache.hyracks.algebricks.data.IBinaryComparatorFactoryProvider;
@@ -66,6 +67,7 @@ public abstract class AbstractCompilerFactoryBuilder {
     protected IMergeAggregationExpressionFactory mergeAggregationExpressionFactory;
     protected PhysicalOptimizationConfig physicalOptimizationConfig = new PhysicalOptimizationConfig();
     protected AlgebricksPartitionConstraint clusterLocations;
+    protected ICardinalityEstimator cardinalityEstimator;
 
     public abstract ICompilerFactory create();
 
@@ -116,7 +118,7 @@ public abstract class AbstractCompilerFactoryBuilder {
     public IBinaryComparatorFactoryProvider getComparatorFactoryProvider() {
         return comparatorFactoryProvider;
     }
-    
+
     public void setPredicateEvaluatorFactoryProvider(IPredicateEvaluatorFactoryProvider predEvaluatorFactoryProvider) {
         this.predEvaluatorFactoryProvider = predEvaluatorFactoryProvider;
     }
@@ -229,6 +231,14 @@ public abstract class AbstractCompilerFactoryBuilder {
 
     public INullableTypeComputer getNullableTypeComputer() {
         return nullableTypeComputer;
+    }
+
+    public ICardinalityEstimator getCardinalityEstimator() {
+        return cardinalityEstimator;
+    }
+
+    public void setCardinalityEstimator(ICardinalityEstimator cardinalityEstimator) {
+        this.cardinalityEstimator = cardinalityEstimator;
     }
 
 }

@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.hyracks.api.constraints.Constraint;
-import org.apache.hyracks.api.constraints.expressions.ConstantExpression;
+import org.apache.hyracks.api.constraints.expressions.ConstantConstraintExpression;
 import org.apache.hyracks.api.constraints.expressions.ConstraintExpression;
 import org.apache.hyracks.api.constraints.expressions.LValueConstraintExpression;
 
@@ -61,7 +61,7 @@ public class PartitionConstraintSolver {
     private Solution solve(ConstraintExpression ce, Set<LValueConstraintExpression> inProcess) {
         switch (ce.getTag()) {
             case CONSTANT:
-                return new Solution(((ConstantExpression) ce).getValue(), Solution.Status.FOUND);
+                return new Solution(((ConstantConstraintExpression) ce).getValue(), Solution.Status.FOUND);
 
             case PARTITION_COUNT:
             case PARTITION_LOCATION:
@@ -89,7 +89,7 @@ public class PartitionConstraintSolver {
         }
         if (result != null) {
             rValues.clear();
-            rValues.add(new ConstantExpression(result.value));
+            rValues.add(new ConstantConstraintExpression(result.value));
         }
         inProcess.remove(lv);
         return result;
@@ -105,7 +105,7 @@ public class PartitionConstraintSolver {
         }
         for (ConstraintExpression ce : rValues) {
             if (ce.getTag() == ConstraintExpression.ExpressionTag.CONSTANT) {
-                return ((ConstantExpression) ce).getValue();
+                return ((ConstantConstraintExpression) ce).getValue();
             }
         }
         return null;
