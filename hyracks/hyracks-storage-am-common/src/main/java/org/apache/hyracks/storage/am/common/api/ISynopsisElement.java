@@ -16,13 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.hyracks.storage.am.common.api;
 
-public interface ISynopsisBuilder extends IIndexBulkLoader {
+import java.io.Serializable;
 
-    ISynopsis<? extends ISynopsisElement> getSynopsis();
+import org.apache.hyracks.api.dataflow.value.ISerializerDeserializer;
+import org.apache.hyracks.dataflow.common.data.marshalling.DoubleSerializerDeserializer;
+import org.apache.hyracks.dataflow.common.data.marshalling.Integer64SerializerDeserializer;
 
-    void setAntimatterTuple(boolean isAntimatter);
+public interface ISynopsisElement extends Serializable {
+
+    final static int SYNOPSIS_KEY_SIZE = Long.BYTES;
+    final static int SYNOPSIS_VALUE_SIZE = Double.BYTES;
+
+    @SuppressWarnings("rawtypes")
+    final ISerializerDeserializer SYNOPSIS_KEY_SERDE = Integer64SerializerDeserializer.INSTANCE;
+    @SuppressWarnings("rawtypes")
+    final ISerializerDeserializer SYNOPSIS_VALUE_SERDE = DoubleSerializerDeserializer.INSTANCE;
+
+    Long getKey();
+
+    Double getValue();
 
 }

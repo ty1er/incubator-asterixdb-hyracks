@@ -127,32 +127,6 @@ public abstract class AbstractLSMRTree extends AbstractLSMIndex implements ITree
         this.rtreeFields = rtreeFields;
     }
 
-    /*
-     * For External indexes with no memory components
-     */
-    public AbstractLSMRTree(ITreeIndexFrameFactory rtreeInteriorFrameFactory,
-            ITreeIndexFrameFactory rtreeLeafFrameFactory, ITreeIndexFrameFactory btreeInteriorFrameFactory,
-            ITreeIndexFrameFactory btreeLeafFrameFactory, ILSMIndexFileManager fileManager,
-            ILSMComponentFactory componentFactory, IFileMapProvider diskFileMapProvider, int fieldCount,
-            IBinaryComparatorFactory[] rtreeCmpFactories, IBinaryComparatorFactory[] btreeCmpFactories,
-            ILinearizeComparatorFactory linearizer, int[] comparatorFields, IBinaryComparatorFactory[] linearizerArray,
-            double bloomFilterFalsePositiveRate, ILSMMergePolicy mergePolicy, ILSMOperationTracker opTracker,
-            ILSMIOOperationScheduler ioScheduler, ILSMIOOperationCallback ioOpCallback, boolean durable) {
-        super(componentFactory.getBufferCache(), fileManager, diskFileMapProvider, bloomFilterFalsePositiveRate,
-                mergePolicy, opTracker, ioScheduler, ioOpCallback, durable);
-        this.rtreeInteriorFrameFactory = rtreeInteriorFrameFactory;
-        this.rtreeLeafFrameFactory = rtreeLeafFrameFactory;
-        this.btreeInteriorFrameFactory = btreeInteriorFrameFactory;
-        this.btreeLeafFrameFactory = btreeLeafFrameFactory;
-        this.componentFactory = componentFactory;
-        this.btreeCmpFactories = btreeCmpFactories;
-        this.rtreeCmpFactories = rtreeCmpFactories;
-        this.linearizer = linearizer;
-        this.comparatorFields = comparatorFields;
-        this.linearizerArray = linearizerArray;
-        this.rtreeFields = null;
-    }
-
     @Override
     public synchronized void create() throws HyracksDataException {
         if (isActivated) {

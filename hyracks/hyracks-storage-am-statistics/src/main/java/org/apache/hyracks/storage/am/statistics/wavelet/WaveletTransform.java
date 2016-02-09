@@ -19,141 +19,51 @@
 
 package org.apache.hyracks.storage.am.statistics.wavelet;
 
-import java.nio.ByteBuffer;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Stack;
 
-import org.apache.hyracks.api.dataflow.value.ISerializerDeserializer;
 import org.apache.hyracks.api.dataflow.value.ITypeTraits;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.api.io.FileReference;
-import org.apache.hyracks.dataflow.common.comm.io.ArrayTupleBuilder;
 import org.apache.hyracks.dataflow.common.data.accessors.ITupleReference;
-import org.apache.hyracks.dataflow.common.data.marshalling.DoubleSerializerDeserializer;
-import org.apache.hyracks.dataflow.common.data.marshalling.Integer64SerializerDeserializer;
 import org.apache.hyracks.storage.am.common.api.IOrdinalPrimitiveValueProvider;
 import org.apache.hyracks.storage.am.common.api.ISynopsis;
 import org.apache.hyracks.storage.am.common.api.ISynopsisBuilder;
+import org.apache.hyracks.storage.am.common.api.ISynopsisElement;
 import org.apache.hyracks.storage.am.common.api.IndexException;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMTreeTupleReference;
+import org.apache.hyracks.storage.am.statistics.common.AbstractSynopsisBuilder;
 import org.apache.hyracks.storage.am.statistics.common.StatisticsCollector;
-import org.apache.hyracks.storage.am.statistics.common.TypeTraitsDomainUtils;
 import org.apache.hyracks.storage.common.buffercache.IBufferCache;
-import org.apache.hyracks.storage.common.buffercache.ICachedPage;
-import org.apache.hyracks.storage.common.file.BufferedFileHandle;
 import org.apache.hyracks.storage.common.file.IFileMapProvider;
 import org.apache.hyracks.util.objectpool.IObjectFactory;
 import org.apache.hyracks.util.objectpool.MapObjectPool;
 
 public class WaveletTransform extends StatisticsCollector {
 
-    private final static int METADATA_PAGE_ID = 0;
-    private final static int NUM_PAGES_OFFSET = 0;
-    private final static int NUM_ELEMENTS_OFFSET = NUM_PAGES_OFFSET + Integer.BYTES;
-    private final static int SYNOPSIS_KEY_SIZE = Long.BYTES;
-    private final static int SYNOPSIS_VALUE_SIZE = Double.BYTES;
-
-    private final int[] fields;
-    private final IOrdinalPrimitiveValueProvider fieldValueProvider;
-    private final ITypeTraits[] fieldTypeTraits;
-    @SuppressWarnings("rawtypes")
-    private final ISerializerDeserializer synopsisKeySerde = Integer64SerializerDeserializer.INSTANCE;
-    @SuppressWarnings("rawtypes")
-    private final ISerializerDeserializer synopsisValueSerde = DoubleSerializerDeserializer.INSTANCE;
-
-    private final WaveletSynopsis synopsis;
-
-    private transient final int numPages;
-
     public WaveletTransform(IBufferCache bufferCache, IFileMapProvider fileMapProvider, FileReference file,
-            int[] fields, int threshold, ITypeTraits[] fieldTypeTraits,
-            IOrdinalPrimitiveValueProvider fieldValueProvider) {
-        super(bufferCache, fileMapProvider, file);
-        this.fields = fields;
-        this.fieldValueProvider = fieldValueProvider;
-        this.fieldTypeTraits = fieldTypeTraits;
-        this.numPages = (int) Math
-                .ceil(threshold * (SYNOPSIS_KEY_SIZE + SYNOPSIS_VALUE_SIZE) / (double) bufferCache.getPageSize());
-        this.synopsis = new WaveletSynopsis(threshold);
+            int[] fields, int size, ITypeTraits[] fieldTypeTraits, IOrdinalPrimitiveValueProvider fieldValueProvider)
+                    throws HyracksDataException {
+        super(bufferCache, fileMapProvider, file, fields, size, fieldTypeTraits, fieldValueProvider);
     }
 
     @Override
-    public ISynopsis getSynopsis() {
-        return synopsis;
-    }
-
-    @Override
-    public synchronized void create() throws HyracksDataException {
-        super.create();
-
-        initWaveletSynopsisMetaData();
-        bufferCache.closeFile(fileId);
-    }
-
-    @Override
-    public synchronized void deactivate() throws HyracksDataException {
-        super.deactivate();
-    }
-
-    public int getNumPages() throws HyracksDataException {
-        if (!isActive) {
-            throw new HyracksDataException("The synopsis is not activated.");
-        }
-        return numPages;
-    }
-
-    private void initWaveletSynopsisMetaData() throws HyracksDataException {
-        ICachedPage metaPage = bufferCache.pin(BufferedFileHandle.getDiskPageId(fileId, METADATA_PAGE_ID), true);
-        metaPage.acquireWriteLatch();
-        try {
-            metaPage.getBuffer().putInt(NUM_PAGES_OFFSET, 0);
-            metaPage.getBuffer().putLong(NUM_ELEMENTS_OFFSET, 0L);
-        } finally {
-            metaPage.releaseWriteLatch(true);
-            bufferCache.unpin(metaPage);
-        }
-    }
-
-    // Appends value to the coefficient with given index. If such coefficient is not found creates a new coeff
-    public void apendToElement(long index, double appendValue, int maxLevel) {
-        // TODO: do something better than linear search
-        for (Map.Entry<Long, Double> coeff : synopsis) {
-            if (coeff.getKey() == index) {
-                coeff.setValue(coeff.getValue() + appendValue /* / WaveletCoefficient.getNormalizationCoefficient(maxLevel,
-                                                              WaveletCoefficient.getLevel(index, maxLevel))*/);
-                return;
-            }
-        }
-        synopsis.addElement(index, appendValue, maxLevel);
-    }
-
-    @Override
-    public ISynopsisBuilder createSynopsisBuilder() throws HyracksDataException {
+    public ISynopsisBuilder createSynopsisBuilder(long numElements) throws HyracksDataException {
         return new SparseWaveletTransformBuilder();
     }
 
-    public class SparseWaveletTransformBuilder implements ISynopsisBuilder {
+    class SparseWaveletTransformBuilder extends AbstractSynopsisBuilder {
         private final Stack<WaveletCoefficient> avgStack;
         private MapObjectPool<WaveletCoefficient, Integer> avgStackObjectPool;
-        private final long domainEnd;
-        private final long domainStart;
-        private final int maxLevel;
         private Long prevPosition;
-        private ArrayTupleBuilder tupleBuilder = new ArrayTupleBuilder(2);
-        private boolean isAntimatterTuple = false;
+        private final WaveletSynopsis synopsis;
+
+        @Override
+        public ISynopsis<? extends ISynopsisElement> getSynopsis() {
+            return synopsis;
+        }
 
         public SparseWaveletTransformBuilder() throws HyracksDataException {
-            if (fields.length > 1) {
-                throw new HyracksDataException("Unable to collect statistics on composite keys");
-            }
-            if (!fieldTypeTraits[fields[0]].isFixedLength() || fieldTypeTraits[fields[0]].getFixedLength() > 9) {
-                throw new HyracksDataException(
-                        "Unable to collect statistics for key field with typeTrait" + fieldTypeTraits[fields[0]]);
-            }
-            domainStart = TypeTraitsDomainUtils.minDomainValue(fieldTypeTraits[fields[0]]);
-            domainEnd = TypeTraitsDomainUtils.maxDomainValue(fieldTypeTraits[fields[0]]);
-            maxLevel = TypeTraitsDomainUtils.maxLevel(fieldTypeTraits[fields[0]]);
+            this.synopsis = new WaveletSynopsis(fieldTypeTrait, size);
 
             avgStack = new Stack<>();
             avgStackObjectPool = new MapObjectPool<WaveletCoefficient, Integer>();
@@ -163,7 +73,7 @@ public class WaveletTransform extends StatisticsCollector {
                     return new WaveletCoefficient(0.0, level, -1);
                 }
             };
-            for (int i = -1; i <= maxLevel; i++) {
+            for (int i = -1; i <= synopsis.getMaxLevel(); i++) {
                 avgStackObjectPool.register(i, waveletFactory);
             }
             //add first dummy average
@@ -171,25 +81,19 @@ public class WaveletTransform extends StatisticsCollector {
             dummyCoeff.setIndex(-1);
             avgStack.push(dummyCoeff);
             prevPosition = null;
-
-            persistWaveletSynopsisMetaData();
         }
 
-        @Override
-        public void setAntimatterTuple(boolean isAntimatter) {
-            this.isAntimatterTuple = isAntimatter;
-        }
-
-        private void persistWaveletSynopsisMetaData() throws HyracksDataException {
-            ICachedPage metaPage = bufferCache.pin(BufferedFileHandle.getDiskPageId(fileId, METADATA_PAGE_ID), false);
-            metaPage.acquireWriteLatch();
-            try {
-                metaPage.getBuffer().putInt(NUM_PAGES_OFFSET, numPages);
-                metaPage.getBuffer().putLong(NUM_ELEMENTS_OFFSET, synopsis.size());
-            } finally {
-                metaPage.releaseWriteLatch(true);
-                bufferCache.unpin(metaPage);
+        // Appends value to the coefficient with given index. If such coefficient is not found creates a new coeff
+        public void apendToElement(long index, double appendValue, int maxLevel) {
+            // TODO: do something better than linear search
+            for (WaveletCoefficient coeff : synopsis) {
+                if (coeff.getKey() == index) {
+                    coeff.setValue(coeff.getValue() + appendValue / WaveletCoefficient
+                            .getNormalizationCoefficient(maxLevel, WaveletCoefficient.getLevel(index, maxLevel)));
+                    return;
+                }
             }
+            synopsis.addElement(index, appendValue, maxLevel);
         }
 
         // Modifies the wavelet coefficients in case when tuple was already transformed
@@ -198,7 +102,7 @@ public class WaveletTransform extends StatisticsCollector {
             long rightCoeffId = topCoeff.getKey();
             for (long i = topCoeff.getLevel(); i > 0; i--) {
                 // update coefficients, corresponding to all subranges having current position as they right end
-                apendToElement(rightCoeffId, (i == 0 ? 1 : -1) * tupleValue / (1l << i), maxLevel);
+                apendToElement(rightCoeffId, (i == 0 ? 1 : -1) * tupleValue / (1l << i), synopsis.getMaxLevel());
                 rightCoeffId = rightCoeffId << 1 | 1;
             }
             // put modified top coefficient back to the stack
@@ -211,18 +115,19 @@ public class WaveletTransform extends StatisticsCollector {
         private WaveletCoefficient moveLevelUp(WaveletCoefficient childCoeff) {
             WaveletCoefficient parentCoeff = avgStackObjectPool.allocate(childCoeff.getLevel() + 1);
             parentCoeff.setValue(childCoeff.getValue() / 2.0);
-            parentCoeff.setIndex(childCoeff.getParentCoeffIndex(domainStart, maxLevel));
+            parentCoeff.setIndex(childCoeff.getParentCoeffIndex(synopsis.getDomainStart(), synopsis.getMaxLevel()));
             return parentCoeff;
         }
 
         // Calculates the position of the next tuple (on level 0) after given wavelet coefficient
         private long getTransformPosition(WaveletCoefficient coeff) {
             if (coeff.getLevel() < 0) {
-                return domainStart;
+                return synopsis.getDomainStart();
             } else if (coeff.getLevel() == 0) {
                 return coeff.getKey() + 1;
             } else {
-                return ((((coeff.getKey() + 1) << (coeff.getLevel() - 1)) - (1l << (maxLevel - 1))) << 1) + domainStart;
+                return ((((coeff.getKey() + 1) << (coeff.getLevel() - 1)) - (1l << (synopsis.getMaxLevel() - 1))) << 1)
+                        + synopsis.getDomainStart();
             }
         }
 
@@ -247,7 +152,7 @@ public class WaveletTransform extends StatisticsCollector {
                     //allocate next level coefficient from objectPool
                     WaveletCoefficient avgCoeff = avgStackObjectPool.allocate(topCoeff.getLevel() + 1);
                     // combine newCoeff and topCoeff by averaging them. Result coeff's level is greater than parent's level by 1
-                    average(topCoeff, newCoeff, domainStart, maxLevel, avgCoeff);
+                    average(topCoeff, newCoeff, synopsis.getDomainStart(), synopsis.getMaxLevel(), avgCoeff);
                     avgStackObjectPool.deallocate(topCoeff.getLevel(), topCoeff);
                     avgStackObjectPool.deallocate(newCoeff.getLevel(), newCoeff);
                     newCoeff = avgCoeff;
@@ -263,11 +168,11 @@ public class WaveletTransform extends StatisticsCollector {
             // 1st part: Upward transform
             WaveletCoefficient newCoeff = moveLevelUp(topCoeff);
             // Move the current top coefficient 1 level up as far as possible (until it will cover current position)
-            while (!newCoeff.covers(tuplePosition, maxLevel, domainStart)
+            while (!newCoeff.covers(tuplePosition, synopsis.getMaxLevel(), synopsis.getDomainStart())
                     && (avgStack.size() > 0 ? avgStack.peek().getLevel() > (newCoeff.getLevel() - 1) : true)
                     && topCoeff.getLevel() >= 0) {
                 synopsis.addElement(newCoeff.getKey(), ((topCoeff.getKey() & 0x01) == 0 ? 1 : -1) * newCoeff.getValue(),
-                        maxLevel);
+                        synopsis.getMaxLevel());
                 topCoeff = newCoeff;
                 newCoeff = moveLevelUp(newCoeff);
             }
@@ -303,18 +208,19 @@ public class WaveletTransform extends StatisticsCollector {
                 }
                 // special case when there is no coeffs on the stack.
                 else {
-                    coeff = avgStackObjectPool.allocate(maxLevel);
+                    coeff = avgStackObjectPool.allocate(synopsis.getMaxLevel());
                     coeff.setValue(0.0);
                     // Starting descent from top coefficient, i.e. the one with index == 1, level == maxLevel
                     coeff.setIndex(1l);
                 }
                 // decrease the coefficient level until it stops covering tuplePosition
-                while (coeff.covers(tuplePosition, maxLevel, domainStart)) {
+                while (coeff.covers(tuplePosition, synopsis.getMaxLevel(), synopsis.getDomainStart())) {
                     avgStackObjectPool.deallocate(coeff.getLevel(), coeff);
                     WaveletCoefficient newCoeff = avgStackObjectPool.allocate(coeff.getLevel() - 1);
                     newCoeff.setValue(0.0);
                     if (newCoeff.getLevel() == 0) {
-                        newCoeff.setIndex(((coeff.getKey() - (1l << (maxLevel - 1))) << 1) + domainStart);
+                        newCoeff.setIndex(((coeff.getKey() - (1l << (synopsis.getMaxLevel() - 1))) << 1)
+                                + synopsis.getDomainStart());
                     } else {
                         newCoeff.setIndex(coeff.getKey() << 1);
                     }
@@ -334,12 +240,12 @@ public class WaveletTransform extends StatisticsCollector {
             if (isAntimatterTuple) {
                 neg = ((ILSMTreeTupleReference) tuple).isAntimatter();
             }
-            long currTuplePosition = fieldValueProvider.getOrdinalValue(tuple.getFieldData(fields[0]),
-                    tuple.getFieldStart(fields[0]));
+            long currTuplePosition = fieldValueProvider.getOrdinalValue(tuple.getFieldData(field),
+                    tuple.getFieldStart(field));
             double currTupleValue = neg ? -1.0 : 1.0;
 
             // check whether tuple with this position was already seen
-            if (prevPosition != null && currTuplePosition == prevPosition) {
+            if (prevPosition != null && prevPosition.equals(currTuplePosition)) {
                 modifyTuple(topCoeff, currTupleValue);
             } else {
                 transformTuple(topCoeff, currTuplePosition, currTupleValue);
@@ -351,42 +257,17 @@ public class WaveletTransform extends StatisticsCollector {
         public void end() throws IndexException, HyracksDataException {
             WaveletCoefficient topCoeff = avgStack.pop();
             if (topCoeff.getKey() > 0) {
-                if (prevPosition == null || prevPosition != domainEnd) {
-                    //complete transform by submitting dummy tuple with the last position avaiable for given domain
-                    transformTuple(topCoeff, domainEnd, 0.0);
+                if (prevPosition == null || prevPosition.equals(synopsis.getDomainEnd())) {
+                    //complete transform by submitting dummy tuple with the last position available for given domain
+                    transformTuple(topCoeff, synopsis.getDomainEnd(), 0.0);
                     topCoeff = avgStack.pop();
                 }
-                //assert(avgStack.size() == 1);
                 // now the transform is complete the top coefficient on the stack is global average, i.e. coefficient with index==0
-                synopsis.addElement(0l, topCoeff.getValue(), maxLevel);
+                synopsis.addElement(0l, topCoeff.getValue(), synopsis.getMaxLevel());
 
-                persistStatistics();
-            }
-        }
-
-        @SuppressWarnings("unchecked")
-        private void persistStatistics() throws HyracksDataException {
-            synopsis.sortOnKey();
-            Iterator<Map.Entry<Long, Double>> it = synopsis.iterator();
-            int currentPageId = 1;
-            while (currentPageId <= numPages) {
-                ICachedPage page = bufferCache.pin(BufferedFileHandle.getDiskPageId(fileId, currentPageId), true);
-                ByteBuffer pageBuffer = page.getBuffer();
-                page.acquireWriteLatch();
-                try {
-                    while (it.hasNext() && (pageBuffer.limit() - pageBuffer.position()) >= SYNOPSIS_KEY_SIZE
-                            + SYNOPSIS_VALUE_SIZE) {
-                        tupleBuilder.reset();
-                        Map.Entry<Long, Double> entry = it.next();
-                        tupleBuilder.addField(synopsisKeySerde, entry.getKey());
-                        tupleBuilder.addField(synopsisValueSerde, entry.getValue());
-                        pageBuffer.put(tupleBuilder.getByteArray(), 0, tupleBuilder.getSize());
-                    }
-                } finally {
-                    page.releaseWriteLatch(true);
-                    bufferCache.unpin(page);
-                }
-                ++currentPageId;
+                synopsis.sortOnKey();
+                //TODO:for now disable local persistence of the stats
+                //persistSynopsis(synopsis);
             }
         }
 

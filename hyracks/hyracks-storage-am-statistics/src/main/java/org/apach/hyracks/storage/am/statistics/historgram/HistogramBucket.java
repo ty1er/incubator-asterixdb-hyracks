@@ -16,13 +16,37 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apach.hyracks.storage.am.statistics.historgram;
 
-package org.apache.hyracks.storage.am.common.api;
+import org.apache.hyracks.storage.am.common.api.ISynopsisElement;
 
-public interface ISynopsisBuilder extends IIndexBulkLoader {
+public class HistogramBucket implements ISynopsisElement {
 
-    ISynopsis<? extends ISynopsisElement> getSynopsis();
+    private static final long serialVersionUID = 1L;
 
-    void setAntimatterTuple(boolean isAntimatter);
+    private long rightBorder;
+    private double value;
 
+    public HistogramBucket(long border, double value) {
+        this.rightBorder = border;
+        this.value = value;
+    }
+
+    public void setRightBorder(long rightBorder) {
+        this.rightBorder = rightBorder;
+    }
+
+    public void appendToValue(double appendedValue) {
+        this.value += appendedValue;
+    }
+
+    @Override
+    public Long getKey() {
+        return rightBorder;
+    }
+
+    @Override
+    public Double getValue() {
+        return value;
+    }
 }

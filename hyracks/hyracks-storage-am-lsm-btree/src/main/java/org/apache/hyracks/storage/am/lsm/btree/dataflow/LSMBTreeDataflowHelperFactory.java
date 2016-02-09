@@ -25,6 +25,7 @@ import org.apache.hyracks.api.context.IHyracksTaskContext;
 import org.apache.hyracks.api.dataflow.value.IBinaryComparatorFactory;
 import org.apache.hyracks.api.dataflow.value.ITypeTraits;
 import org.apache.hyracks.storage.am.common.api.IOrdinalPrimitiveValueProviderFactory;
+import org.apache.hyracks.storage.am.common.api.ISynopsis.SynopsisType;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexOperatorDescriptor;
 import org.apache.hyracks.storage.am.common.dataflow.IndexDataflowHelper;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperationCallbackFactory;
@@ -44,11 +45,11 @@ public class LSMBTreeDataflowHelperFactory extends AbstractLSMBTreeDataflowHelpe
             ILSMOperationTrackerProvider opTrackerFactory, ILSMIOOperationSchedulerProvider ioSchedulerProvider,
             ILSMIOOperationCallbackFactory ioOpCallbackFactory, double bloomFilterFalsePositiveRate,
             boolean needKeyDupCheck, ITypeTraits[] filterTypeTraits, IBinaryComparatorFactory[] filterCmpFactories,
-            int[] btreeFields, int[] filterFields, boolean durable, boolean collectStatistics, int statsSize,
+            int[] btreeFields, int[] filterFields, boolean durable, SynopsisType statsType, int statsSize,
             ITypeTraits[] statsFieldTypeTraits, IOrdinalPrimitiveValueProviderFactory statsFieldValueProviderFactory) {
         super(virtualBufferCacheProvider, mergePolicyFactory, mergePolicyProperties, opTrackerFactory,
                 ioSchedulerProvider, ioOpCallbackFactory, bloomFilterFalsePositiveRate, filterTypeTraits,
-                filterCmpFactories, filterFields, durable, collectStatistics, statsSize, statsFieldTypeTraits,
+                filterCmpFactories, filterFields, durable, statsType, statsSize, statsFieldTypeTraits,
                 statsFieldValueProviderFactory);
         this.needKeyDupCheck = needKeyDupCheck;
         this.btreeFields = btreeFields;
@@ -61,7 +62,7 @@ public class LSMBTreeDataflowHelperFactory extends AbstractLSMBTreeDataflowHelpe
                 virtualBufferCacheProvider.getVirtualBufferCaches(ctx), bloomFilterFalsePositiveRate,
                 mergePolicyFactory.createMergePolicy(mergePolicyProperties, ctx), opTrackerFactory,
                 ioSchedulerProvider.getIOScheduler(ctx), ioOpCallbackFactory, needKeyDupCheck, filterTypeTraits,
-                filterCmpFactories, btreeFields, filterFields, durable, collectStatistics, statsSize,
-                statsFieldTypeTraits, statsFieldValueProviderFactory);
+                filterCmpFactories, btreeFields, filterFields, durable, statsType, statsSize, statsFieldTypeTraits,
+                statsFieldValueProviderFactory);
     }
 }

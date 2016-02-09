@@ -17,8 +17,31 @@
  * under the License.
  */
 
-package org.apache.hyracks.storage.am.statistics.common;
+package org.apache.hyracks.api.util;
 
-public enum SynopsisType {
-    Wavelet
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
+public class ExperimentProfilerUtils {
+    public static void printToOutputFile(StringBuffer sb, FileOutputStream fos) throws IllegalStateException,
+            IOException {
+        fos.write(sb.toString().getBytes());
+    }
+
+    public static FileOutputStream openOutputFile(String filepath) throws IOException {
+        File file = new File(filepath);
+        if (file.exists()) {
+            file.delete();
+        }
+        file.createNewFile();
+        return new FileOutputStream(file);
+    }
+
+    public static void closeOutputFile(OutputStream os) throws IOException {
+        os.flush();
+        os.close();
+        os = null;
+    }
 }

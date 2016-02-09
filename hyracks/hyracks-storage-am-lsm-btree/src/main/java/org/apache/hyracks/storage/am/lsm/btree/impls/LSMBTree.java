@@ -51,6 +51,7 @@ import org.apache.hyracks.storage.am.common.api.IModificationOperationCallback;
 import org.apache.hyracks.storage.am.common.api.ISearchOperationCallback;
 import org.apache.hyracks.storage.am.common.api.ISearchPredicate;
 import org.apache.hyracks.storage.am.common.api.IStatisticsMessageManager;
+import org.apache.hyracks.storage.am.common.api.ISynopsis.SynopsisType;
 import org.apache.hyracks.storage.am.common.api.ISynopsisBuilder;
 import org.apache.hyracks.storage.am.common.api.ITreeIndex;
 import org.apache.hyracks.storage.am.common.api.ITreeIndexCursor;
@@ -88,7 +89,7 @@ import org.apache.hyracks.storage.am.lsm.common.impls.LSMIndexSearchCursor;
 import org.apache.hyracks.storage.am.lsm.common.impls.LSMTreeIndexAccessor;
 import org.apache.hyracks.storage.am.lsm.common.impls.TreeIndexFactory;
 import org.apache.hyracks.storage.am.statistics.common.StatisticsCollector;
-import org.apache.hyracks.storage.am.statistics.common.StatisticsFactory;
+import org.apache.hyracks.storage.am.statistics.common.StatisticsCollectorFactory;
 import org.apache.hyracks.storage.common.buffercache.IBufferCache;
 import org.apache.hyracks.storage.common.file.IFileMapProvider;
 
@@ -106,7 +107,7 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
     protected final ITreeIndexFrameFactory insertLeafFrameFactory;
     protected final ITreeIndexFrameFactory deleteLeafFrameFactory;
     protected final IBinaryComparatorFactory[] cmpFactories;
-    protected boolean collectStatistics;
+    protected SynopsisType statsType;
     protected IStatisticsMessageManager statisticsManager;
 
     private final boolean needKeyDupCheck;
@@ -116,12 +117,12 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
             ITreeIndexFrameFactory insertLeafFrameFactory, ITreeIndexFrameFactory deleteLeafFrameFactory,
             ILSMIndexFileManager fileManager, TreeIndexFactory<BTree> diskBTreeFactory,
             TreeIndexFactory<BTree> bulkLoadBTreeFactory, BloomFilterFactory bloomFilterFactory,
-            ILSMComponentFilterFactory filterFactory, StatisticsFactory statisticsFactory,
+            ILSMComponentFilterFactory filterFactory, StatisticsCollectorFactory statisticsFactory,
             ILSMComponentFilterFrameFactory filterFrameFactory, LSMComponentFilterManager filterManager,
             double bloomFilterFalsePositiveRate, IFileMapProvider diskFileMapProvider, int fieldCount,
             IBinaryComparatorFactory[] cmpFactories, ILSMMergePolicy mergePolicy, ILSMOperationTracker opTracker,
             ILSMIOOperationScheduler ioScheduler, ILSMIOOperationCallback ioOpCallback, boolean needKeyDupCheck,
-            int[] btreeFields, int[] filterFields, boolean durable, boolean collectStatistics,
+            int[] btreeFields, int[] filterFields, boolean durable, SynopsisType statsType,
             IStatisticsMessageManager statsManager) {
         super(virtualBufferCaches, diskBTreeFactory.getBufferCache(), fileManager, diskFileMapProvider,
                 bloomFilterFalsePositiveRate, mergePolicy, opTracker, ioScheduler, ioOpCallback, filterFrameFactory,
@@ -148,32 +149,8 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
                 filterFactory, statisticsFactory);
         this.needKeyDupCheck = needKeyDupCheck;
         this.btreeFields = btreeFields;
-        this.collectStatistics = collectStatistics;
+        this.statsType = statsType;
 
-    }
-
-    // Without memory components
-    public LSMBTree(ITreeIndexFrameFactory interiorFrameFactory, ITreeIndexFrameFactory insertLeafFrameFactory,
-            ITreeIndexFrameFactory deleteLeafFrameFactory, ILSMIndexFileManager fileManager,
-            TreeIndexFactory<BTree> diskBTreeFactory, TreeIndexFactory<BTree> bulkLoadBTreeFactory,
-            BloomFilterFactory bloomFilterFactory, StatisticsFactory statisticsFactory,
-            double bloomFilterFalsePositiveRate, IFileMapProvider diskFileMapProvider, int fieldCount,
-            IBinaryComparatorFactory[] cmpFactories, ILSMMergePolicy mergePolicy, ILSMOperationTracker opTracker,
-            ILSMIOOperationScheduler ioScheduler, ILSMIOOperationCallback ioOpCallback, boolean needKeyDupCheck,
-            boolean durable, boolean collectStatistics, IStatisticsMessageManager statsManager) {
-        super(diskBTreeFactory.getBufferCache(), fileManager, diskFileMapProvider, bloomFilterFalsePositiveRate,
-                mergePolicy, opTracker, ioScheduler, ioOpCallback, durable);
-        this.insertLeafFrameFactory = insertLeafFrameFactory;
-        this.deleteLeafFrameFactory = deleteLeafFrameFactory;
-        this.cmpFactories = cmpFactories;
-        this.statisticsManager = statsManager;
-        componentFactory = new LSMBTreeDiskComponentFactory(diskBTreeFactory, bloomFilterFactory, null,
-                statisticsFactory);
-        bulkLoadComponentFactory = new LSMBTreeDiskComponentFactory(bulkLoadBTreeFactory, bloomFilterFactory, null,
-                statisticsFactory);
-        this.needKeyDupCheck = needKeyDupCheck;
-        this.btreeFields = null;
-        this.collectStatistics = collectStatistics;
     }
 
     @Override
@@ -206,7 +183,7 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
                 component = createDiskComponent(componentFactory,
                         lsmComonentFileReference.getInsertIndexFileReference(),
                         lsmComonentFileReference.getBloomFilterFileReference(),
-                        lsmComonentFileReference.getStatisticsFileReference(), false, false);
+                        lsmComonentFileReference.getStatisticsFileReference(), false, null);
             } catch (IndexException e) {
                 throw new HyracksDataException(e);
             }
@@ -239,7 +216,7 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
             BloomFilter bloomFilter = component.getBloomFilter();
             btree.deactivateCloseHandle();
             bloomFilter.deactivate();
-            if (collectStatistics) {
+            if (statsType != null) {
                 component.getStatisticsCollector().deactivate();
             }
         }
@@ -285,7 +262,7 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
             component.getBTree().destroy();
             component.getBloomFilter().deactivate();
             component.getBloomFilter().destroy();
-            if (collectStatistics) {
+            if (statsType != null) {
                 StatisticsCollector stats = component.getStatisticsCollector();
                 stats.deactivate();
                 stats.destroy();
@@ -480,20 +457,20 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
                 bloomFilterFalsePositiveRate);
 
         LSMBTreeDiskComponent component = createDiskComponent(componentFactory, flushOp.getBTreeFlushTarget(),
-                flushOp.getBloomFilterTarget(), flushOp.getStatisticsTarget(), true, collectStatistics);
+                flushOp.getBloomFilterTarget(), flushOp.getStatisticsTarget(), true, statsType);
         IIndexBulkLoader bulkLoader = component.getBTree().createBulkLoader(1.0f, false, numElements, false, true);
         IIndexBulkLoader builder = component.getBloomFilter().createBuilder(numElements, bloomFilterSpec.getNumHashes(),
                 bloomFilterSpec.getNumBucketsPerElements());
         ISynopsisBuilder statsBuilder = null;
         try {
-            if (collectStatistics) {
-                statsBuilder = component.getStatisticsCollector().createSynopsisBuilder();
+            if (statsType != null) {
+                statsBuilder = component.getStatisticsCollector().createSynopsisBuilder(numElements);
             }
         } catch (HyracksDataException e) {
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.fine("Statistics collection failed: " + e.getMessage());
             }
-            collectStatistics = false;
+            statsType = null;
         }
 
         IIndexCursor scanCursor = accessor.createSearchCursor(false);
@@ -504,7 +481,7 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
                 scanCursor.next();
                 builder.add(tupleRef);
                 bulkLoader.add(tupleRef);
-                if (collectStatistics) {
+                if (statsType != null) {
                     statsBuilder.setAntimatterTuple(tupleRef.isAntimatter());
                     statsBuilder.add(tupleRef);
                 }
@@ -512,9 +489,9 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
         } finally {
             scanCursor.close();
             builder.end();
-            if (collectStatistics) {
+            if (statsType != null) {
                 statsBuilder.end();
-                statisticsManager.sendFlushStatistics(component.getStatisticsCollector().getSynopsis(),
+                statisticsManager.sendFlushStatistics(statsBuilder.getSynopsis(),
                         flushOp.getStatisticsTarget().getFile().toPath());
             }
         }
@@ -578,7 +555,7 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
         BloomFilterSpecification bloomFilterSpec = BloomCalculations.computeBloomSpec(maxBucketsPerElement,
                 bloomFilterFalsePositiveRate);
         LSMBTreeDiskComponent mergedComponent = createDiskComponent(componentFactory, mergeOp.getBTreeMergeTarget(),
-                mergeOp.getBloomFilterTarget(), mergeOp.getStatisticsMergeTarget(), true, collectStatistics);
+                mergeOp.getBloomFilterTarget(), mergeOp.getStatisticsMergeTarget(), true, statsType);
 
         IIndexBulkLoader bulkLoader = mergedComponent.getBTree().createBulkLoader(1.0f, false, numElements, false,
                 true);
@@ -586,14 +563,14 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
                 bloomFilterSpec.getNumHashes(), bloomFilterSpec.getNumBucketsPerElements());
         ISynopsisBuilder statsBuilder = null;
         try {
-            if (collectStatistics) {
-                statsBuilder = mergedComponent.getStatisticsCollector().createSynopsisBuilder();
+            if (statsType != null) {
+                statsBuilder = mergedComponent.getStatisticsCollector().createSynopsisBuilder(numElements);
             }
         } catch (HyracksDataException e) {
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.fine("Statistics collection failed: " + e.getMessage());
             }
-            collectStatistics = false;
+            statsType = null;
         }
         try {
             while (cursor.hasNext()) {
@@ -601,7 +578,7 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
                 LSMBTreeTupleReference frameTuple = (LSMBTreeTupleReference) cursor.getTuple();
                 bloomFilterBuilder.add(frameTuple);
                 bulkLoader.add(frameTuple);
-                if (collectStatistics) {
+                if (statsType != null) {
                     statsBuilder.setAntimatterTuple(frameTuple.isAntimatter());
                     statsBuilder.add(frameTuple);
                 }
@@ -609,9 +586,9 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
         } finally {
             cursor.close();
             bloomFilterBuilder.end();
-            if (collectStatistics) {
+            if (statsType != null) {
                 statsBuilder.end();
-                statisticsManager.sendMergeStatistics(mergedComponent.getStatisticsCollector().getSynopsis(),
+                statisticsManager.sendMergeStatistics(statsBuilder.getSynopsis(),
                         mergeOp.getStatisticsMergeTarget().getFile().toPath(), mergeComponentPaths);
             }
         }
@@ -632,11 +609,11 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
 
     protected LSMBTreeDiskComponent createDiskComponent(LSMBTreeDiskComponentFactory factory,
             FileReference btreeFileRef, FileReference bloomFilterFileRef, FileReference statisticsFileReference,
-            boolean createComponent, boolean createStatistics) throws HyracksDataException, IndexException {
+            boolean createComponent, SynopsisType statsType) throws HyracksDataException, IndexException {
         // Create new BTree instance.
         LSMBTreeDiskComponent component = (LSMBTreeDiskComponent) factory.createLSMComponentInstance(
                 new LSMComponentFileReferences(btreeFileRef, null, bloomFilterFileRef, statisticsFileReference));
-        if (createComponent && createStatistics) {
+        if (createComponent && statsType != null) {
             component.getStatisticsCollector().create();
         }
         // BTree will be closed during cleanup of merge().
@@ -644,7 +621,7 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
             component.getBTree().activate();
         }
         component.getBloomFilter().activate();
-        if (createStatistics) {
+        if (statsType != null) {
             component.getStatisticsCollector().activate();
         }
         if (component.getLSMComponentFilter() != null && !createComponent) {
@@ -667,7 +644,7 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
         LSMComponentFileReferences componentFileRefs = fileManager.getRelFlushFileReference();
         return createDiskComponent(bulkLoadComponentFactory, componentFileRefs.getInsertIndexFileReference(),
                 componentFileRefs.getBloomFilterFileReference(), componentFileRefs.getStatisticsFileReference(), true,
-                collectStatistics);
+                statsType);
     }
 
     @Override
@@ -676,7 +653,7 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
         // bloom filter must be always done first.
         LSMBTreeDiskComponent component = (LSMBTreeDiskComponent) lsmComponent;
         markAsValidInternal(component.getBTree().getBufferCache(), component.getBloomFilter());
-        if (collectStatistics) {
+        if (statsType != null) {
             component.getBTree().getBufferCache().force(component.getStatisticsCollector().getFileId(), true);
         }
         markAsValidInternal(component.getBTree());
@@ -713,15 +690,15 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
             bloomFilterBuilder = ((AbstractDiskLSMComponent) component).getBloomFilter().createBuilder(numElementsHint,
                     bloomFilterSpec.getNumHashes(), bloomFilterSpec.getNumBucketsPerElements());
             try {
-                if (collectStatistics) {
+                if (statsType != null) {
                     statisticsBuilder = ((LSMBTreeDiskComponent) component).getStatisticsCollector()
-                            .createSynopsisBuilder();
+                            .createSynopsisBuilder(numElementsHint);
                 }
             } catch (HyracksDataException e) {
                 if (LOGGER.isLoggable(Level.FINE)) {
                     LOGGER.fine("Statistics collection failed: " + e.getMessage());
                 }
-                collectStatistics = false;
+                statsType = null;
             }
 
             if (filterFields != null) {
@@ -748,7 +725,7 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
 
                 bulkLoader.add(t);
                 bloomFilterBuilder.add(t);
-                if (collectStatistics) {
+                if (statsType != null) {
                     statisticsBuilder.add(t);
                 }
 
@@ -796,10 +773,9 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
                             ((LSMBTreeDiskComponent) component).getBTree());
                 }
 
-                if (collectStatistics) {
+                if (statsType != null) {
                     statisticsBuilder.end();
-                    statisticsManager.sendFlushStatistics(
-                            ((LSMBTreeDiskComponent) component).getStatisticsCollector().getSynopsis(),
+                    statisticsManager.sendFlushStatistics(statisticsBuilder.getSynopsis(),
                             ((LSMBTreeDiskComponent) component).getBTree().getFileReference().getFile().toPath());
                 }
                 bulkLoader.end();

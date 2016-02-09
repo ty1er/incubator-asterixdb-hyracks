@@ -25,9 +25,10 @@ import org.apache.hyracks.api.exceptions.HyracksDataException;
 
 public interface IStatisticsMessageManager {
 
-    void sendFlushStatistics(ISynopsis stats, Path flushCompomentPath) throws HyracksDataException;
-
-    void sendMergeStatistics(ISynopsis stats, Path componentPath, List<Path> mergeCompomentIds)
+    void sendFlushStatistics(ISynopsis<? extends ISynopsisElement> stats, Path flushCompomentPath)
             throws HyracksDataException;
+
+    void sendMergeStatistics(ISynopsis<? extends ISynopsisElement> stats, Path componentPath,
+            List<Path> mergeCompomentIds) throws HyracksDataException;
 
 }

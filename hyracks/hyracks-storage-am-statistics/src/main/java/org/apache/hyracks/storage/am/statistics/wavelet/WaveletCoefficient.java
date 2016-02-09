@@ -21,13 +21,12 @@ package org.apache.hyracks.storage.am.statistics.wavelet;
 
 import java.io.Serializable;
 import java.util.Comparator;
-import java.util.Map;
 import java.util.Objects;
 
 import org.apache.hyracks.data.std.primitive.DoublePointable;
+import org.apache.hyracks.storage.am.common.api.ISynopsisElement;
 
-public class WaveletCoefficient
-        implements Map.Entry<Long, Double>, Serializable /*implements Comparable<WaveletCoefficient>*/ {
+public class WaveletCoefficient implements ISynopsisElement {
 
     private static final long serialVersionUID = 1L;
 
@@ -74,7 +73,6 @@ public class WaveletCoefficient
         return level;
     }
 
-    @Override
     public Double setValue(Double value) {
         Double oldValue = this.value;
         this.value = value;

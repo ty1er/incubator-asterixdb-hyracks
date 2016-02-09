@@ -19,6 +19,7 @@
 package org.apache.hyracks.storage.am.lsm.btree.impls;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -40,6 +41,7 @@ import org.apache.hyracks.storage.am.common.api.IModificationOperationCallback;
 import org.apache.hyracks.storage.am.common.api.ISearchOperationCallback;
 import org.apache.hyracks.storage.am.common.api.ISearchPredicate;
 import org.apache.hyracks.storage.am.common.api.IStatisticsMessageManager;
+import org.apache.hyracks.storage.am.common.api.ISynopsis.SynopsisType;
 import org.apache.hyracks.storage.am.common.api.ITreeIndexCursor;
 import org.apache.hyracks.storage.am.common.api.ITreeIndexFrameFactory;
 import org.apache.hyracks.storage.am.common.api.ITreeIndexTupleWriterFactory;
@@ -65,8 +67,8 @@ import org.apache.hyracks.storage.am.lsm.common.impls.BlockingIOOperationCallbac
 import org.apache.hyracks.storage.am.lsm.common.impls.ExternalIndexHarness;
 import org.apache.hyracks.storage.am.lsm.common.impls.LSMComponentFileReferences;
 import org.apache.hyracks.storage.am.lsm.common.impls.TreeIndexFactory;
-import org.apache.hyracks.storage.am.statistics.common.StatisticsFactory;
 import org.apache.hyracks.storage.am.statistics.common.StatisticsCollector;
+import org.apache.hyracks.storage.am.statistics.common.StatisticsCollectorFactory;
 import org.apache.hyracks.storage.common.file.IFileMapProvider;
 
 /**
@@ -95,16 +97,16 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
     public ExternalBTree(ITreeIndexFrameFactory interiorFrameFactory, ITreeIndexFrameFactory insertLeafFrameFactory,
             ITreeIndexFrameFactory deleteLeafFrameFactory, ILSMIndexFileManager fileManager,
             TreeIndexFactory<BTree> diskBTreeFactory, TreeIndexFactory<BTree> bulkLoadBTreeFactory,
-            BloomFilterFactory bloomFilterFactory, StatisticsFactory statisticsFactory,
+            BloomFilterFactory bloomFilterFactory, StatisticsCollectorFactory statisticsFactory,
             double bloomFilterFalsePositiveRate, IFileMapProvider diskFileMapProvider, int fieldCount,
             IBinaryComparatorFactory[] cmpFactories, ILSMMergePolicy mergePolicy, ILSMOperationTracker opTracker,
             ILSMIOOperationScheduler ioScheduler, ILSMIOOperationCallback ioOpCallback,
-            TreeIndexFactory<BTree> transactionBTreeFactory, int version, boolean durable, boolean collectStatistics,
+            TreeIndexFactory<BTree> transactionBTreeFactory, int version, boolean durable, SynopsisType statsType,
             IStatisticsMessageManager statsManager) {
-        super(interiorFrameFactory, insertLeafFrameFactory, deleteLeafFrameFactory, fileManager, diskBTreeFactory,
-                bulkLoadBTreeFactory, bloomFilterFactory, statisticsFactory, bloomFilterFalsePositiveRate,
-                diskFileMapProvider, fieldCount, cmpFactories, mergePolicy, opTracker, ioScheduler, ioOpCallback, false,
-                durable, collectStatistics, statsManager);
+        super(Collections.emptyList(), interiorFrameFactory, insertLeafFrameFactory, deleteLeafFrameFactory,
+                fileManager, diskBTreeFactory, bulkLoadBTreeFactory, bloomFilterFactory, null, statisticsFactory, null,
+                null, bloomFilterFalsePositiveRate, diskFileMapProvider, fieldCount, cmpFactories, mergePolicy,
+                opTracker, ioScheduler, ioOpCallback, false, null, null, durable, statsType, statsManager);
         this.transactionComponentFactory = new LSMBTreeDiskComponentFactory(transactionBTreeFactory, bloomFilterFactory,
                 null, null);
         this.secondDiskComponents = new LinkedList<ILSMComponent>();
@@ -123,7 +125,7 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
         }
         return createDiskComponent(transactionComponentFactory, componentFileRefs.getInsertIndexFileReference(),
                 componentFileRefs.getBloomFilterFileReference(), componentFileRefs.getStatisticsFileReference(), true,
-                collectStatistics);
+                statsType);
     }
 
     // The subsume merged components is overridden to account for:
@@ -272,7 +274,7 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
                     component = createDiskComponent(componentFactory,
                             lsmComonentFileReference.getInsertIndexFileReference(),
                             lsmComonentFileReference.getBloomFilterFileReference(),
-                            lsmComonentFileReference.getStatisticsFileReference(), false, false);
+                            lsmComonentFileReference.getStatisticsFileReference(), false, statsType);
                 } catch (IndexException e) {
                     throw new HyracksDataException(e);
                 }
@@ -725,7 +727,7 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
         if (componentFileReferences != null) {
             component = createDiskComponent(componentFactory, componentFileReferences.getInsertIndexFileReference(),
                     componentFileReferences.getBloomFilterFileReference(),
-                    componentFileReferences.getStatisticsFileReference(), false, false);
+                    componentFileReferences.getStatisticsFileReference(), false, statsType);
         }
         ((ExternalIndexHarness) lsmHarness).addTransactionComponents(component);
     }

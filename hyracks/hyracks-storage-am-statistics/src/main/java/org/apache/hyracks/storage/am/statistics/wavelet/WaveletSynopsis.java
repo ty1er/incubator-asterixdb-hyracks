@@ -1,56 +1,53 @@
 package org.apache.hyracks.storage.am.statistics.wavelet;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
 import org.apache.commons.collections4.iterators.PeekingIterator;
+import org.apache.hyracks.api.dataflow.value.ITypeTraits;
+import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.storage.am.common.api.ISynopsis;
+import org.apache.hyracks.storage.am.common.api.ISynopsisElement;
+import org.apache.hyracks.storage.am.statistics.common.AbstractSynopsis;
 
-public class WaveletSynopsis implements ISynopsis, Serializable {
+public class WaveletSynopsis extends AbstractSynopsis<WaveletCoefficient> {
 
     private static final long serialVersionUID = 1L;
 
-    private Collection<? extends Map.Entry<Long, Double>> coefficients;
-    private final int threshold;
+    private Collection<WaveletCoefficient> coefficients;
 
-    public WaveletSynopsis(Collection<WaveletCoefficient> coefficients) {
+    public WaveletSynopsis(ITypeTraits keyTypeTraits, Collection<WaveletCoefficient> coefficients, int size)
+            throws HyracksDataException {
+        super(keyTypeTraits, size);
         this.coefficients = coefficients;
-        this.threshold = coefficients.size();
     }
 
-    public WaveletSynopsis(int threshold) {
-        this.coefficients = new PriorityQueue<WaveletCoefficient>(threshold, new WaveletCoefficient.ValueComparator());
-        this.threshold = threshold;
+    public WaveletSynopsis(ITypeTraits keyTypeTraits, int size) throws HyracksDataException {
+        this(keyTypeTraits, new PriorityQueue<WaveletCoefficient>(size, new WaveletCoefficient.ValueComparator()),
+                size);
     }
 
     @Override
-    public int size() {
-        return threshold;
+    public SynopsisType getType() {
+        return SynopsisType.Wavelet;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public Iterator<Entry<Long, Double>> iterator() {
-        Iterator<? extends Entry<Long, Double>> it = coefficients.iterator();
-        return ((Iterator<Entry<Long, Double>>) it);
+    public Iterator<WaveletCoefficient> iterator() {
+        return coefficients.iterator();
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
     // Adds a new coefficient to the transform, subject to thresholding
     public void addElement(long index, double value, int maxLevel) {
         WaveletCoefficient newCoeff;
-        if (coefficients.size() < threshold) {
+        if (coefficients.size() < size) {
             newCoeff = new WaveletCoefficient(value / WaveletCoefficient.getNormalizationCoefficient(maxLevel,
                     WaveletCoefficient.getLevel(index, maxLevel)), -1, index);
         } else {
@@ -58,27 +55,29 @@ public class WaveletSynopsis implements ISynopsis, Serializable {
             newCoeff.setValue(value);
             newCoeff.setIndex(index);
         }
-        ((Collection<WaveletCoefficient>) coefficients).add(newCoeff);
+        coefficients.add(newCoeff);
     }
 
     public void sortOnKey() {
         // sorting coefficients according their indices to enable fast binary search
-        List<WaveletCoefficient> sortedCoefficients = new ArrayList<>((Collection<WaveletCoefficient>) coefficients);
+        List<WaveletCoefficient> sortedCoefficients = new ArrayList<>(coefficients);
         Collections.sort(sortedCoefficients, new WaveletCoefficient.KeyComparator());
         coefficients = sortedCoefficients;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     // Method implements naive synopsis merge, which just picks largest coefficients from the synopsis sum
-    public void merge(ISynopsis mergedSynopsis) {
-        Collection<? extends Map.Entry<Long, Double>> newCoefficients = new PriorityQueue<WaveletCoefficient>(
+    public void merge(ISynopsis<WaveletCoefficient> mergedSynopsis) {
+        if (mergedSynopsis.getType() != SynopsisType.Wavelet) {
+            return;
+        }
+        Collection<WaveletCoefficient> newCoefficients = new PriorityQueue<WaveletCoefficient>(
                 new WaveletCoefficient.ValueComparator());
         //method assumes that the synopsis coefficients are already sorted on key
-        Iterator<Map.Entry<Long, Double>> mergedIt = mergedSynopsis.iterator();
-        Iterator<Map.Entry<Long, Double>> it = iterator();
-        Map.Entry<Long, Double> mergedEntry = null;
-        Map.Entry<Long, Double> entry = null;
+        Iterator<WaveletCoefficient> mergedIt = mergedSynopsis.iterator();
+        Iterator<WaveletCoefficient> it = iterator();
+        WaveletCoefficient mergedEntry = null;
+        WaveletCoefficient entry = null;
         if (mergedIt.hasNext()) {
             mergedEntry = mergedIt.next();
         }
@@ -88,7 +87,7 @@ public class WaveletSynopsis implements ISynopsis, Serializable {
         while (mergedEntry != null || entry != null) {
             if ((mergedEntry != null && entry == null)
                     || (mergedEntry != null && entry != null && mergedEntry.getKey() < entry.getKey())) {
-                ((Collection<Map.Entry<Long, Double>>) newCoefficients).add(mergedEntry);
+                newCoefficients.add(mergedEntry);
                 if (mergedIt.hasNext()) {
                     mergedEntry = mergedIt.next();
                 } else {
@@ -96,14 +95,14 @@ public class WaveletSynopsis implements ISynopsis, Serializable {
                 }
             } else if ((entry != null && mergedEntry == null)
                     || (mergedEntry != null && entry != null && entry.getKey() < mergedEntry.getKey())) {
-                ((Collection<Map.Entry<Long, Double>>) newCoefficients).add(entry);
+                newCoefficients.add(entry);
                 if (it.hasNext()) {
                     entry = it.next();
                 } else {
                     entry = null;
                 }
             } else {
-                ((Collection<WaveletCoefficient>) newCoefficients)
+                newCoefficients
                         .add(new WaveletCoefficient(entry.getValue() + mergedEntry.getValue(), -1, entry.getKey()));
                 if (mergedIt.hasNext()) {
                     mergedEntry = mergedIt.next();
@@ -121,15 +120,8 @@ public class WaveletSynopsis implements ISynopsis, Serializable {
         sortOnKey();
     }
 
-    @Override
-    public void merge(List<ISynopsis> synopsisList) {
-        for (ISynopsis s : synopsisList) {
-            merge(s);
-        }
-    }
-
-    private Double findCoeffValue(PeekingIterator<? extends Entry<Long, Double>> coeffIt, Long coeffIdx) {
-        Entry<Long, Double> curr;
+    private Double findCoeffValue(PeekingIterator<? extends ISynopsisElement> coeffIt, Long coeffIdx) {
+        ISynopsisElement curr;
         try {
             curr = coeffIt.element();
             while (curr.getKey() < coeffIdx) {
@@ -147,9 +139,9 @@ public class WaveletSynopsis implements ISynopsis, Serializable {
     }
 
     @Override
-    public Double pointQuery(Long position, int maxLevel) {
-        Long startCoeffIdx = (1l << (maxLevel - 1)) + (position >> 1);
-        PeekingIterator<? extends Entry<Long, Double>> it = new PeekingIterator<>(coefficients.iterator());
+    public Double pointQuery(Long position) {
+        Long startCoeffIdx = (1l << (maxLevel - 1)) + ((position - domainStart) >> 1);
+        PeekingIterator<? extends ISynopsisElement> it = new PeekingIterator<>(coefficients.iterator());
         //init with main average
         Double value = findCoeffValue(it, 0l);
         //topmost wavelet coefficient
@@ -158,7 +150,7 @@ public class WaveletSynopsis implements ISynopsis, Serializable {
         for (int i = maxLevel - 1; i >= 0; i--) {
             if (i == 0) {
                 //on the last level use position to calculate sign of the coefficient
-                coeffIdx = position;
+                coeffIdx = position - domainStart;
             } else {
                 coeffIdx = startCoeffIdx >> (i - 1);
             }
@@ -169,12 +161,12 @@ public class WaveletSynopsis implements ISynopsis, Serializable {
     }
 
     @Override
-    public Double rangeQuery(Long startPosition, Long endPosition, int maxLevel) {
+    public Double rangeQuery(Long startPosition, Long endPosition) {
         Double value = 0.0;
-        PeekingIterator<? extends Entry<Long, Double>> it = new PeekingIterator<>(coefficients.iterator());
+        PeekingIterator<? extends ISynopsisElement> it = new PeekingIterator<>(coefficients.iterator());
         Double mainAvg = findCoeffValue(it, 0l);
         List<DyadicTupleRange> workingSet = new ArrayList<>();
-        workingSet.add(new DyadicTupleRange(startPosition, endPosition, mainAvg));
+        workingSet.add(new DyadicTupleRange(startPosition - domainStart, endPosition - domainStart, mainAvg));
         int level = maxLevel;
         while (!workingSet.isEmpty()) {
             ListIterator<DyadicTupleRange> rangeIt = workingSet.listIterator();

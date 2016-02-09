@@ -28,17 +28,17 @@ import org.apache.hyracks.storage.am.lsm.common.api.ILSMComponentFactory;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMComponentFilterFactory;
 import org.apache.hyracks.storage.am.lsm.common.impls.LSMComponentFileReferences;
 import org.apache.hyracks.storage.am.lsm.common.impls.TreeIndexFactory;
-import org.apache.hyracks.storage.am.statistics.common.StatisticsFactory;
+import org.apache.hyracks.storage.am.statistics.common.StatisticsCollectorFactory;
 import org.apache.hyracks.storage.common.buffercache.IBufferCache;
 
 public class LSMBTreeDiskComponentFactory implements ILSMComponentFactory {
     private final TreeIndexFactory<BTree> btreeFactory;
     private final BloomFilterFactory bloomFilterFactory;
     private final ILSMComponentFilterFactory filterFactory;
-    private final StatisticsFactory statisticsFactory;
+    private final StatisticsCollectorFactory statisticsFactory;
 
     public LSMBTreeDiskComponentFactory(TreeIndexFactory<BTree> btreeFactory, BloomFilterFactory bloomFilterFactory,
-            ILSMComponentFilterFactory filterFactory, StatisticsFactory statisticsFactory) {
+            ILSMComponentFilterFactory filterFactory, StatisticsCollectorFactory statisticsFactory) {
         this.btreeFactory = btreeFactory;
         this.bloomFilterFactory = bloomFilterFactory;
         this.filterFactory = filterFactory;
@@ -51,7 +51,7 @@ public class LSMBTreeDiskComponentFactory implements ILSMComponentFactory {
         return new LSMBTreeDiskComponent(btreeFactory.createIndexInstance(cfr.getInsertIndexFileReference()),
                 bloomFilterFactory.createBloomFilterInstance(cfr.getBloomFilterFileReference()),
                 filterFactory == null ? null : filterFactory.createLSMComponentFilter(), statisticsFactory == null
-                        ? null : statisticsFactory.createWaveletStatistics(cfr.getStatisticsFileReference()));
+                        ? null : statisticsFactory.createStatisticsCollector(cfr.getStatisticsFileReference()));
     }
 
     @Override

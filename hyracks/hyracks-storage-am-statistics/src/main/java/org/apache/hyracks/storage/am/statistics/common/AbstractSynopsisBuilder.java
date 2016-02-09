@@ -16,13 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.hyracks.storage.am.statistics.common;
 
-package org.apache.hyracks.storage.am.common.api;
+import org.apache.hyracks.storage.am.common.api.ISynopsisBuilder;
 
-public interface ISynopsisBuilder extends IIndexBulkLoader {
+public abstract class AbstractSynopsisBuilder implements ISynopsisBuilder {
 
-    ISynopsis<? extends ISynopsisElement> getSynopsis();
+    protected boolean isAntimatterTuple = false;
 
-    void setAntimatterTuple(boolean isAntimatter);
-
+    @Override
+    public void setAntimatterTuple(boolean isAntimatter) {
+        this.isAntimatterTuple = isAntimatter;
+    }
 }

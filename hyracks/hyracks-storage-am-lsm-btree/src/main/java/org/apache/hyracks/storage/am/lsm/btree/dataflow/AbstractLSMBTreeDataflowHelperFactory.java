@@ -24,6 +24,7 @@ import java.util.Map;
 import org.apache.hyracks.api.dataflow.value.IBinaryComparatorFactory;
 import org.apache.hyracks.api.dataflow.value.ITypeTraits;
 import org.apache.hyracks.storage.am.common.api.IOrdinalPrimitiveValueProviderFactory;
+import org.apache.hyracks.storage.am.common.api.ISynopsis.SynopsisType;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperationCallbackFactory;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperationSchedulerProvider;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMMergePolicyFactory;
@@ -34,7 +35,7 @@ import org.apache.hyracks.storage.am.lsm.common.dataflow.AbstractLSMIndexDataflo
 public abstract class AbstractLSMBTreeDataflowHelperFactory extends AbstractLSMIndexDataflowHelperFactory {
 
     private static final long serialVersionUID = 1L;
-    protected final boolean collectStatistics;
+    protected final SynopsisType statsType;
     protected final int statsSize;
     protected final IOrdinalPrimitiveValueProviderFactory statsFieldValueProviderFactory;
     protected final ITypeTraits[] statsFieldTypeTraits;
@@ -44,12 +45,12 @@ public abstract class AbstractLSMBTreeDataflowHelperFactory extends AbstractLSMI
             ILSMOperationTrackerProvider opTrackerFactory, ILSMIOOperationSchedulerProvider ioSchedulerProvider,
             ILSMIOOperationCallbackFactory ioOpCallbackFactory, double bloomFilterFalsePositiveRate,
             ITypeTraits[] filterTypeTraits, IBinaryComparatorFactory[] filterCmpFactories, int[] filterFields,
-            boolean durable, boolean collectStatistics, int statsSize, ITypeTraits[] statsFieldTypeTraits,
+            boolean durable, SynopsisType statsType, int statsSize, ITypeTraits[] statsFieldTypeTraits,
             IOrdinalPrimitiveValueProviderFactory statsKeyValueProviderFactory) {
         super(virtualBufferCacheProvider, mergePolicyFactory, mergePolicyProperties, opTrackerFactory,
                 ioSchedulerProvider, ioOpCallbackFactory, bloomFilterFalsePositiveRate, filterTypeTraits,
                 filterCmpFactories, filterFields, durable);
-        this.collectStatistics = collectStatistics;
+        this.statsType = statsType;
         this.statsSize = statsSize;
         this.statsFieldValueProviderFactory = statsKeyValueProviderFactory;
         this.statsFieldTypeTraits = statsFieldTypeTraits;

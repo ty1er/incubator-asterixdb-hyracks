@@ -31,6 +31,7 @@ import org.apache.hyracks.storage.am.btree.impls.BTree;
 import org.apache.hyracks.storage.am.common.api.IMetadataManagerFactory;
 import org.apache.hyracks.storage.am.common.api.IOrdinalPrimitiveValueProviderFactory;
 import org.apache.hyracks.storage.am.common.api.IStatisticsMessageManager;
+import org.apache.hyracks.storage.am.common.api.ISynopsis.SynopsisType;
 import org.apache.hyracks.storage.am.common.api.ITreeIndexFrameFactory;
 import org.apache.hyracks.storage.am.common.api.ITreeIndexMetaDataFrameFactory;
 import org.apache.hyracks.storage.am.common.frames.LIFOMetaDataFrameFactory;
@@ -55,7 +56,7 @@ import org.apache.hyracks.storage.am.lsm.common.impls.BTreeFactory;
 import org.apache.hyracks.storage.am.lsm.common.impls.LSMComponentFilterFactory;
 import org.apache.hyracks.storage.am.lsm.common.impls.LSMComponentFilterManager;
 import org.apache.hyracks.storage.am.lsm.common.impls.TreeIndexFactory;
-import org.apache.hyracks.storage.am.statistics.common.StatisticsFactory;
+import org.apache.hyracks.storage.am.statistics.common.StatisticsCollectorFactory;
 import org.apache.hyracks.storage.common.buffercache.IBufferCache;
 import org.apache.hyracks.storage.common.file.IFileMapProvider;
 
@@ -66,7 +67,7 @@ public class LSMBTreeUtils {
             ILSMMergePolicy mergePolicy, ILSMOperationTracker opTracker, ILSMIOOperationScheduler ioScheduler,
             ILSMIOOperationCallback ioOpCallback, boolean needKeyDupCheck, ITypeTraits[] filterTypeTraits,
             IBinaryComparatorFactory[] filterCmpFactories, int[] btreeFields, int[] filterFields, boolean durable,
-            boolean collectStatistics, int statsSize, IOrdinalPrimitiveValueProviderFactory statsFieldProviderFactory,
+            SynopsisType statsType, int statsSize, IOrdinalPrimitiveValueProviderFactory statsFieldProviderFactory,
             IStatisticsMessageManager statsManager) {
         LSMBTreeTupleWriterFactory insertTupleWriterFactory = new LSMBTreeTupleWriterFactory(typeTraits,
                 cmpFactories.length, false);
@@ -102,10 +103,11 @@ public class LSMBTreeUtils {
             filterManager = new LSMComponentFilterManager(diskBufferCache, filterFrameFactory);
         }
 
-        StatisticsFactory statisticsFactory = null;
-        if (collectStatistics) {
-            statisticsFactory = new StatisticsFactory(diskBufferCache, diskFileMapProvider, bloomFilterKeyFields,
-                    statsSize, typeTraits, statsFieldProviderFactory.createOrdinalPrimitiveValueProvider());
+        StatisticsCollectorFactory statisticsFactory = null;
+        if (statsType != null) {
+            statisticsFactory = new StatisticsCollectorFactory(diskBufferCache, diskFileMapProvider, statsType,
+                    bloomFilterKeyFields, statsSize, typeTraits,
+                    statsFieldProviderFactory.createOrdinalPrimitiveValueProvider());
         }
 
         ILSMIndexFileManager fileNameManager = new LSMBTreeFileManager(diskFileMapProvider, file, diskBTreeFactory);
@@ -114,7 +116,7 @@ public class LSMBTreeUtils {
                 deleteLeafFrameFactory, fileNameManager, diskBTreeFactory, bulkLoadBTreeFactory, bloomFilterFactory,
                 filterFactory, statisticsFactory, filterFrameFactory, filterManager, bloomFilterFalsePositiveRate,
                 diskFileMapProvider, typeTraits.length, cmpFactories, mergePolicy, opTracker, ioScheduler, ioOpCallback,
-                needKeyDupCheck, btreeFields, filterFields, durable, collectStatistics, statsManager);
+                needKeyDupCheck, btreeFields, filterFields, durable, statsType, statsManager);
         return lsmTree;
     }
 
@@ -122,8 +124,9 @@ public class LSMBTreeUtils {
             IFileMapProvider diskFileMapProvider, ITypeTraits[] typeTraits, IBinaryComparatorFactory[] cmpFactories,
             int[] bloomFilterKeyFields, double bloomFilterFalsePositiveRate, ILSMMergePolicy mergePolicy,
             ILSMOperationTracker opTracker, ILSMIOOperationScheduler ioScheduler, ILSMIOOperationCallback ioOpCallback,
-            int startWithVersion, boolean durable, boolean collectStatistics, int statsSize,
-            IStatisticsMessageManager statsManager, IOrdinalPrimitiveValueProviderFactory statsKeyValueProviderFactory) {
+            int startWithVersion, boolean durable, SynopsisType statsType, int statsSize,
+            IStatisticsMessageManager statsManager,
+            IOrdinalPrimitiveValueProviderFactory statsKeyValueProviderFactory) {
         LSMBTreeTupleWriterFactory insertTupleWriterFactory = new LSMBTreeTupleWriterFactory(typeTraits,
                 cmpFactories.length, false);
         LSMBTreeTupleWriterFactory deleteTupleWriterFactory = new LSMBTreeTupleWriterFactory(typeTraits,
@@ -159,18 +162,19 @@ public class LSMBTreeUtils {
 
         ILSMIndexFileManager fileNameManager = new LSMBTreeFileManager(diskFileMapProvider, file, diskBTreeFactory);
 
-        StatisticsFactory statisticsFactory = null;
-        if (collectStatistics) {
-            statisticsFactory = new StatisticsFactory(diskBufferCache, diskFileMapProvider, bloomFilterKeyFields,
-                    statsSize, typeTraits, statsKeyValueProviderFactory.createOrdinalPrimitiveValueProvider());
+        StatisticsCollectorFactory statisticsFactory = null;
+        if (statsType != null) {
+            statisticsFactory = new StatisticsCollectorFactory(diskBufferCache, diskFileMapProvider, statsType,
+                    bloomFilterKeyFields, statsSize, typeTraits,
+                    statsKeyValueProviderFactory.createOrdinalPrimitiveValueProvider());
         }
 
         // the disk only index uses an empty ArrayList for virtual buffer caches
         ExternalBTree lsmTree = new ExternalBTree(interiorFrameFactory, insertLeafFrameFactory, deleteLeafFrameFactory,
                 fileNameManager, diskBTreeFactory, bulkLoadBTreeFactory, bloomFilterFactory, statisticsFactory,
                 bloomFilterFalsePositiveRate, diskFileMapProvider, typeTraits.length, cmpFactories, mergePolicy,
-                opTracker, ioScheduler, ioOpCallback, transactionBTreeFactory, startWithVersion, durable,
-                collectStatistics, statsManager);
+                opTracker, ioScheduler, ioOpCallback, transactionBTreeFactory, startWithVersion, durable, statsType,
+                statsManager);
         return lsmTree;
     }
 

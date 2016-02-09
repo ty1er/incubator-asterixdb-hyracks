@@ -24,6 +24,7 @@ import org.apache.hyracks.api.context.IHyracksTaskContext;
 import org.apache.hyracks.api.dataflow.value.ITypeTraits;
 import org.apache.hyracks.storage.am.common.api.IIndexDataflowHelper;
 import org.apache.hyracks.storage.am.common.api.IOrdinalPrimitiveValueProviderFactory;
+import org.apache.hyracks.storage.am.common.api.ISynopsis.SynopsisType;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexOperatorDescriptor;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperationCallbackFactory;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIOOperationSchedulerProvider;
@@ -40,11 +41,11 @@ public class ExternalBTreeWithBuddyDataflowHelperFactory extends AbstractLSMBTre
             Map<String, String> mergePolicyProperties, ILSMOperationTrackerProvider opTrackerFactory,
             ILSMIOOperationSchedulerProvider ioSchedulerProvider, ILSMIOOperationCallbackFactory ioOpCallbackFactory,
             double bloomFilterFalsePositiveRate, int[] buddyBtreeFields, int version, boolean durable,
-            boolean collectStatistics, int statsSize, ITypeTraits[] statsFieldTypeTraits,
+            SynopsisType statsType, int statsSize, ITypeTraits[] statsFieldTypeTraits,
             IOrdinalPrimitiveValueProviderFactory statsFieldValueProviderFactory) {
         super(null, mergePolicyFactory, mergePolicyProperties, opTrackerFactory, ioSchedulerProvider,
-                ioOpCallbackFactory, bloomFilterFalsePositiveRate, null, null, null, durable, collectStatistics,
-                statsSize, statsFieldTypeTraits, statsFieldValueProviderFactory);
+                ioOpCallbackFactory, bloomFilterFalsePositiveRate, null, null, null, durable, statsType, statsSize,
+                statsFieldTypeTraits, statsFieldValueProviderFactory);
         this.buddyBtreeFields = buddyBtreeFields;
         this.version = version;
     }
@@ -55,7 +56,7 @@ public class ExternalBTreeWithBuddyDataflowHelperFactory extends AbstractLSMBTre
         return new ExternalBTreeWithBuddyDataflowHelper(opDesc, ctx, partition, bloomFilterFalsePositiveRate,
                 mergePolicyFactory.createMergePolicy(mergePolicyProperties, ctx), opTrackerFactory,
                 ioSchedulerProvider.getIOScheduler(ctx), ioOpCallbackFactory, buddyBtreeFields, version, durable,
-                collectStatistics, statsSize, statsFieldTypeTraits, statsFieldValueProviderFactory);
+                statsType, statsSize, statsFieldTypeTraits, statsFieldValueProviderFactory);
     }
 
 }

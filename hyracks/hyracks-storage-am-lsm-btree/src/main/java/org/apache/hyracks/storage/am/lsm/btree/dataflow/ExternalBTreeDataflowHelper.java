@@ -25,6 +25,7 @@ import org.apache.hyracks.api.dataflow.value.ITypeTraits;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.storage.am.common.api.IIndex;
 import org.apache.hyracks.storage.am.common.api.IOrdinalPrimitiveValueProviderFactory;
+import org.apache.hyracks.storage.am.common.api.ISynopsis.SynopsisType;
 import org.apache.hyracks.storage.am.common.api.ITreeIndex;
 import org.apache.hyracks.storage.am.common.dataflow.AbstractTreeIndexOperatorDescriptor;
 import org.apache.hyracks.storage.am.common.dataflow.IIndexOperatorDescriptor;
@@ -43,11 +44,11 @@ public class ExternalBTreeDataflowHelper extends LSMBTreeDataflowHelper {
             double bloomFilterFalsePositiveRate, ILSMMergePolicy mergePolicy,
             ILSMOperationTrackerProvider opTrackerFactory, ILSMIOOperationScheduler ioScheduler,
             ILSMIOOperationCallbackFactory ioOpCallbackFactory, boolean needKeyDupCheck, int version, boolean durable,
-            boolean collectStatistics, int statsSize, ITypeTraits[] statsFieldTypeTraits,
+            SynopsisType statsType, int statsSize, ITypeTraits[] statsFieldTypeTraits,
             IOrdinalPrimitiveValueProviderFactory statsFieldValueProviderFactory) {
         super(opDesc, ctx, partition, null, bloomFilterFalsePositiveRate, mergePolicy, opTrackerFactory, ioScheduler,
-                ioOpCallbackFactory, false, null, null, null, null, durable, collectStatistics, statsSize,
-                statsFieldTypeTraits, statsFieldValueProviderFactory);
+                ioOpCallbackFactory, false, null, null, null, null, durable, statsType, statsSize, statsFieldTypeTraits,
+                statsFieldValueProviderFactory);
         this.version = version;
     }
 
@@ -55,10 +56,10 @@ public class ExternalBTreeDataflowHelper extends LSMBTreeDataflowHelper {
             List<IVirtualBufferCache> virtualBufferCaches, ILSMMergePolicy mergePolicy,
             ILSMOperationTrackerProvider opTrackerFactory, ILSMIOOperationScheduler ioScheduler,
             ILSMIOOperationCallbackFactory ioOpCallbackFactory, boolean needKeyDupCheck, int version, boolean durable,
-            boolean collectStatistics, int statsSize, ITypeTraits[] statsFieldTypeTraits,
+            SynopsisType statsType, int statsSize, ITypeTraits[] statsFieldTypeTraits,
             IOrdinalPrimitiveValueProviderFactory statsFieldValueProviderFactory) {
         this(opDesc, ctx, partition, DEFAULT_BLOOM_FILTER_FALSE_POSITIVE_RATE, mergePolicy, opTrackerFactory,
-                ioScheduler, ioOpCallbackFactory, needKeyDupCheck, version, durable, collectStatistics, statsSize,
+                ioScheduler, ioOpCallbackFactory, needKeyDupCheck, version, durable, statsType, statsSize,
                 statsFieldTypeTraits, statsFieldValueProviderFactory);
     }
 
@@ -84,7 +85,7 @@ public class ExternalBTreeDataflowHelper extends LSMBTreeDataflowHelper {
                 opDesc.getStorageManager().getFileMapProvider(ctx), treeOpDesc.getTreeIndexTypeTraits(),
                 treeOpDesc.getTreeIndexComparatorFactories(), treeOpDesc.getTreeIndexBloomFilterKeyFields(),
                 bloomFilterFalsePositiveRate, mergePolicy, opTrackerFactory.getOperationTracker(ctx), ioScheduler,
-                ioOpCallbackFactory.createIOOperationCallback(), getVersion(), durable, collectStatistics, statsSize,
+                ioOpCallbackFactory.createIOOperationCallback(), getVersion(), durable, statsType, statsSize,
                 opDesc.getStatisticsManagerProvider().getStatisticsManager(ctx), statsFieldValueProviderFactory);
     }
 

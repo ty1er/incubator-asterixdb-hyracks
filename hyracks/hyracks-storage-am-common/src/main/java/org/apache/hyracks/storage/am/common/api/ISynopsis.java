@@ -18,21 +18,28 @@
  */
 package org.apache.hyracks.storage.am.common.api;
 
-import java.util.List;
-import java.util.Map;
+import java.io.Serializable;
 
-public interface ISynopsis extends Iterable<Map.Entry<Long, Double>> {
+import org.apache.hyracks.api.dataflow.value.ITypeTraits;
 
-    void addElement(long key, double frequency, int maxLevel);
+public interface ISynopsis<T extends ISynopsisElement> extends Iterable<T>, Serializable {
+
+    public static enum SynopsisType {
+        Wavelet,
+        UniformHistogram,
+        ContinuousHistogram;
+    }
+
+    SynopsisType getType();
+
+    ITypeTraits getKeyTypeTraits();
 
     int size();
 
-    void merge(ISynopsis mergeSynopsis);
+    void merge(ISynopsis<T> mergeSynopsis);
 
-    void merge(List<ISynopsis> synopsisList);
+    Double pointQuery(Long position);
 
-    Double pointQuery(Long position, int maxLevel);
-
-    Double rangeQuery(Long startPosition, Long endPosition, int maxLevel);
+    Double rangeQuery(Long startPosition, Long endPosition);
 
 }

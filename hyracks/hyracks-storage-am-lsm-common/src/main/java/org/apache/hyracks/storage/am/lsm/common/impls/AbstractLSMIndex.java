@@ -33,7 +33,6 @@ import org.apache.hyracks.api.replication.IReplicationJob.ReplicationExecutionTy
 import org.apache.hyracks.api.replication.IReplicationJob.ReplicationOperation;
 import org.apache.hyracks.storage.am.bloomfilter.impls.BloomFilter;
 import org.apache.hyracks.storage.am.common.api.ITreeIndex;
-import org.apache.hyracks.storage.am.common.api.ITreeIndexMetaDataFrame;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMComponent;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMComponent.ComponentState;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMComponentFilterFrameFactory;
@@ -48,8 +47,6 @@ import org.apache.hyracks.storage.am.lsm.common.api.ILSMOperationTracker;
 import org.apache.hyracks.storage.am.lsm.common.api.IVirtualBufferCache;
 import org.apache.hyracks.storage.am.lsm.common.api.LSMOperationType;
 import org.apache.hyracks.storage.common.buffercache.IBufferCache;
-import org.apache.hyracks.storage.common.buffercache.ICachedPage;
-import org.apache.hyracks.storage.common.file.BufferedFileHandle;
 import org.apache.hyracks.storage.common.file.IFileMapProvider;
 
 public abstract class AbstractLSMIndex implements ILSMIndexInternal {
@@ -80,11 +77,10 @@ public abstract class AbstractLSMIndex implements ILSMIndexInternal {
     protected boolean memoryComponentsAllocated = false;
 
     public AbstractLSMIndex(List<IVirtualBufferCache> virtualBufferCaches, IBufferCache diskBufferCache,
-            ILSMIndexFileManager fileManager, IFileMapProvider diskFileMapProvider,
-            double bloomFilterFalsePositiveRate, ILSMMergePolicy mergePolicy, ILSMOperationTracker opTracker,
-            ILSMIOOperationScheduler ioScheduler, ILSMIOOperationCallback ioOpCallback,
-            ILSMComponentFilterFrameFactory filterFrameFactory, LSMComponentFilterManager filterManager,
-            int[] filterFields, boolean durable) {
+            ILSMIndexFileManager fileManager, IFileMapProvider diskFileMapProvider, double bloomFilterFalsePositiveRate,
+            ILSMMergePolicy mergePolicy, ILSMOperationTracker opTracker, ILSMIOOperationScheduler ioScheduler,
+            ILSMIOOperationCallback ioOpCallback, ILSMComponentFilterFrameFactory filterFrameFactory,
+            LSMComponentFilterManager filterManager, int[] filterFields, boolean durable) {
         this.virtualBufferCaches = virtualBufferCaches;
         this.diskBufferCache = diskBufferCache;
         this.diskFileMapProvider = diskFileMapProvider;
@@ -109,32 +105,6 @@ public abstract class AbstractLSMIndex implements ILSMIndexInternal {
         }
     }
 
-    // The constructor used by external indexes
-    public AbstractLSMIndex(IBufferCache diskBufferCache, ILSMIndexFileManager fileManager,
-            IFileMapProvider diskFileMapProvider, double bloomFilterFalsePositiveRate, ILSMMergePolicy mergePolicy,
-            ILSMOperationTracker opTracker, ILSMIOOperationScheduler ioScheduler, ILSMIOOperationCallback ioOpCallback,
-            boolean durable) {
-        this.diskBufferCache = diskBufferCache;
-        this.diskFileMapProvider = diskFileMapProvider;
-        this.fileManager = fileManager;
-        this.bloomFilterFalsePositiveRate = bloomFilterFalsePositiveRate;
-        this.ioScheduler = ioScheduler;
-        this.ioOpCallback = ioOpCallback;
-        this.durable = durable;
-        lsmHarness = new ExternalIndexHarness(this, mergePolicy, opTracker, diskBufferCache.isReplicationEnabled());
-        isActivated = false;
-        diskComponents = new LinkedList<ILSMComponent>();
-        this.inactiveDiskComponents = new LinkedList<ILSMComponent>();
-        // Memory related objects are nulled
-        this.virtualBufferCaches = null;
-        memoryComponents = null;
-        currentMutableComponentId = null;
-        flushRequests = null;
-        filterFrameFactory = null;
-        filterManager = null;
-        filterFields = null;
-    }
-
     protected void markAsValidInternal(ITreeIndex treeIndex) throws HyracksDataException {
         int fileId = treeIndex.getFileId();
         IBufferCache bufferCache = treeIndex.getBufferCache();
@@ -149,8 +119,8 @@ public abstract class AbstractLSMIndex implements ILSMIndexInternal {
     }
 
     protected void markAsValidInternal(IBufferCache bufferCache, BloomFilter filter) throws HyracksDataException {
-        if(durable){
-            bufferCache.force(filter.getFileId(),true);
+        if (durable) {
+            bufferCache.force(filter.getFileId(), true);
         }
     }
 
@@ -288,8 +258,10 @@ public abstract class AbstractLSMIndex implements ILSMIndexInternal {
         }
     }
 
+    @Override
     public abstract void allocateMemoryComponents() throws HyracksDataException;
 
+    @Override
     public boolean isMemoryComponentsAllocated() {
         return memoryComponentsAllocated;
     }
