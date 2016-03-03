@@ -44,6 +44,7 @@ import org.apache.hyracks.storage.am.lsm.common.api.ILSMIndexInternal;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMIndexOperationContext;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMMergePolicy;
 import org.apache.hyracks.storage.am.lsm.common.api.ILSMOperationTracker;
+import org.apache.hyracks.storage.am.lsm.common.api.ITwoPCIndex;
 import org.apache.hyracks.storage.am.lsm.common.api.IVirtualBufferCache;
 import org.apache.hyracks.storage.am.lsm.common.api.LSMOperationType;
 import org.apache.hyracks.storage.common.buffercache.IBufferCache;
@@ -94,7 +95,12 @@ public abstract class AbstractLSMIndex implements ILSMIndexInternal {
         this.filterFields = filterFields;
         this.inactiveDiskComponents = new LinkedList<ILSMComponent>();
         this.durable = durable;
-        lsmHarness = new LSMHarness(this, mergePolicy, opTracker, diskBufferCache.isReplicationEnabled());
+        // TODO: maybe substitute specific declarative interface for external indexes
+        if (this instanceof ITwoPCIndex) {
+            lsmHarness = new ExternalIndexHarness(this, mergePolicy, opTracker, diskBufferCache.isReplicationEnabled());
+        } else {
+            lsmHarness = new LSMHarness(this, mergePolicy, opTracker, diskBufferCache.isReplicationEnabled());
+        }
         isActivated = false;
         diskComponents = new ArrayList<ILSMComponent>();
         memoryComponents = new ArrayList<ILSMComponent>();
