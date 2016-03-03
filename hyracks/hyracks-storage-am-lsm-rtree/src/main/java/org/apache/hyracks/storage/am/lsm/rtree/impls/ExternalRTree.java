@@ -269,12 +269,9 @@ public class ExternalRTree extends LSMRTree implements ITwoPCIndex {
             throws HyracksDataException, IndexException {
         ExternalRTreeOpContext ctx = (ExternalRTreeOpContext) ictx;
         List<ILSMComponent> operationalComponents = ictx.getComponentHolder();
+        ctx.initialState.setOperationalComponents(operationalComponents);
 
-        LSMRTreeCursorInitialState initialState = new LSMRTreeCursorInitialState(rtreeLeafFrameFactory,
-                rtreeInteriorFrameFactory, btreeLeafFrameFactory, ctx.getBTreeMultiComparator(), lsmHarness,
-                comparatorFields, linearizerArray, ctx.searchCallback, operationalComponents);
-
-        cursor.open(initialState, pred);
+        cursor.open(ctx.initialState, pred);
     }
 
     // The only reason for overriding the merge method is the way to determine
@@ -703,7 +700,9 @@ public class ExternalRTree extends LSMRTree implements ITwoPCIndex {
 
     // This method creates the appropriate opContext for the targeted version
     public ExternalRTreeOpContext createOpContext(ISearchOperationCallback searchCallback, int targetVersion) {
-        return new ExternalRTreeOpContext(rtreeCmpFactories, btreeCmpFactories, searchCallback, targetVersion);
+        return new ExternalRTreeOpContext(rtreeCmpFactories, btreeCmpFactories, searchCallback, targetVersion,
+                lsmHarness, comparatorFields, linearizerArray, rtreeLeafFrameFactory, rtreeInteriorFrameFactory,
+                btreeLeafFrameFactory);
     }
 
     // The accessor for disk only indexes don't use modification callback and

@@ -329,13 +329,8 @@ public class ExternalBTreeWithBuddy extends AbstractLSMIndex implements ITreeInd
             throws HyracksDataException, IndexException {
         ExternalBTreeWithBuddyOpContext ctx = (ExternalBTreeWithBuddyOpContext) ictx;
         List<ILSMComponent> operationalComponents = ictx.getComponentHolder();
-
-        LSMBTreeWithBuddyCursorInitialState initialState = new LSMBTreeWithBuddyCursorInitialState(
-                btreeInteriorFrameFactory, btreeLeafFrameFactory, buddyBtreeLeafFrameFactory, lsmHarness,
-                MultiComparator.create(btreeCmpFactories), MultiComparator.create(buddyBtreeCmpFactories),
-                ctx.searchCallback, operationalComponents);
-
-        cursor.open(initialState, pred);
+        ctx.searchInitialState.setOperationalComponents(operationalComponents);
+        cursor.open(ctx.searchInitialState, pred);
     }
 
     @Override
@@ -354,8 +349,8 @@ public class ExternalBTreeWithBuddy extends AbstractLSMIndex implements ITreeInd
         BTree firstTree = ((LSMBTreeWithBuddyDiskComponent) mergingDiskComponents.get(0)).getBTree();
         BTree lastTree = ((LSMBTreeWithBuddyDiskComponent) mergingDiskComponents.get(mergingDiskComponents.size() - 1))
                 .getBTree();
-        FileReference firstFile = diskFileMapProvider.lookupFileName(firstTree.getFileId());
-        FileReference lastFile = diskFileMapProvider.lookupFileName(lastTree.getFileId());
+        FileReference firstFile = firstTree.getFileReference();
+        FileReference lastFile = lastTree.getFileReference();
         LSMComponentFileReferences fileRefs = fileManager.getRelMergeFileReference(firstFile.getFile().getName(),
                 lastFile.getFile().getName());
         return fileRefs;
@@ -392,7 +387,8 @@ public class ExternalBTreeWithBuddy extends AbstractLSMIndex implements ITreeInd
     // This method creates the appropriate opContext for the targeted version
     public ExternalBTreeWithBuddyOpContext createOpContext(ISearchOperationCallback searchCallback, int targetVersion) {
         return new ExternalBTreeWithBuddyOpContext(btreeCmpFactories, buddyBtreeCmpFactories, searchCallback,
-                targetVersion);
+                targetVersion, lsmHarness, btreeInteriorFrameFactory, btreeLeafFrameFactory,
+                buddyBtreeLeafFrameFactory);
     }
 
     @Override
@@ -885,12 +881,10 @@ public class ExternalBTreeWithBuddy extends AbstractLSMIndex implements ITreeInd
     @Override
     public Set<String> getLSMComponentPhysicalFiles(ILSMComponent lsmComponent) {
         Set<String> files = new HashSet<String>();
-
         LSMBTreeWithBuddyDiskComponent component = (LSMBTreeWithBuddyDiskComponent) lsmComponent;
-        files.add(component.getBTree().getFileReference().toString());
-        files.add(component.getBuddyBTree().getFileReference().toString());
-        files.add(component.getBloomFilter().getFileReference().toString());
-
+        files.add(component.getBTree().getFileReference().getFile().getAbsolutePath());
+        files.add(component.getBuddyBTree().getFileReference().getFile().getAbsolutePath());
+        files.add(component.getBloomFilter().getFileReference().getFile().getAbsolutePath());
         return files;
     }
 

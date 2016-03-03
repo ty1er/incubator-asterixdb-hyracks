@@ -20,6 +20,7 @@
 package org.apache.hyracks.storage.am.common.impls;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.hyracks.api.dataflow.value.IBinaryComparatorFactory;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
@@ -266,6 +267,7 @@ public abstract class AbstractTreeIndex extends AbstractFileManager implements I
         protected boolean releasedLatches;
         public boolean appendOnly = false;
         protected final IFIFOPageQueue queue;
+        protected List<ICachedPage> pagesToWrite;
 
         public AbstractTreeIndexBulkLoader(float fillFactor, boolean appendOnly)
                 throws TreeIndexException, HyracksDataException {
@@ -304,10 +306,11 @@ public abstract class AbstractTreeIndex extends AbstractFileManager implements I
 
             leafFrame.setPage(leafFrontier.page);
             leafFrame.initBuffer((byte) 0);
-            leafMaxBytes = (int) (leafFrame.getBuffer().capacity() * fillFactor);
+            leafMaxBytes = (int) ((float) leafFrame.getBuffer().capacity() * fillFactor);
             slotSize = leafFrame.getSlotSize();
 
             nodeFrontiers.add(leafFrontier);
+            pagesToWrite = new ArrayList<>();
         }
 
         @Override
@@ -320,6 +323,9 @@ public abstract class AbstractTreeIndex extends AbstractFileManager implements I
                 if (frontierPage.confiscated()) {
                     bufferCache.returnPage(frontierPage, false);
                 }
+            }
+            for(ICachedPage pageToDiscard: pagesToWrite){
+                bufferCache.returnPage(pageToDiscard, false);
             }
             releasedLatches = true;
         }

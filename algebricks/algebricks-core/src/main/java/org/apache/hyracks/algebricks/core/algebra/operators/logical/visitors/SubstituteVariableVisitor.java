@@ -18,11 +18,9 @@
  */
 package org.apache.hyracks.algebricks.core.algebra.operators.logical.visitors;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.mutable.Mutable;
-
 import org.apache.hyracks.algebricks.common.exceptions.AlgebricksException;
 import org.apache.hyracks.algebricks.common.utils.Pair;
 import org.apache.hyracks.algebricks.common.utils.Triple;
@@ -31,7 +29,6 @@ import org.apache.hyracks.algebricks.core.algebra.base.ILogicalOperator;
 import org.apache.hyracks.algebricks.core.algebra.base.ILogicalPlan;
 import org.apache.hyracks.algebricks.core.algebra.base.LogicalVariable;
 import org.apache.hyracks.algebricks.core.algebra.expressions.IVariableTypeEnvironment;
-import org.apache.hyracks.algebricks.core.algebra.operators.logical.AbstractLogicalOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.AbstractUnnestNonMapOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.AggregateOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.AssignOperator;
@@ -41,11 +38,11 @@ import org.apache.hyracks.algebricks.core.algebra.operators.logical.DistributeRe
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.EmptyTupleSourceOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.ExchangeOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.ExtensionOperator;
-import org.apache.hyracks.algebricks.core.algebra.operators.logical.ExternalDataLookupOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.GroupByOperator;
-import org.apache.hyracks.algebricks.core.algebra.operators.logical.IndexInsertDeleteOperator;
+import org.apache.hyracks.algebricks.core.algebra.operators.logical.IndexInsertDeleteUpsertOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.InnerJoinOperator;
-import org.apache.hyracks.algebricks.core.algebra.operators.logical.InsertDeleteOperator;
+import org.apache.hyracks.algebricks.core.algebra.operators.logical.IntersectOperator;
+import org.apache.hyracks.algebricks.core.algebra.operators.logical.InsertDeleteUpsertOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.LeftOuterJoinOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.LimitOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.MaterializeOperator;
@@ -69,10 +66,10 @@ import org.apache.hyracks.algebricks.core.algebra.operators.logical.WriteOperato
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.WriteResultOperator;
 import org.apache.hyracks.algebricks.core.algebra.properties.OrderColumn;
 import org.apache.hyracks.algebricks.core.algebra.typing.ITypingContext;
-import org.apache.hyracks.algebricks.core.algebra.util.OperatorManipulationUtil;
 import org.apache.hyracks.algebricks.core.algebra.visitors.ILogicalOperatorVisitor;
 
-public class SubstituteVariableVisitor implements ILogicalOperatorVisitor<Void, Pair<LogicalVariable, LogicalVariable>> {
+public class SubstituteVariableVisitor
+        implements ILogicalOperatorVisitor<Void, Pair<LogicalVariable, LogicalVariable>> {
 
     private final boolean goThroughNts;
     private final ITypingContext ctx;
@@ -149,7 +146,8 @@ public class SubstituteVariableVisitor implements ILogicalOperatorVisitor<Void, 
     }
 
     @Override
-    public Void visitEmptyTupleSourceOperator(EmptyTupleSourceOperator op, Pair<LogicalVariable, LogicalVariable> pair) {
+    public Void visitEmptyTupleSourceOperator(EmptyTupleSourceOperator op,
+            Pair<LogicalVariable, LogicalVariable> pair) {
         // does not use any variable
         return null;
     }
@@ -167,8 +165,7 @@ public class SubstituteVariableVisitor implements ILogicalOperatorVisitor<Void, 
         subst(pair.first, pair.second, op.getDecorList());
         for (ILogicalPlan p : op.getNestedPlans()) {
             for (Mutable<ILogicalOperator> r : p.getRoots()) {
-                OperatorManipulationUtil.substituteVarRec((AbstractLogicalOperator) r.getValue(), pair.first,
-                        pair.second, goThroughNts, ctx);
+                VariableUtilities.substituteVariablesInDescendantsAndSelf(r.getValue(), pair.first, pair.second, ctx);
             }
         }
         substVarTypes(op, pair);
@@ -204,8 +201,8 @@ public class SubstituteVariableVisitor implements ILogicalOperatorVisitor<Void, 
     }
 
     @Override
-    public Void visitNestedTupleSourceOperator(NestedTupleSourceOperator op, Pair<LogicalVariable, LogicalVariable> pair)
-            throws AlgebricksException {
+    public Void visitNestedTupleSourceOperator(NestedTupleSourceOperator op,
+            Pair<LogicalVariable, LogicalVariable> pair) throws AlgebricksException {
         return null;
     }
 
@@ -220,8 +217,8 @@ public class SubstituteVariableVisitor implements ILogicalOperatorVisitor<Void, 
     }
 
     @Override
-    public Void visitPartitioningSplitOperator(PartitioningSplitOperator op, Pair<LogicalVariable, LogicalVariable> pair)
-            throws AlgebricksException {
+    public Void visitPartitioningSplitOperator(PartitioningSplitOperator op,
+            Pair<LogicalVariable, LogicalVariable> pair) throws AlgebricksException {
         for (Mutable<ILogicalExpression> e : op.getExpressions()) {
             e.getValue().substituteVar(pair.first, pair.second);
         }
@@ -280,8 +277,7 @@ public class SubstituteVariableVisitor implements ILogicalOperatorVisitor<Void, 
             throws AlgebricksException {
         for (ILogicalPlan p : op.getNestedPlans()) {
             for (Mutable<ILogicalOperator> r : p.getRoots()) {
-                OperatorManipulationUtil.substituteVarRec((AbstractLogicalOperator) r.getValue(), pair.first,
-                        pair.second, goThroughNts, ctx);
+                VariableUtilities.substituteVariablesInDescendantsAndSelf(r.getValue(), pair.first, pair.second, ctx);
             }
         }
         return null;
@@ -303,6 +299,24 @@ public class SubstituteVariableVisitor implements ILogicalOperatorVisitor<Void, 
             }
         }
         substVarTypes(op, pair);
+        return null;
+    }
+
+    @Override
+    public Void visitIntersectOperator(IntersectOperator op, Pair<LogicalVariable, LogicalVariable> pair)
+            throws AlgebricksException {
+        for (int i = 0; i < op.getOutputVars().size(); i++) {
+            if (op.getOutputVars().get(i).equals(pair.first)){
+                op.getOutputVars().set(i, pair.second);
+            }
+        }
+        for(int i = 0; i < op.getNumInput(); i++){
+            for (int j = 0; j < op.getInputVariables(i).size(); j++){
+                if (op.getInputVariables(i).get(j).equals(pair.first)){
+                    op.getInputVariables(i).set(j, pair.second);
+                }
+            }
+        }
         return null;
     }
 
@@ -369,7 +383,7 @@ public class SubstituteVariableVisitor implements ILogicalOperatorVisitor<Void, 
         }
     }
 
-    private void substInArray(ArrayList<LogicalVariable> varArray, LogicalVariable v1, LogicalVariable v2) {
+    private void substInArray(List<LogicalVariable> varArray, LogicalVariable v1, LogicalVariable v2) {
         for (int i = 0; i < varArray.size(); i++) {
             LogicalVariable v = varArray.get(i);
             if (v == v1) {
@@ -392,8 +406,8 @@ public class SubstituteVariableVisitor implements ILogicalOperatorVisitor<Void, 
     }
 
     @Override
-    public Void visitInsertDeleteOperator(InsertDeleteOperator op, Pair<LogicalVariable, LogicalVariable> pair)
-            throws AlgebricksException {
+    public Void visitInsertDeleteUpsertOperator(InsertDeleteUpsertOperator op,
+            Pair<LogicalVariable, LogicalVariable> pair) throws AlgebricksException {
         op.getPayloadExpression().getValue().substituteVar(pair.first, pair.second);
         for (Mutable<ILogicalExpression> e : op.getPrimaryKeyExpressions()) {
             e.getValue().substituteVar(pair.first, pair.second);
@@ -403,8 +417,8 @@ public class SubstituteVariableVisitor implements ILogicalOperatorVisitor<Void, 
     }
 
     @Override
-    public Void visitIndexInsertDeleteOperator(IndexInsertDeleteOperator op, Pair<LogicalVariable, LogicalVariable> pair)
-            throws AlgebricksException {
+    public Void visitIndexInsertDeleteUpsertOperator(IndexInsertDeleteUpsertOperator op,
+            Pair<LogicalVariable, LogicalVariable> pair) throws AlgebricksException {
         for (Mutable<ILogicalExpression> e : op.getPrimaryKeyExpressions()) {
             e.getValue().substituteVar(pair.first, pair.second);
         }
@@ -440,27 +454,14 @@ public class SubstituteVariableVisitor implements ILogicalOperatorVisitor<Void, 
             return;
         }
         IVariableTypeEnvironment env = ctx.getOutputTypeEnvironment(op);
-        env.substituteProducedVariable(arg.first, arg.second);
+        if (env != null) {
+            env.substituteProducedVariable(arg.first, arg.second);
+        }
     }
 
     @Override
     public Void visitExtensionOperator(ExtensionOperator op, Pair<LogicalVariable, LogicalVariable> arg)
             throws AlgebricksException {
-        return null;
-    }
-
-    @Override
-    public Void visitExternalDataLookupOperator(ExternalDataLookupOperator op,
-            Pair<LogicalVariable, LogicalVariable> pair) throws AlgebricksException {
-        List<LogicalVariable> variables = op.getVariables();
-        for (int i = 0; i < variables.size(); i++) {
-            if (variables.get(i) == pair.first) {
-                variables.set(i, pair.second);
-                return null;
-            }
-        }
-        op.getExpressionRef().getValue().substituteVar(pair.first, pair.second);
-        substVarTypes(op, pair);
         return null;
     }
 

@@ -20,10 +20,10 @@ package org.apache.hyracks.algebricks.core.algebra.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
-
 import org.apache.hyracks.algebricks.common.exceptions.AlgebricksException;
 import org.apache.hyracks.algebricks.core.algebra.base.ILogicalOperator;
 import org.apache.hyracks.algebricks.core.algebra.base.ILogicalPlan;
@@ -129,8 +129,9 @@ public class OperatorManipulationUtil {
                     AbstractLogicalOperator inputOp = (AbstractLogicalOperator) i.getValue();
                     switch (inputOp.getExecutionMode()) {
                         case PARTITIONED: {
-                            if (forceUnpartitioned)
+                            if (forceUnpartitioned) {
                                 break;
+                            }
                             op.setExecutionMode(AbstractLogicalOperator.ExecutionMode.PARTITIONED);
                             change = true;
                             exit = true;
@@ -216,14 +217,66 @@ public class OperatorManipulationUtil {
     public static ILogicalOperator bottomUpCopyOperators(ILogicalOperator op) throws AlgebricksException {
         ILogicalOperator newOp = deepCopy(op);
         newOp.getInputs().clear();
-        for (Mutable<ILogicalOperator> child : op.getInputs())
+        for (Mutable<ILogicalOperator> child : op.getInputs()) {
             newOp.getInputs().add(new MutableObject<ILogicalOperator>(bottomUpCopyOperators(child.getValue())));
+        }
         return newOp;
     }
 
     public static ILogicalOperator deepCopy(ILogicalOperator op) throws AlgebricksException {
         OperatorDeepCopyVisitor visitor = new OperatorDeepCopyVisitor();
         return op.accept(visitor, null);
+    }
+
+    public static ILogicalOperator deepCopyWithExcutionMode(ILogicalOperator op) throws AlgebricksException {
+        OperatorDeepCopyVisitor visitor = new OperatorDeepCopyVisitor();
+        AbstractLogicalOperator newOp = (AbstractLogicalOperator) op.accept(visitor, null);
+        newOp.setExecutionMode(op.getExecutionMode());
+        return newOp;
+    }
+    /**
+     * Compute type environment of a newly generated operator {@code op} and its input.
+     *
+     * @param op,
+     *            the logical operator.
+     * @param context,the
+     *            optimization context.
+     * @throws AlgebricksException
+     */
+    public static void computeTypeEnvironmentBottomUp(ILogicalOperator op, ITypingContext context)
+            throws AlgebricksException {
+        for (Mutable<ILogicalOperator> children : op.getInputs()) {
+            computeTypeEnvironmentBottomUp(children.getValue(), context);
+        }
+        AbstractLogicalOperator abstractOp = (AbstractLogicalOperator) op;
+        if (abstractOp.hasNestedPlans()) {
+            for (ILogicalPlan p : ((AbstractOperatorWithNestedPlans) op).getNestedPlans()) {
+                for (Mutable<ILogicalOperator> rootRef : p.getRoots()) {
+                    computeTypeEnvironmentBottomUp(rootRef.getValue(), context);
+                }
+            }
+        }
+        context.computeAndSetTypeEnvironmentForOperator(op);
+    }
+
+    /***
+     * Is the operator <code>>op</code> an ancestor of any operators with tags in the set <code>tags</code>?
+     *
+     * @param op
+     * @param tags
+     * @return True if yes; false other wise.
+     */
+    public static boolean ancestorOfOperators(ILogicalOperator op, Set<LogicalOperatorTag> tags) {
+        LogicalOperatorTag opTag = op.getOperatorTag();
+        if (tags.contains(opTag)) {
+            return true;
+        }
+        for (Mutable<ILogicalOperator> children : op.getInputs()) {
+            if (ancestorOfOperators(children.getValue(), tags)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

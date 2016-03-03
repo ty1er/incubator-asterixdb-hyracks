@@ -29,10 +29,9 @@ import java.lang.reflect.Constructor;
 
 import org.apache.hadoop.mapred.FileSplit;
 import org.apache.hadoop.mapred.InputSplit;
-
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 
-@SuppressWarnings({ "deprecation", "rawtypes" })
+@SuppressWarnings({ "rawtypes" })
 public class InputSplitsFactory implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -54,7 +53,7 @@ public class InputSplitsFactory implements Serializable {
 
     /**
      * Convert splits to bytes.
-     * 
+     *
      * @param splits
      *            input splits
      * @return bytes which serialize the splits
@@ -77,7 +76,7 @@ public class InputSplitsFactory implements Serializable {
 
     /**
      * Covert bytes to splits.
-     * 
+     *
      * @param bytes
      * @return
      * @throws HyracksDataException

@@ -27,7 +27,7 @@ import org.apache.hyracks.api.exceptions.HyracksDataException;
 public interface ISerializerDeserializer<T> extends Serializable {
     /**
      * Deserialization method.
-     * 
+     *
      * @param in
      *            - Stream to read instance from.
      * @return A new instance of T with data.
@@ -36,14 +36,14 @@ public interface ISerializerDeserializer<T> extends Serializable {
 
     /**
      * Serialization method.
-     * 
+     *
      * @param instance
      *            - the instance to serialize.
      * @param out
      *            - Stream to write data to.
      */
     public void serialize(T instance, DataOutput out) throws HyracksDataException;
-    
+
     /*
      * TODO: Add a new method:
      * T deserialize(DataInput in, T mutable)

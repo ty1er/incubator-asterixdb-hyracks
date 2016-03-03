@@ -40,6 +40,7 @@ import org.apache.hyracks.algebricks.core.algebra.prettyprint.LogicalOperatorPre
 import org.apache.hyracks.algebricks.core.algebra.properties.FunctionalDependency;
 import org.apache.hyracks.algebricks.core.algebra.properties.ILogicalPropertiesVector;
 
+@SuppressWarnings({ "unchecked", "rawtypes" })
 public class AlgebricksOptimizationContext implements IOptimizationContext {
 
     private int varCounter;
@@ -92,7 +93,8 @@ public class AlgebricksOptimizationContext implements IOptimizationContext {
     public AlgebricksOptimizationContext(int varCounter, IExpressionEvalSizeComputer expressionEvalSizeComputer,
             IMergeAggregationExpressionFactory mergeAggregationExpressionFactory,
             IExpressionTypeComputer expressionTypeComputer, INullableTypeComputer nullableTypeComputer,
-            ICardinalityEstimator cardinalityEstimator, PhysicalOptimizationConfig physicalOptimizationConfig,
+            ICardinalityEstimator cardinalityEstimator, 
+            PhysicalOptimizationConfig physicalOptimizationConfig,
             LogicalOperatorPrettyPrintVisitor prettyPrintVisitor) {
         this.varCounter = varCounter;
         this.expressionEvalSizeComputer = expressionEvalSizeComputer;
@@ -122,7 +124,6 @@ public class AlgebricksOptimizationContext implements IOptimizationContext {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public IMetadataProvider getMetadataProvider() {
         return metadataProvider;
     }
@@ -225,6 +226,12 @@ public class AlgebricksOptimizationContext implements IOptimizationContext {
     @Override
     public void putFDList(ILogicalOperator op, List<FunctionalDependency> fdList) {
         this.fdGlobalMap.put(op, fdList);
+    }
+
+    @Override
+    public void clearAllFDAndEquivalenceClasses() {
+        eqClassGlobalMap.clear();
+        fdGlobalMap.clear();
     }
 
     @Override

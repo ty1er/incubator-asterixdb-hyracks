@@ -153,6 +153,11 @@ public class StreamSelectRuntimeFactory extends AbstractOneInputOneOutputRuntime
                     }
                 }
             }
+
+            @Override
+            public void flush() throws HyracksDataException {
+                appender.flush(writer);
+            }
         };
     }
 

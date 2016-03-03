@@ -31,10 +31,10 @@ import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.api.io.FileReference;
 import org.apache.hyracks.dataflow.common.comm.io.FrameTupleAccessor;
 import org.apache.hyracks.dataflow.common.io.RunFileWriter;
-import org.apache.hyracks.dataflow.std.sort.buffermanager.IFramePool;
-import org.apache.hyracks.dataflow.std.sort.buffermanager.ITupleBufferManager;
-import org.apache.hyracks.dataflow.std.sort.buffermanager.VariableFramePool;
-import org.apache.hyracks.dataflow.std.sort.buffermanager.VariableTupleMemoryManager;
+import org.apache.hyracks.dataflow.std.buffermanager.IFramePool;
+import org.apache.hyracks.dataflow.std.buffermanager.IDeletableTupleBufferManager;
+import org.apache.hyracks.dataflow.std.buffermanager.VariableFramePool;
+import org.apache.hyracks.dataflow.std.buffermanager.VariableDeletableTupleMemoryManager;
 
 public class HeapSortRunGenerator extends AbstractSortRunGenerator {
     protected final IHyracksTaskContext ctx;
@@ -64,9 +64,8 @@ public class HeapSortRunGenerator extends AbstractSortRunGenerator {
     @Override
     public void open() throws HyracksDataException {
         IFramePool framePool = new VariableFramePool(ctx, (frameLimit - 1) * ctx.getInitialFrameSize());
-        ITupleBufferManager bufferManager = new VariableTupleMemoryManager(framePool, recordDescriptor);
-        tupleSorter = new TupleSorterHeapSort(ctx, bufferManager, topK, sortFields, nmkFactory,
-                comparatorFactories);
+        IDeletableTupleBufferManager bufferManager = new VariableDeletableTupleMemoryManager(framePool, recordDescriptor);
+        tupleSorter = new TupleSorterHeapSort(ctx, bufferManager, topK, sortFields, nmkFactory, comparatorFactories);
         super.open();
     }
 
@@ -77,8 +76,8 @@ public class HeapSortRunGenerator extends AbstractSortRunGenerator {
 
     @Override
     protected RunFileWriter getRunFileWriter() throws HyracksDataException {
-        FileReference file = ctx.getJobletContext().createManagedWorkspaceFile(
-                HeapSortRunGenerator.class.getSimpleName());
+        FileReference file = ctx.getJobletContext()
+                .createManagedWorkspaceFile(HeapSortRunGenerator.class.getSimpleName());
         return new RunFileWriter(file, ctx.getIOManager());
     }
 
@@ -99,5 +98,4 @@ public class HeapSortRunGenerator extends AbstractSortRunGenerator {
             }
         }
     }
-
 }

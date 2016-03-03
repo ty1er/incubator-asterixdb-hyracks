@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.lang3.mutable.Mutable;
-
 import org.apache.hyracks.algebricks.common.exceptions.AlgebricksException;
 import org.apache.hyracks.algebricks.common.utils.Pair;
 import org.apache.hyracks.algebricks.core.algebra.base.ILogicalExpression;
@@ -40,11 +39,11 @@ import org.apache.hyracks.algebricks.core.algebra.operators.logical.DistributeRe
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.EmptyTupleSourceOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.ExchangeOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.ExtensionOperator;
-import org.apache.hyracks.algebricks.core.algebra.operators.logical.ExternalDataLookupOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.GroupByOperator;
-import org.apache.hyracks.algebricks.core.algebra.operators.logical.IndexInsertDeleteOperator;
+import org.apache.hyracks.algebricks.core.algebra.operators.logical.IndexInsertDeleteUpsertOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.InnerJoinOperator;
-import org.apache.hyracks.algebricks.core.algebra.operators.logical.InsertDeleteOperator;
+import org.apache.hyracks.algebricks.core.algebra.operators.logical.InsertDeleteUpsertOperator;
+import org.apache.hyracks.algebricks.core.algebra.operators.logical.IntersectOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.LeftOuterJoinOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.LimitOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.MaterializeOperator;
@@ -214,7 +213,6 @@ public class SchemaVariableVisitor implements ILogicalOperatorVisitor<Void, Void
         for (Mutable<ILogicalOperator> c : op.getInputs()) {
             VariableUtilities.getLiveVariables(c.getValue(), schemaVariables);
         }
-        VariableUtilities.getProducedVariables(op, schemaVariables);
         for (ILogicalPlan p : op.getNestedPlans()) {
             for (Mutable<ILogicalOperator> r : p.getRoots()) {
                 VariableUtilities.getLiveVariables(r.getValue(), schemaVariables);
@@ -225,6 +223,12 @@ public class SchemaVariableVisitor implements ILogicalOperatorVisitor<Void, Void
 
     @Override
     public Void visitUnionOperator(UnionAllOperator op, Void arg) throws AlgebricksException {
+        VariableUtilities.getProducedVariables(op, schemaVariables);
+        return null;
+    }
+
+    @Override
+    public Void visitIntersectOperator(IntersectOperator op, Void arg) throws AlgebricksException {
         VariableUtilities.getProducedVariables(op, schemaVariables);
         return null;
     }
@@ -283,13 +287,14 @@ public class SchemaVariableVisitor implements ILogicalOperatorVisitor<Void, Void
     }
 
     @Override
-    public Void visitInsertDeleteOperator(InsertDeleteOperator op, Void arg) throws AlgebricksException {
+    public Void visitInsertDeleteUpsertOperator(InsertDeleteUpsertOperator op, Void arg) throws AlgebricksException {
         standardLayout(op);
         return null;
     }
 
     @Override
-    public Void visitIndexInsertDeleteOperator(IndexInsertDeleteOperator op, Void arg) throws AlgebricksException {
+    public Void visitIndexInsertDeleteUpsertOperator(IndexInsertDeleteUpsertOperator op, Void arg)
+            throws AlgebricksException {
         standardLayout(op);
         return null;
     }
@@ -309,26 +314,6 @@ public class SchemaVariableVisitor implements ILogicalOperatorVisitor<Void, Void
     @Override
     public Void visitExtensionOperator(ExtensionOperator op, Void arg) throws AlgebricksException {
         standardLayout(op);
-        return null;
-    }
-
-    @Override
-    public Void visitExternalDataLookupOperator(ExternalDataLookupOperator op, Void arg) throws AlgebricksException {
-        ArrayList<LogicalVariable> liveVariables = new ArrayList<LogicalVariable>();
-        ArrayList<LogicalVariable> usedVariables = new ArrayList<LogicalVariable>();
-        //get used variables
-        op.getExpressionRef().getValue().getUsedVariables(usedVariables);
-        //live variables - used variables
-        for (Mutable<ILogicalOperator> c : op.getInputs()) {
-            VariableUtilities.getLiveVariables(c.getValue(), liveVariables);
-        }
-        for (LogicalVariable v : liveVariables) {
-            if (!usedVariables.contains(v)) {
-                schemaVariables.add(v);
-            }
-        }
-        VariableUtilities.getProducedVariables(op, schemaVariables);
-        //+ produced variables
         return null;
     }
 

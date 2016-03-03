@@ -24,6 +24,6 @@ import org.apache.hyracks.api.context.IHyracksTaskContext;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 
 public interface IModificationOperationCallbackFactory extends Serializable {
-    public IModificationOperationCallback createModificationOperationCallback(String resourceName, long resourceId,
-            Object resource, IHyracksTaskContext ctx) throws HyracksDataException;
+    public IModificationOperationCallback createModificationOperationCallback(String resourcePath, long resourceId,
+            int resourcePartition, Object resource, IHyracksTaskContext ctx) throws HyracksDataException;
 }

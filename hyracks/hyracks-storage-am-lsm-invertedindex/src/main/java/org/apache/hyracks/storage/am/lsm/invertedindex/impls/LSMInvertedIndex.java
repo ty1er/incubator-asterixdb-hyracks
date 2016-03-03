@@ -139,8 +139,8 @@ public class LSMInvertedIndex extends AbstractLSMIndex implements IInvertedIndex
                     new VirtualMetaDataPageManager(virtualBufferCache.getNumPages()), i);
             BTree deleteKeysBTree = BTreeUtils.createBTree(virtualBufferCache,
                     new VirtualMetaDataPageManager(virtualBufferCache.getNumPages()),
-                    ((IVirtualBufferCache) virtualBufferCache).getFileMapProvider(), invListTypeTraits,
-                    invListCmpFactories, BTreeLeafFrameType.REGULAR_NSM,
+                    virtualBufferCache.getFileMapProvider(), invListTypeTraits, invListCmpFactories,
+                    BTreeLeafFrameType.REGULAR_NSM,
                     new FileReference(new File(fileManager.getBaseDir() + "_virtual_del_" + i)));
             LSMInvertedIndexMemoryComponent mutableComponent = new LSMInvertedIndexMemoryComponent(memInvIndex,
                     deleteKeysBTree, virtualBufferCache, i == 0 ? true : false,
@@ -273,6 +273,7 @@ public class LSMInvertedIndex extends AbstractLSMIndex implements IInvertedIndex
             case FLUSH:
             case DELETE:
             case INSERT:
+            case UPSERT:
                 operationalComponents.add(memoryComponents.get(cmc));
                 break;
             case SEARCH:
@@ -338,8 +339,8 @@ public class LSMInvertedIndex extends AbstractLSMIndex implements IInvertedIndex
             indexTuple = tuple;
         }
 
-        ctx.modificationCallback.before(indexTuple);
-        ctx.modificationCallback.found(null, indexTuple);
+        ctx.getModificationCallback().before(indexTuple);
+        ctx.getModificationCallback().found(null, indexTuple);
         switch (ctx.getOperation()) {
             case INSERT: {
                 // Insert into the in-memory inverted index.
@@ -884,12 +885,7 @@ public class LSMInvertedIndex extends AbstractLSMIndex implements IInvertedIndex
     public void markAsValid(ILSMComponent lsmComponent) throws HyracksDataException {
         LSMInvertedIndexDiskComponent invIndexComponent = (LSMInvertedIndexDiskComponent) lsmComponent;
         OnDiskInvertedIndex invIndex = (OnDiskInvertedIndex) invIndexComponent.getInvIndex();
-        // Flush the bloom filter first.
-        int fileId = invIndexComponent.getBloomFilter().getFileId();
         IBufferCache bufferCache = invIndex.getBufferCache();
-        int startPage = 0;
-        int maxPage = invIndexComponent.getBloomFilter().getNumPages();
-
         markAsValidInternal(invIndex.getBufferCache(), invIndexComponent.getBloomFilter());
 
         // Flush inverted index second.
@@ -929,15 +925,12 @@ public class LSMInvertedIndex extends AbstractLSMIndex implements IInvertedIndex
     @Override
     public Set<String> getLSMComponentPhysicalFiles(ILSMComponent lsmComponent) {
         Set<String> files = new HashSet<String>();
-
         LSMInvertedIndexDiskComponent invIndexComponent = (LSMInvertedIndexDiskComponent) lsmComponent;
         OnDiskInvertedIndex invIndex = (OnDiskInvertedIndex) invIndexComponent.getInvIndex();
-
-        files.add(invIndex.getInvListsFile().toString());
-        files.add(invIndex.getBTree().toString());
-        files.add(invIndexComponent.getBloomFilter().getFileReference().toString());
-        files.add(invIndexComponent.getDeletedKeysBTree().getFileReference().toString());
-
+        files.add(invIndex.getInvListsFile().getFile().getAbsolutePath());
+        files.add(invIndex.getBTree().getFileReference().getFile().getAbsolutePath());
+        files.add(invIndexComponent.getBloomFilter().getFileReference().getFile().getAbsolutePath());
+        files.add(invIndexComponent.getDeletedKeysBTree().getFileReference().getFile().getAbsolutePath());
         return files;
     }
 

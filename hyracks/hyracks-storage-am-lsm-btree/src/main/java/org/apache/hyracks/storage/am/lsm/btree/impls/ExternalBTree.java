@@ -174,9 +174,14 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
             throws HyracksDataException, IndexException {
         ExternalBTreeOpContext ctx = (ExternalBTreeOpContext) ictx;
         List<ILSMComponent> operationalComponents = ctx.getComponentHolder();
-        LSMBTreeCursorInitialState initialState = new LSMBTreeCursorInitialState(insertLeafFrameFactory, ctx.cmp,
-                ctx.bloomFilterCmp, lsmHarness, pred, ctx.searchCallback, operationalComponents);
-        cursor.open(initialState, pred);
+        ctx.searchInitialState.reset(pred, operationalComponents);
+        cursor.open(ctx.searchInitialState, pred);
+    }
+
+    // This method creates the appropriate opContext for the targeted version
+    public ExternalBTreeOpContext createOpContext(ISearchOperationCallback searchCallback, int targetVersion) {
+        return new ExternalBTreeOpContext(insertLeafFrameFactory, deleteLeafFrameFactory, searchCallback,
+                componentFactory.getBloomFilterKeyFields().length, cmpFactories, targetVersion, lsmHarness);
     }
 
     // The only reason to override the following method is that it uses a different context object
@@ -202,8 +207,8 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
         ITreeIndexCursor cursor = new LSMBTreeRangeSearchCursor(opCtx, returnDeletedTuples);
         BTree firstBTree = ((LSMBTreeDiskComponent) mergingComponents.get(0)).getBTree();
         BTree lastBTree = ((LSMBTreeDiskComponent) mergingComponents.get(mergingComponents.size() - 1)).getBTree();
-        FileReference firstFile = diskFileMapProvider.lookupFileName(firstBTree.getFileId());
-        FileReference lastFile = diskFileMapProvider.lookupFileName(lastBTree.getFileId());
+        FileReference firstFile = firstBTree.getFileReference();
+        FileReference lastFile = lastBTree.getFileReference();
         LSMComponentFileReferences relMergeFileRefs = fileManager
                 .getRelMergeFileReference(firstFile.getFile().getName(), lastFile.getFile().getName());
         ILSMIndexAccessorInternal accessor = new LSMBTreeAccessor(lsmHarness, opCtx);
@@ -666,12 +671,6 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
     public ILSMIndexAccessorInternal createAccessor(IModificationOperationCallback modificationCallback,
             ISearchOperationCallback searchCallback) {
         return new LSMBTreeAccessor(lsmHarness, createOpContext(searchCallback, version));
-    }
-
-    // This method creates the appropriate opContext for the targeted version
-    public ExternalBTreeOpContext createOpContext(ISearchOperationCallback searchCallback, int targetVersion) {
-        return new ExternalBTreeOpContext(insertLeafFrameFactory, deleteLeafFrameFactory, searchCallback,
-                componentFactory.getBloomFilterKeyFields().length, cmpFactories, targetVersion);
     }
 
     @Override

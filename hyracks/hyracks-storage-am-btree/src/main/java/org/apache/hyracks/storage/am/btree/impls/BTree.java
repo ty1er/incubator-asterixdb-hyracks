@@ -328,7 +328,7 @@ public class BTree extends AbstractTreeIndex {
     private void update(ITupleReference tuple, BTreeOpContext ctx) throws HyracksDataException, TreeIndexException {
         // This call only allows updating of non-key fields.
         // Updating a tuple's key necessitates deleting the old entry, and inserting the new entry.
-        // The user of the BTree is responsible for dealing with non-key updates (i.e., doing a delete + insert). 
+        // The user of the BTree is responsible for dealing with non-key updates (i.e., doing a delete + insert).
         if (fieldCount == ctx.cmp.getKeyFieldCount()) {
             throw new BTreeNotUpdateableException("Cannot perform updates when the entire tuple forms the key.");
         }
@@ -632,7 +632,7 @@ public class BTree extends AbstractTreeIndex {
                                 node = isConsistent(pageId, ctx);
                                 if (node != null) {
                                     isReadLatched = true;
-                                    // Descend the tree again.                                
+                                    // Descend the tree again.
                                     continue;
                                 } else {
                                     // Pop pageLsn of this page (version seen by this op during descent).
@@ -654,7 +654,7 @@ public class BTree extends AbstractTreeIndex {
                                             BufferedFileHandle.getDiskPageId(fileId, pageId), false);
                                     interiorNode.acquireWriteLatch();
                                     try {
-                                        // Insert or update op. Both can cause split keys to propagate upwards. 
+                                        // Insert or update op. Both can cause split keys to propagate upwards.
                                         insertInterior(interiorNode, pageId, ctx.splitKey.getTuple(), ctx);
                                     } finally {
                                         interiorNode.releaseWriteLatch(true);
@@ -849,6 +849,13 @@ public class BTree extends AbstractTreeIndex {
 
     // TODO: Class should be private. But currently we need to expose the
     // setOpContext() API to the LSM Tree for it to work correctly.
+
+    /* TODO: Class should be re-usable to avoid massive object creation on a per tuple basis. two solutions for this:
+     * 1. have an accessor pool as part of the btree class (cleaner but introduce additional synchronization)
+     * 2. don't make it an inner class (no synchronization overhead)
+     *
+     * for now, we are reusing it while it is an inner class !!!!
+     */
     public class BTreeAccessor implements ITreeIndexAccessor {
         private BTree btree;
         private BTreeOpContext ctx;
@@ -857,6 +864,13 @@ public class BTree extends AbstractTreeIndex {
                 ISearchOperationCallback searchCallback) {
             this.btree = btree;
             this.ctx = btree.createOpContext(this, modificationCalback, searchCallback);
+        }
+
+        public void reset(BTree btree, IModificationOperationCallback modificationCallback,
+                ISearchOperationCallback searchCallback) {
+            this.btree = btree;
+            ctx.setCallbacks(modificationCallback, searchCallback);
+            ctx.reset();
         }
 
         @Override
@@ -945,7 +959,6 @@ public class BTree extends AbstractTreeIndex {
     public class BTreeBulkLoader extends AbstractTreeIndex.AbstractTreeIndexBulkLoader {
         protected final ISplitKey splitKey;
         protected final boolean verifyInput;
-        protected List<ICachedPage> pagesToWrite;
 
         public BTreeBulkLoader(float fillFactor, boolean verifyInput, boolean appendOnly) throws TreeIndexException,
                 HyracksDataException {
@@ -953,7 +966,6 @@ public class BTree extends AbstractTreeIndex {
             this.verifyInput = verifyInput;
             splitKey = new BTreeSplitKey(leafFrame.getTupleWriter().createTupleReference());
             splitKey.getTuple().setFieldCount(cmp.getKeyFieldCount());
-            pagesToWrite = new ArrayList<ICachedPage>();
         }
 
         @Override
@@ -989,15 +1001,16 @@ public class BTree extends AbstractTreeIndex {
                     splitKey.getTuple().resetByTupleOffset(splitKey.getBuffer(), 0);
                     splitKey.setLeftPage(leafFrontier.pageId);
 
-                    pagesToWrite.clear();
                     propagateBulk(1, pagesToWrite);
                     leafFrontier.pageId = freePageManager.getFreePage(metaFrame);
 
                     ((IBTreeLeafFrame) leafFrame).setNextLeaf(leafFrontier.pageId);
+
                     queue.put(leafFrontier.page);
                     for (ICachedPage c : pagesToWrite) {
                         queue.put(c);
                     }
+                    pagesToWrite.clear();
 
                     splitKey.setRightPage(leafFrontier.pageId);
                     leafFrontier.page = bufferCache.confiscatePage(BufferedFileHandle.getDiskPageId(fileId,
@@ -1013,13 +1026,7 @@ public class BTree extends AbstractTreeIndex {
 
                 leafFrame.setPage(leafFrontier.page);
                 ((IBTreeLeafFrame) leafFrame).insertSorted(tuple);
-            } catch (IndexException e) {
-                handleException();
-                throw e;
-            } catch (HyracksDataException e) {
-                handleException();
-                throw e;
-            } catch (RuntimeException e) {
+            } catch (IndexException | HyracksDataException | RuntimeException e) {
                 handleException();
                 throw e;
             }
@@ -1110,14 +1117,14 @@ public class BTree extends AbstractTreeIndex {
         }
 
         @Override
-        protected void handleException() throws HyracksDataException {
-            super.handleException();
-        }
-
-        @Override
         public void end() throws HyracksDataException {
-            persistFrontiers(0, -1);
-            super.end();
+            try{
+                persistFrontiers(0, -1);
+                super.end();
+            } catch ( HyracksDataException | RuntimeException e) {
+                handleException();
+                throw e;
+            }
         }
 
         @Override

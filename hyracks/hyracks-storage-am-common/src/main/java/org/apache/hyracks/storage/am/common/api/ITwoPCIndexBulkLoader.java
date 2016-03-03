@@ -1,8 +1,3 @@
-package org.apache.hyracks.storage.am.common.api;
-
-import org.apache.hyracks.api.exceptions.HyracksDataException;
-import org.apache.hyracks.dataflow.common.data.accessors.ITupleReference;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -21,11 +16,17 @@ import org.apache.hyracks.dataflow.common.data.accessors.ITupleReference;
  * specific language governing permissions and limitations
  * under the License.
  */
+
+package org.apache.hyracks.storage.am.common.api;
+
+import org.apache.hyracks.api.exceptions.HyracksDataException;
+import org.apache.hyracks.dataflow.common.data.accessors.ITupleReference;
+
 public interface ITwoPCIndexBulkLoader {
-    
+
     /**
      * Append a "delete" tuple to the index in the context of a bulk load.
-     * 
+     *
      * @param tuple
      *            "delete" Tuple to be inserted.
      * @throws IndexException
@@ -34,7 +35,7 @@ public interface ITwoPCIndexBulkLoader {
      *             If the BufferCache throws while un/pinning or un/latching.
      */
     public void delete(ITupleReference tuple) throws IndexException, HyracksDataException;
-    
+
     /**
      * Abort the bulk modify op
      */

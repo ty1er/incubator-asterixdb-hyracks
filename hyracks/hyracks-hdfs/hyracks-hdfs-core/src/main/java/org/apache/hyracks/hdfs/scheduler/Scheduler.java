@@ -34,7 +34,6 @@ import java.util.logging.Logger;
 
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapred.InputSplit;
-
 import org.apache.hyracks.api.client.HyracksConnection;
 import org.apache.hyracks.api.client.IHyracksClientConnection;
 import org.apache.hyracks.api.client.NodeControllerInfo;
@@ -48,7 +47,6 @@ import org.apache.hyracks.hdfs.api.INcCollectionBuilder;
  * The scheduler conduct data-local scheduling for data reading on HDFS. This
  * class works for Hadoop old API.
  */
-@SuppressWarnings("deprecation")
 public class Scheduler {
     private static final Logger LOGGER = Logger.getLogger(Scheduler.class.getName());
 
@@ -71,10 +69,11 @@ public class Scheduler {
 
     /**
      * The constructor of the scheduler.
-     * 
+     *
      * @param ncNameToNcInfos
      * @throws HyracksException
      */
+
     public Scheduler(String ipAddress, int port) throws HyracksException {
         try {
             IHyracksClientConnection hcc = new HyracksConnection(ipAddress, port);
@@ -90,7 +89,7 @@ public class Scheduler {
 
     /**
      * The constructor of the scheduler.
-     * 
+     *
      * @param ncNameToNcInfos
      * @throws HyracksException
      */
@@ -107,7 +106,7 @@ public class Scheduler {
 
     /**
      * The constructor of the scheduler.
-     * 
+     *
      * @param ncNameToNcInfos
      *            the mapping from nc names to nc infos
      * @throws HyracksException
@@ -120,14 +119,15 @@ public class Scheduler {
 
     /**
      * The constructor of the scheduler.
-     * 
+     *
      * @param ncNameToNcInfos
      *            the mapping from nc names to nc infos
      * @param topology
      *            the hyracks cluster toplogy
      * @throws HyracksException
      */
-    public Scheduler(Map<String, NodeControllerInfo> ncNameToNcInfos, ClusterTopology topology) throws HyracksException {
+    public Scheduler(Map<String, NodeControllerInfo> ncNameToNcInfos, ClusterTopology topology)
+            throws HyracksException {
         this(ncNameToNcInfos);
         this.ncCollectionBuilder = topology == null ? new IPProximityNcCollectionBuilder()
                 : new RackAwareNcCollectionBuilder(topology);
@@ -135,7 +135,7 @@ public class Scheduler {
 
     /**
      * The constructor of the scheduler.
-     * 
+     *
      * @param ncNameToNcInfos
      *            the mapping from nc names to nc infos
      * @throws HyracksException
@@ -151,7 +151,7 @@ public class Scheduler {
      * Set location constraints for a file scan operator with a list of file
      * splits. It guarantees the maximum slots a machine can is at most one more
      * than the minimum slots a machine can get.
-     * 
+     *
      * @throws HyracksDataException
      */
     public String[] getLocationConstraints(InputSplit[] splits) throws HyracksException {
@@ -215,7 +215,7 @@ public class Scheduler {
 
     /**
      * Schedule non-local slots to each machine
-     * 
+     *
      * @param splits
      *            The HDFS file splits.
      * @param workloads
@@ -257,7 +257,7 @@ public class Scheduler {
 
     /**
      * Schedule data-local slots to each machine.
-     * 
+     *
      * @param splits
      *            The HDFS file splits.
      * @param workloads
@@ -274,8 +274,8 @@ public class Scheduler {
      * @throws UnknownHostException
      */
     private void scheduleLocalSlots(InputSplit[] splits, int[] workloads, String[] locations, int slots, Random random,
-            boolean[] scheduled, final Map<String, IntWritable> locationToNumSplits) throws IOException,
-            UnknownHostException {
+            boolean[] scheduled, final Map<String, IntWritable> locationToNumSplits)
+                    throws IOException, UnknownHostException {
         /** scheduling candidates will be ordered inversely according to their popularity */
         PriorityQueue<String> scheduleCadndiates = new PriorityQueue<String>(3, new Comparator<String>() {
 
@@ -344,7 +344,7 @@ public class Scheduler {
 
     /**
      * Scan the splits once and build a popularity map
-     * 
+     *
      * @param splits
      *            the split array
      * @param locationToNumOfSplits
@@ -368,7 +368,7 @@ public class Scheduler {
 
     /**
      * Load the IP-address-to-NC map from the NCNameToNCInfoMap
-     * 
+     *
      * @param ncNameToNcInfos
      * @throws HyracksException
      */

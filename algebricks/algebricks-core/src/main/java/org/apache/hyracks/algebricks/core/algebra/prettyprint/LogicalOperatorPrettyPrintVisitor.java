@@ -36,12 +36,12 @@ import org.apache.hyracks.algebricks.core.algebra.operators.logical.DistributeRe
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.EmptyTupleSourceOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.ExchangeOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.ExtensionOperator;
-import org.apache.hyracks.algebricks.core.algebra.operators.logical.ExternalDataLookupOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.GroupByOperator;
-import org.apache.hyracks.algebricks.core.algebra.operators.logical.IndexInsertDeleteOperator;
+import org.apache.hyracks.algebricks.core.algebra.operators.logical.IndexInsertDeleteUpsertOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.InnerJoinOperator;
-import org.apache.hyracks.algebricks.core.algebra.operators.logical.InsertDeleteOperator;
-import org.apache.hyracks.algebricks.core.algebra.operators.logical.InsertDeleteOperator.Kind;
+import org.apache.hyracks.algebricks.core.algebra.operators.logical.InsertDeleteUpsertOperator;
+import org.apache.hyracks.algebricks.core.algebra.operators.logical.InsertDeleteUpsertOperator.Kind;
+import org.apache.hyracks.algebricks.core.algebra.operators.logical.IntersectOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.LeftOuterJoinOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.LimitOperator;
 import org.apache.hyracks.algebricks.core.algebra.operators.logical.MaterializeOperator;
@@ -151,6 +151,11 @@ public class LogicalOperatorPrettyPrintVisitor implements ILogicalOperatorVisito
         addIndent(buffer, indent).append("order ");
         for (Pair<OrderOperator.IOrder, Mutable<ILogicalExpression>> p : op.getOrderExpressions()) {
             String fst;
+
+            if (op.getTopK() != -1) {
+                buffer.append("(topK: " + op.getTopK() + ") ");
+            }
+
             switch (p.first.getKind()) {
                 case ASC: {
                     fst = "ASC";
@@ -165,6 +170,7 @@ public class LogicalOperatorPrettyPrintVisitor implements ILogicalOperatorVisito
                 }
             }
             buffer.append("(" + fst + ", " + p.second.getValue().accept(exprVisitor, indent) + ") ");
+
         }
         return buffer.toString();
     }
@@ -247,6 +253,36 @@ public class LogicalOperatorPrettyPrintVisitor implements ILogicalOperatorVisito
     }
 
     @Override
+    public String visitIntersectOperator(IntersectOperator op, Integer indent) throws AlgebricksException {
+        StringBuilder builder = new StringBuilder();
+        addIndent(builder, indent).append("intersect (");
+
+        builder.append('[');
+        for (int i = 0; i < op.getOutputVars().size(); i++) {
+            if (i > 0) {
+                builder.append(", ");
+            }
+            builder.append(op.getOutputVars().get(i));
+        }
+        builder.append("] <- [");
+        for (int i = 0; i < op.getNumInput(); i++) {
+            if (i > 0) {
+                builder.append(", ");
+            }
+            builder.append('[');
+            for (int j = 0; j < op.getInputVariables(i).size(); j++) {
+                if (j > 0) {
+                    builder.append(", ");
+                }
+                builder.append(op.getInputVariables(i).get(j));
+            }
+            builder.append(']');
+        }
+        builder.append("])");
+        return builder.toString();
+    }
+
+    @Override
     public String visitUnnestOperator(UnnestOperator op, Integer indent) throws AlgebricksException {
         StringBuilder buffer = new StringBuilder();
         addIndent(buffer, indent).append("unnest " + op.getVariable());
@@ -325,12 +361,16 @@ public class LogicalOperatorPrettyPrintVisitor implements ILogicalOperatorVisito
     }
 
     @Override
-    public String visitInsertDeleteOperator(InsertDeleteOperator op, Integer indent) throws AlgebricksException {
+    public String visitInsertDeleteUpsertOperator(InsertDeleteUpsertOperator op, Integer indent)
+            throws AlgebricksException {
         StringBuilder buffer = new StringBuilder();
-        String header = op.getOperation() == Kind.INSERT ? "insert into " : "delete from ";
+        String header = getIndexOpString(op.getOperation());
         addIndent(buffer, indent).append(header).append(op.getDataSource()).append(" from ")
                 .append(op.getPayloadExpression().getValue().accept(exprVisitor, indent)).append(" partitioned by ");
         pprintExprList(op.getPrimaryKeyExpressions(), buffer, indent);
+        if (op.getOperation() == Kind.UPSERT) {
+            buffer.append(" out: ([" + op.getPrevRecordVar() + "] <-{record-before-upsert}) ");
+        }
         if (op.isBulkload()) {
             buffer.append(" [bulkload]");
         }
@@ -338,17 +378,36 @@ public class LogicalOperatorPrettyPrintVisitor implements ILogicalOperatorVisito
     }
 
     @Override
-    public String visitIndexInsertDeleteOperator(IndexInsertDeleteOperator op, Integer indent)
+    public String visitIndexInsertDeleteUpsertOperator(IndexInsertDeleteUpsertOperator op, Integer indent)
             throws AlgebricksException {
         StringBuilder buffer = new StringBuilder();
-        String header = op.getOperation() == Kind.INSERT ? "insert into " : "delete from ";
+        String header = getIndexOpString(op.getOperation());
         addIndent(buffer, indent).append(header).append(op.getIndexName()).append(" on ")
                 .append(op.getDataSourceIndex().getDataSource()).append(" from ");
-        pprintExprList(op.getSecondaryKeyExpressions(), buffer, indent);
+        if (op.getOperation() == Kind.UPSERT) {
+            buffer.append(" replace:");
+            pprintExprList(op.getPrevSecondaryKeyExprs(), buffer, indent);
+            buffer.append(" with:");
+            pprintExprList(op.getSecondaryKeyExpressions(), buffer, indent);
+        } else {
+            pprintExprList(op.getSecondaryKeyExpressions(), buffer, indent);
+        }
         if (op.isBulkload()) {
             buffer.append(" [bulkload]");
         }
         return buffer.toString();
+    }
+
+    public String getIndexOpString(Kind opKind) {
+        switch (opKind) {
+            case DELETE:
+                return "delete from ";
+            case INSERT:
+                return "insert into ";
+            case UPSERT:
+                return "upsert into ";
+        }
+        return null;
     }
 
     @Override
@@ -434,14 +493,4 @@ public class LogicalOperatorPrettyPrintVisitor implements ILogicalOperatorVisito
         }
         sb.append("]");
     }
-
-    @Override
-    public String visitExternalDataLookupOperator(ExternalDataLookupOperator op, Integer indent)
-            throws AlgebricksException {
-        StringBuilder buffer = new StringBuilder();
-        addIndent(buffer, indent)
-                .append("external-instant-lookup " + op.getVariables() + " <- " + op.getExpressionRef().getValue());
-        return buffer.toString();
-    }
-
 }

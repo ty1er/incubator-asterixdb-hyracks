@@ -21,7 +21,6 @@ package org.apache.hyracks.algebricks.core.algebra.operators.logical;
 import java.util.List;
 
 import org.apache.commons.lang3.mutable.Mutable;
-
 import org.apache.hyracks.algebricks.common.exceptions.AlgebricksException;
 import org.apache.hyracks.algebricks.core.algebra.base.ILogicalExpression;
 import org.apache.hyracks.algebricks.core.algebra.base.LogicalOperatorTag;
@@ -32,14 +31,9 @@ import org.apache.hyracks.algebricks.core.algebra.typing.ITypingContext;
 import org.apache.hyracks.algebricks.core.algebra.typing.NonPropagatingTypeEnvironment;
 import org.apache.hyracks.algebricks.core.algebra.visitors.ILogicalOperatorVisitor;
 
-/**
- * This operator may go away after we add indexes to Algebricks.
- */
 public class UnnestMapOperator extends AbstractUnnestOperator {
-
-    private final List<Object> variableTypes; // TODO: get rid of this and  deprecate UnnestMap
+    private final List<Object> variableTypes;
     private boolean propagateInput;
-
     private List<Mutable<ILogicalExpression>> additionalFilteringExpressions;
     private List<LogicalVariable> minFilterVars;
     private List<LogicalVariable> maxFilterVars;
@@ -105,6 +99,10 @@ public class UnnestMapOperator extends AbstractUnnestOperator {
         return propagateInput;
     }
 
+    public void setPropagatesInput(boolean propagateInput) {
+        this.propagateInput = propagateInput;
+    }
+
     public List<LogicalVariable> getMinFilterVars() {
         return minFilterVars;
     }
@@ -129,10 +127,8 @@ public class UnnestMapOperator extends AbstractUnnestOperator {
         return additionalFilteringExpressions;
     }
 
-    /*
     @Override
     public boolean isMap() {
-        return !propagateInput;
+        return true;
     }
-    */
 }

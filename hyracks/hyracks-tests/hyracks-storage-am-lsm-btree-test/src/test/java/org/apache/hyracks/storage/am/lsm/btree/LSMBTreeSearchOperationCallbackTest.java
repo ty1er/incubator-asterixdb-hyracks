@@ -206,6 +206,9 @@ public class LSMBTreeSearchOperationCallbackTest extends AbstractSearchOperation
                         expectedTupleToBeLockedValue);
             }
 
+            @Override
+            public void before(ITupleReference tuple) throws HyracksDataException {
+            }
         }
     }
 

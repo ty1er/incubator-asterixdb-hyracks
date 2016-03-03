@@ -21,10 +21,11 @@ package org.apache.hyracks.algebricks.core.algebra.operators.logical.visitors;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.mutable.Mutable;
-
 import org.apache.hyracks.algebricks.common.exceptions.AlgebricksException;
 import org.apache.hyracks.algebricks.common.utils.Pair;
 import org.apache.hyracks.algebricks.core.algebra.base.ILogicalOperator;
@@ -34,22 +35,57 @@ import org.apache.hyracks.algebricks.core.algebra.visitors.ILogicalOperatorVisit
 
 public class VariableUtilities {
 
+    /***
+     * Adds the used variables in the logical operator to the list of used variables
+     *
+     * @param op
+     *            The target operator
+     * @param usedVariables
+     *            A list to be filled with variables used in the logical operator op.
+     * @throws AlgebricksException
+     */
     public static void getUsedVariables(ILogicalOperator op, Collection<LogicalVariable> usedVariables)
             throws AlgebricksException {
         ILogicalOperatorVisitor<Void, Void> visitor = new UsedVariableVisitor(usedVariables);
         op.accept(visitor, null);
     }
 
+    /**
+     * Adds the variables produced in the logical operator in the list of produced variables
+     *
+     * @param op
+     *            The target operator
+     * @param producedVariables
+     *            The variables produced in the logical operator
+     * @throws AlgebricksException
+     */
     public static void getProducedVariables(ILogicalOperator op, Collection<LogicalVariable> producedVariables)
             throws AlgebricksException {
         ILogicalOperatorVisitor<Void, Void> visitor = new ProducedVariableVisitor(producedVariables);
         op.accept(visitor, null);
     }
 
+    /**
+     * Adds the variables that are live after the execution of this operator to the list of schema variables.
+     *
+     * @param op
+     *            The target logical operator
+     * @param schemaVariables
+     *            The list of live variables. The output of the operator and the propagated outputs of its children
+     * @throws AlgebricksException
+     */
     public static void getLiveVariables(ILogicalOperator op, Collection<LogicalVariable> schemaVariables)
             throws AlgebricksException {
         ILogicalOperatorVisitor<Void, Void> visitor = new SchemaVariableVisitor(schemaVariables);
         op.accept(visitor, null);
+    }
+
+    public static void getSubplanLocalLiveVariables(ILogicalOperator op, Collection<LogicalVariable> liveVariables)
+            throws AlgebricksException {
+        VariableUtilities.getLiveVariables(op, liveVariables);
+        Set<LogicalVariable> locallyProducedVars = new HashSet<>();
+        VariableUtilities.getProducedVariablesInDescendantsAndSelf(op, locallyProducedVars);
+        liveVariables.retainAll(locallyProducedVars);
     }
 
     public static void getUsedVariablesInDescendantsAndSelf(ILogicalOperator op, Collection<LogicalVariable> vars)
@@ -75,12 +111,37 @@ public class VariableUtilities {
         substituteVariables(op, v1, v2, true, ctx);
     }
 
+    public static void substituteVariables(ILogicalOperator op, Map<LogicalVariable, LogicalVariable> varMap,
+            ITypingContext ctx) throws AlgebricksException {
+        for (Map.Entry<LogicalVariable, LogicalVariable> entry : varMap.entrySet()) {
+            VariableUtilities.substituteVariables(op, entry.getKey(), entry.getValue(), ctx);
+        }
+    }
+
+    public static void substituteVariables(ILogicalOperator op,
+            List<Pair<LogicalVariable, LogicalVariable>> oldVarNewVarMapHistory, ITypingContext ctx)
+                    throws AlgebricksException {
+        for (Pair<LogicalVariable, LogicalVariable> entry : oldVarNewVarMapHistory) {
+            VariableUtilities.substituteVariables(op, entry.first, entry.second, ctx);
+        }
+    }
+
     public static void substituteVariablesInDescendantsAndSelf(ILogicalOperator op, LogicalVariable v1,
             LogicalVariable v2, ITypingContext ctx) throws AlgebricksException {
         for (Mutable<ILogicalOperator> childOp : op.getInputs()) {
             substituteVariablesInDescendantsAndSelf(childOp.getValue(), v1, v2, ctx);
         }
         substituteVariables(op, v1, v2, true, ctx);
+    }
+
+    public static void substituteVariablesInDescendantsAndSelf(ILogicalOperator op,
+            Map<LogicalVariable, LogicalVariable> varMap, ITypingContext ctx) throws AlgebricksException {
+        for (Entry<LogicalVariable, LogicalVariable> entry : varMap.entrySet()) {
+            for (Mutable<ILogicalOperator> childOp : op.getInputs()) {
+                substituteVariablesInDescendantsAndSelf(childOp.getValue(), entry.getKey(), entry.getValue(), ctx);
+            }
+            substituteVariables(op, entry.getKey(), entry.getValue(), true, ctx);
+        }
     }
 
     public static void substituteVariables(ILogicalOperator op, LogicalVariable v1, LogicalVariable v2,

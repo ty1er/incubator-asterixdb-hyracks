@@ -57,8 +57,6 @@ import org.apache.hyracks.storage.am.lsm.common.impls.AbstractLSMIndex;
 import org.apache.hyracks.storage.am.lsm.common.impls.BlockingIOOperationCallbackWrapper;
 import org.apache.hyracks.storage.am.lsm.common.impls.LSMComponentFileReferences;
 import org.apache.hyracks.storage.am.lsm.common.impls.LSMComponentFilterManager;
-import org.apache.hyracks.storage.am.rtree.api.IRTreeInteriorFrame;
-import org.apache.hyracks.storage.am.rtree.api.IRTreeLeafFrame;
 import org.apache.hyracks.storage.am.rtree.impls.RTree;
 import org.apache.hyracks.storage.common.buffercache.IBufferCache;
 import org.apache.hyracks.storage.common.file.IFileMapProvider;
@@ -190,6 +188,7 @@ public abstract class AbstractLSMRTree extends AbstractLSMIndex implements ITree
             case INSERT:
             case DELETE:
             case FLUSH:
+            case UPSERT:
                 operationalComponents.add(memoryComponents.get(cmc));
                 break;
             case SEARCH:
@@ -227,13 +226,7 @@ public abstract class AbstractLSMRTree extends AbstractLSMIndex implements ITree
     public void search(ILSMIndexOperationContext ictx, IIndexCursor cursor, ISearchPredicate pred)
             throws HyracksDataException, IndexException {
         LSMRTreeOpContext ctx = (LSMRTreeOpContext) ictx;
-        List<ILSMComponent> operationalComponents = ictx.getComponentHolder();
-
-        LSMRTreeCursorInitialState initialState = new LSMRTreeCursorInitialState(rtreeLeafFrameFactory,
-                rtreeInteriorFrameFactory, btreeLeafFrameFactory, ctx.getBTreeMultiComparator(), lsmHarness,
-                comparatorFields, linearizerArray, ctx.searchCallback, operationalComponents);
-
-        cursor.open(initialState, pred);
+        cursor.open(ctx.searchInitialState, pred);
     }
 
     protected LSMComponentFileReferences getMergeTargetFileName(List<ILSMComponent> mergingDiskComponents)
@@ -241,8 +234,8 @@ public abstract class AbstractLSMRTree extends AbstractLSMIndex implements ITree
         RTree firstTree = ((LSMRTreeDiskComponent) mergingDiskComponents.get(0)).getRTree();
         RTree lastTree = ((LSMRTreeDiskComponent) mergingDiskComponents.get(mergingDiskComponents.size() - 1))
                 .getRTree();
-        FileReference firstFile = diskFileMapProvider.lookupFileName(firstTree.getFileId());
-        FileReference lastFile = diskFileMapProvider.lookupFileName(lastTree.getFileId());
+        FileReference firstFile = firstTree.getFileReference();
+        FileReference lastFile = lastTree.getFileReference();
         LSMComponentFileReferences fileRefs = fileManager.getRelMergeFileReference(firstFile.getFile().getName(),
                 lastFile.getFile().getName());
         return fileRefs;
@@ -327,8 +320,8 @@ public abstract class AbstractLSMRTree extends AbstractLSMIndex implements ITree
             indexTuple = tuple;
         }
 
-        ctx.modificationCallback.before(indexTuple);
-        ctx.modificationCallback.found(null, indexTuple);
+        ctx.getModificationCallback().before(indexTuple);
+        ctx.getModificationCallback().found(null, indexTuple);
         if (ctx.getOperation() == IndexOperation.INSERT) {
             ctx.currentMutableRTreeAccessor.insert(indexTuple);
         } else {
@@ -350,10 +343,10 @@ public abstract class AbstractLSMRTree extends AbstractLSMIndex implements ITree
     }
 
     protected LSMRTreeOpContext createOpContext(IModificationOperationCallback modCallback) {
-        return new LSMRTreeOpContext(memoryComponents, (IRTreeLeafFrame) rtreeLeafFrameFactory.createFrame(),
-                (IRTreeInteriorFrame) rtreeInteriorFrameFactory.createFrame(), btreeLeafFrameFactory,
-                btreeInteriorFrameFactory, rtreeCmpFactories, btreeCmpFactories, modCallback,
-                NoOpOperationCallback.INSTANCE, rtreeFields, filterFields);
+        return new LSMRTreeOpContext(memoryComponents, rtreeLeafFrameFactory, rtreeInteriorFrameFactory,
+                btreeLeafFrameFactory, btreeInteriorFrameFactory, rtreeCmpFactories, btreeCmpFactories, modCallback,
+                NoOpOperationCallback.INSTANCE, rtreeFields, filterFields, lsmHarness, comparatorFields,
+                linearizerArray);
     }
 
     @Override

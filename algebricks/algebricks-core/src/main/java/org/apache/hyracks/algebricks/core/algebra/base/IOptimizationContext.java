@@ -21,7 +21,6 @@ package org.apache.hyracks.algebricks.core.algebra.base;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.hyracks.algebricks.common.exceptions.AlgebricksException;
 import org.apache.hyracks.algebricks.core.algebra.expressions.IExpressionEvalSizeComputer;
 import org.apache.hyracks.algebricks.core.algebra.expressions.IMergeAggregationExpressionFactory;
 import org.apache.hyracks.algebricks.core.algebra.expressions.IVariableEvalSizeEnvironment;
@@ -34,16 +33,7 @@ import org.apache.hyracks.algebricks.core.rewriter.base.IAlgebraicRewriteRule;
 import org.apache.hyracks.algebricks.core.rewriter.base.ICardinalityEstimator;
 import org.apache.hyracks.algebricks.core.rewriter.base.PhysicalOptimizationConfig;
 
-public interface IOptimizationContext extends ITypingContext {
-
-    public int getVarCounter();
-
-    public void setVarCounter(int varCounter);
-
-    public LogicalVariable newVar();
-
-    @Override
-    public IMetadataProvider<?, ?> getMetadataProvider();
+public interface IOptimizationContext extends ITypingContext, IVariableContext {
 
     public void setMetadataDeclarations(IMetadataProvider<?, ?> metadataProvider);
 
@@ -73,7 +63,9 @@ public interface IOptimizationContext extends ITypingContext {
     public void putFDList(ILogicalOperator op, List<FunctionalDependency> fdList);
 
     public List<FunctionalDependency> getFDList(ILogicalOperator op);
-
+    
+    public void clearAllFDAndEquivalenceClasses();
+    
     public void putLogicalPropertiesVector(ILogicalOperator op, ILogicalPropertiesVector v);
 
     public ILogicalPropertiesVector getLogicalPropertiesVector(ILogicalOperator op);
@@ -86,13 +78,9 @@ public interface IOptimizationContext extends ITypingContext {
 
     public PhysicalOptimizationConfig getPhysicalOptimizationConfig();
 
-    public void invalidateTypeEnvironmentForOperator(ILogicalOperator op);
-
-    public void computeAndSetTypeEnvironmentForOperator(ILogicalOperator op) throws AlgebricksException;
-
     public void updatePrimaryKeys(Map<LogicalVariable, LogicalVariable> mappedVars);
 
-    public LogicalOperatorPrettyPrintVisitor getPrettyPrintVisitor();
-
     public ICardinalityEstimator getCardinalityEstimator();
+
+    public LogicalOperatorPrettyPrintVisitor getPrettyPrintVisitor();
 }

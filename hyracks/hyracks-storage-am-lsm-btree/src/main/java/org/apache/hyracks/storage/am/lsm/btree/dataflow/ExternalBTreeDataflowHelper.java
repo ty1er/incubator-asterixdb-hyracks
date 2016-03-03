@@ -69,10 +69,12 @@ public class ExternalBTreeDataflowHelper extends LSMBTreeDataflowHelper {
             return index;
         }
         synchronized (lcManager) {
-            try {
-                index = lcManager.getIndex(resourceName);
-            } catch (HyracksDataException e) {
-                return null;
+            if (index == null) {
+                try {
+                    index = lcManager.getIndex(resourcePath);
+                } catch (HyracksDataException e) {
+                    return null;
+                }
             }
         }
         return index;
