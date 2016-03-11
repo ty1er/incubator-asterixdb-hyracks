@@ -41,13 +41,13 @@ import org.apache.hyracks.util.objectpool.MapObjectPool;
 public class WaveletTransform extends StatisticsCollector {
 
     public WaveletTransform(IBufferCache bufferCache, IFileMapProvider fileMapProvider, FileReference file,
-            int[] fields, int size, ITypeTraits[] fieldTypeTraits, IOrdinalPrimitiveValueProvider fieldValueProvider)
-                    throws HyracksDataException {
+            int[] fields, int size, ITypeTraits[] fieldTypeTraits, IOrdinalPrimitiveValueProvider fieldValueProvider) {
         super(bufferCache, fileMapProvider, file, fields, size, fieldTypeTraits, fieldValueProvider);
     }
 
     @Override
     public ISynopsisBuilder createSynopsisBuilder(long numElements) throws HyracksDataException {
+        check();
         return new SparseWaveletTransformBuilder();
     }
 
@@ -63,7 +63,7 @@ public class WaveletTransform extends StatisticsCollector {
         }
 
         public SparseWaveletTransformBuilder() throws HyracksDataException {
-            this.synopsis = new WaveletSynopsis(fieldTypeTrait, size);
+            this.synopsis = new WaveletSynopsis(fieldTypeTraits[0], size);
 
             avgStack = new Stack<>();
             avgStackObjectPool = new MapObjectPool<WaveletCoefficient, Integer>();
@@ -240,8 +240,8 @@ public class WaveletTransform extends StatisticsCollector {
             if (isAntimatterTuple) {
                 neg = ((ILSMTreeTupleReference) tuple).isAntimatter();
             }
-            long currTuplePosition = fieldValueProvider.getOrdinalValue(tuple.getFieldData(field),
-                    tuple.getFieldStart(field));
+            long currTuplePosition = fieldValueProvider.getOrdinalValue(tuple.getFieldData(fields[0]),
+                    tuple.getFieldStart(fields[0]));
             double currTupleValue = neg ? -1.0 : 1.0;
 
             // check whether tuple with this position was already seen

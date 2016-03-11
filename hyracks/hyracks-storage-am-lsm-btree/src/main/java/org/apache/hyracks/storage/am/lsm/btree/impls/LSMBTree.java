@@ -541,8 +541,10 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
         List<Path> mergeComponentPaths = new ArrayList<Path>();
         for (int i = 0; i < mergedComponents.size(); ++i) {
             LSMBTreeDiskComponent component = (LSMBTreeDiskComponent) mergedComponents.get(i);
-            mergeComponentPaths.add(component.getBTree().getFileReference().getFile().toPath());
             numElements += component.getBloomFilter().getNumElements();
+            if (statsType != null) {
+                mergeComponentPaths.add(component.getStatisticsCollector().getFileReference().getFile().toPath());
+            }
         }
 
         int maxBucketsPerElement = BloomCalculations.maxBucketsPerElement(numElements);
@@ -923,8 +925,7 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
         LSMBTreeDiskComponent component = (LSMBTreeDiskComponent) lsmComponent;
 
         files.add(component.getBTree().getFileReference().getFile().getAbsolutePath());
-        files.add(component.getBloomFilter().getFileReference().getFile()
-.getAbsolutePath());
+        files.add(component.getBloomFilter().getFileReference().getFile().getAbsolutePath());
         StatisticsCollector stats = component.getStatisticsCollector();
         if (stats != null) {
             files.add(component.getStatisticsCollector().getFileReference().toString());

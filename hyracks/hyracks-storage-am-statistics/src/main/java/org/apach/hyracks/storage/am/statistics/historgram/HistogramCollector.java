@@ -39,13 +39,14 @@ public class HistogramCollector extends StatisticsCollector {
 
     public HistogramCollector(IBufferCache bufferCache, IFileMapProvider fileMapProvider, FileReference file,
             int[] fields, int size, ITypeTraits[] fieldTypeTraits, IOrdinalPrimitiveValueProvider fieldValueProvider,
-            SynopsisType statsType) throws HyracksDataException {
+            SynopsisType statsType) {
         super(bufferCache, fileMapProvider, file, fields, size, fieldTypeTraits, fieldValueProvider);
         this.statsType = statsType;
     }
 
     @Override
     public ISynopsisBuilder createSynopsisBuilder(long numElements) throws HyracksDataException {
+        check();
         return new HistogramBuilder(numElements);
     }
 
@@ -61,10 +62,10 @@ public class HistogramCollector extends StatisticsCollector {
             elementsPerBucket = Math.max(numElements / size, 1);
             switch (statsType) {
                 case UniformHistogram:
-                    histogram = new UniformHistogramSynopsis(fieldTypeTrait, size);
+                    histogram = new UniformHistogramSynopsis(fieldTypeTraits[0], size);
                     break;
                 case ContinuousHistogram:
-                    histogram = new ContinuousHistogramSynopsis(fieldTypeTrait, size);
+                    histogram = new ContinuousHistogramSynopsis(fieldTypeTraits[0], size);
                     break;
                 default:
                     throw new HyracksDataException("Unsupported histogram type " + statsType);
@@ -82,8 +83,8 @@ public class HistogramCollector extends StatisticsCollector {
         @Override
         public void add(ITupleReference tuple) throws IndexException, HyracksDataException {
             // TODO: what to do with animatter entries?
-            long currTuplePosition = fieldValueProvider.getOrdinalValue(tuple.getFieldData(field),
-                    tuple.getFieldStart(field));
+            long currTuplePosition = fieldValueProvider.getOrdinalValue(tuple.getFieldData(fields[0]),
+                    tuple.getFieldStart(fields[0]));
             if (currTuplePosition != lastAddedTuplePosition && addedElementsNum > elementsPerBucket) {
                 histogram.setBucketBorder(activeBucket, currTuplePosition - 1);
                 activeBucket++;

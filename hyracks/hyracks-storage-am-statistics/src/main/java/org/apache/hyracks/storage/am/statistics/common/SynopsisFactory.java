@@ -34,7 +34,7 @@ import org.apache.hyracks.storage.am.statistics.wavelet.WaveletSynopsis;
 
 public class SynopsisFactory {
     @SuppressWarnings("unchecked")
-    public static ISynopsis<? extends ISynopsisElement> createSynopsisElement(SynopsisType type,
+    public static ISynopsis<? extends ISynopsisElement> createSynopsis(SynopsisType type,
             ITypeTraits keyTypeTraits, List<? extends ISynopsisElement> elements) throws HyracksDataException {
         switch (type) {
             case UniformHistogram:

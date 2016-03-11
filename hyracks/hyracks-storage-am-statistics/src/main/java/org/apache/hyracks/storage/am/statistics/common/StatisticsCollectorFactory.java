@@ -62,12 +62,12 @@ public class StatisticsCollectorFactory {
         }
     }
 
-    private StatisticsCollector createWaveletStatistics(FileReference file) throws HyracksDataException {
+    private StatisticsCollector createWaveletStatistics(FileReference file) {
         return new WaveletTransform(bufferCache, fileMapProvider, file, statsFields, statsSize, statsFieldTypeTraits,
                 statsFieldValueProvider);
     }
 
-    public StatisticsCollector createHistorgamStatistics(FileReference file) throws HyracksDataException {
+    public StatisticsCollector createHistorgamStatistics(FileReference file) {
         return new HistogramCollector(bufferCache, fileMapProvider, file, statsFields, statsSize, statsFieldTypeTraits,
                 statsFieldValueProvider, statsType);
     }

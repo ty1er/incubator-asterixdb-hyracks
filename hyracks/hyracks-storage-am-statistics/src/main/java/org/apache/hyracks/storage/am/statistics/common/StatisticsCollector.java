@@ -40,9 +40,9 @@ import org.apache.hyracks.storage.common.file.IFileMapProvider;
 public abstract class StatisticsCollector extends AbstractFileManager {
 
     protected int size;
-    protected final int field;
+    protected final int[] fields;
     protected final IOrdinalPrimitiveValueProvider fieldValueProvider;
-    protected final ITypeTraits fieldTypeTrait;
+    protected final ITypeTraits[] fieldTypeTraits;
     private final int numPages;
 
     protected final static int METADATA_PAGE_ID = 0;
@@ -50,14 +50,18 @@ public abstract class StatisticsCollector extends AbstractFileManager {
     protected final static int NUM_ELEMENTS_OFFSET = NUM_PAGES_OFFSET + Integer.BYTES;
 
     public StatisticsCollector(IBufferCache bufferCache, IFileMapProvider fileMapProvider, FileReference file,
-            int[] fields, int size, ITypeTraits[] fieldTypeTraits, IOrdinalPrimitiveValueProvider fieldValueProvider)
-                    throws HyracksDataException {
+            int[] fields, int size, ITypeTraits[] fieldTypeTraits, IOrdinalPrimitiveValueProvider fieldValueProvider) {
         super(bufferCache, fileMapProvider, file);
         this.size = size;
         this.numPages = (int) Math
                 .ceil(size * (ISynopsisElement.SYNOPSIS_KEY_SIZE + ISynopsisElement.SYNOPSIS_VALUE_SIZE)
                         / (double) bufferCache.getPageSize());
         this.fieldValueProvider = fieldValueProvider;
+        this.fields = fields;
+        this.fieldTypeTraits = fieldTypeTraits;
+    }
+
+    protected void check() throws HyracksDataException {
         if (fields.length > 1) {
             throw new HyracksDataException("Unable to collect statistics on composite keys");
         }
@@ -65,8 +69,6 @@ public abstract class StatisticsCollector extends AbstractFileManager {
             throw new HyracksDataException(
                     "Unable to collect statistics for key field with typeTrait" + fieldTypeTraits[fields[0]]);
         }
-        this.field = fields[0];
-        this.fieldTypeTrait = fieldTypeTraits[0];
     }
 
     protected void persistSynopsisMetadata(int pageNum, long elementNum, boolean newPage) throws HyracksDataException {

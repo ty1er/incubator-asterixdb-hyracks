@@ -48,7 +48,7 @@ public abstract class AbstractLSMIndexFileManager implements ILSMIndexFileManage
     public static final String SPLIT_STRING = "_";
     protected static final String BLOOM_FILTER_STRING = "f";
     protected static final String TRANSACTION_PREFIX = ".T";
-    protected static final String STATISTICS_STRING = "s";
+    public static final String STATISTICS_STRING = "s";
 
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss-SSS");
 
