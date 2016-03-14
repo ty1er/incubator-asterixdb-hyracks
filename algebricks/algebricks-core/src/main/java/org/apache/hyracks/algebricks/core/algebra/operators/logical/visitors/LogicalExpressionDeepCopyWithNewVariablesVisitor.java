@@ -61,9 +61,9 @@ public class LogicalExpressionDeepCopyWithNewVariablesVisitor
     private void deepCopyAnnotations(AbstractFunctionCallExpression src, AbstractFunctionCallExpression dest) {
         Map<Object, IExpressionAnnotation> srcAnnotations = src.getAnnotations();
         Map<Object, IExpressionAnnotation> destAnnotations = dest.getAnnotations();
-        for (Object k : srcAnnotations.keySet()) {
-            IExpressionAnnotation annotation = srcAnnotations.get(k).copy();
-            destAnnotations.put(k, annotation);
+        for (Map.Entry<Object, IExpressionAnnotation> annotationEntry : srcAnnotations.entrySet()) {
+            IExpressionAnnotation annotation = annotationEntry.getValue().copy();
+            destAnnotations.put(annotationEntry.getKey(), annotation);
         }
     }
 
@@ -123,7 +123,11 @@ public class LogicalExpressionDeepCopyWithNewVariablesVisitor
     @Override
     public ILogicalExpression visitStatefulFunctionCallExpression(StatefulFunctionCallExpression expr, Void arg)
             throws AlgebricksException {
-        throw new UnsupportedOperationException();
+        StatefulFunctionCallExpression exprCopy = new StatefulFunctionCallExpression(expr.getFunctionInfo(),
+                expr.getPropertiesComputer(), deepCopyExpressionReferenceList(expr.getArguments()));
+        deepCopyAnnotations(expr, exprCopy);
+        deepCopyOpaqueParameters(expr, exprCopy);
+        return exprCopy;
     }
 
     @Override

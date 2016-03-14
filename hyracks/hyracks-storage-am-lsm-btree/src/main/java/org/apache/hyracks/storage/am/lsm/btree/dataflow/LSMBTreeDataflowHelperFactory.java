@@ -59,7 +59,7 @@ public class LSMBTreeDataflowHelperFactory extends AbstractLSMBTreeDataflowHelpe
     public IndexDataflowHelper createIndexDataflowHelper(IIndexOperatorDescriptor opDesc, IHyracksTaskContext ctx,
             int partition) {
         return new LSMBTreeDataflowHelper(opDesc, ctx, partition,
-                virtualBufferCacheProvider.getVirtualBufferCaches(ctx), bloomFilterFalsePositiveRate,
+                virtualBufferCacheProvider.getVirtualBufferCaches(ctx, opDesc.getFileSplitProvider()), bloomFilterFalsePositiveRate,
                 mergePolicyFactory.createMergePolicy(mergePolicyProperties, ctx), opTrackerFactory,
                 ioSchedulerProvider.getIOScheduler(ctx), ioOpCallbackFactory, needKeyDupCheck, filterTypeTraits,
                 filterCmpFactories, btreeFields, filterFields, durable, statsType, statsSize, statsFieldTypeTraits,
