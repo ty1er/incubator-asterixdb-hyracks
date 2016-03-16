@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apach.hyracks.storage.am.statistics.historgram;
+package org.apache.hyracks.storage.am.statistics.historgram;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -77,5 +77,5 @@ public abstract class EquiHeightHistogramSynopsis<T extends HistogramBucket> ext
         buckets.get(bucket).setRightBorder(border);
     }
 
-    public abstract void appendToBucket(int bucketId, long tuplePos, double frequency);
+    public abstract void appendToBucket(int bucketId, int bucketNum, long tuplePos, double frequency);
 }

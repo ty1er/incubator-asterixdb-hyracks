@@ -16,13 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apach.hyracks.storage.am.statistics.historgram;
-
-import java.util.ArrayList;
-import java.util.List;
+package org.apache.hyracks.storage.am.statistics.historgram;
 
 import org.apache.hyracks.api.dataflow.value.ITypeTraits;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class UniformHistogramSynopsis extends EquiHeightHistogramSynopsis<UniformHistogramBucket> {
 
@@ -35,12 +35,12 @@ public class UniformHistogramSynopsis extends EquiHeightHistogramSynopsis<Unifor
     }
 
     public UniformHistogramSynopsis(ITypeTraits keyTypeTraits, int bucketNum) throws HyracksDataException {
-        this(keyTypeTraits, bucketNum, new ArrayList<UniformHistogramBucket>(bucketNum));
+        this(keyTypeTraits, bucketNum, new ArrayList<>(bucketNum));
     }
 
     @Override
-    public void appendToBucket(int bucketId, long tuple, double frequency) {
-        if (bucketId >= buckets.size()) {
+    public void appendToBucket(int bucketId, int bucketNum, long tuple, double frequency) {
+        if (bucketId >= bucketNum) {
             lastAppendedTuple = tuple;
             buckets.add(new UniformHistogramBucket(0l, frequency, 1));
         } else {

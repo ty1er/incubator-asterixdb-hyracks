@@ -18,8 +18,8 @@
  */
 package org.apache.hyracks.storage.am.statistics.common;
 
-import org.apach.hyracks.storage.am.statistics.historgram.HistogramBucket;
-import org.apach.hyracks.storage.am.statistics.historgram.UniformHistogramBucket;
+import org.apache.hyracks.storage.am.statistics.historgram.HistogramBucket;
+import org.apache.hyracks.storage.am.statistics.historgram.UniformHistogramBucket;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.storage.am.common.api.ISynopsis.SynopsisType;
 import org.apache.hyracks.storage.am.common.api.ISynopsisElement;

@@ -18,12 +18,14 @@
  */
 package org.apache.hyracks.storage.am.statistics.common;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import org.apach.hyracks.storage.am.statistics.historgram.ContinuousHistogramSynopsis;
-import org.apach.hyracks.storage.am.statistics.historgram.HistogramBucket;
-import org.apach.hyracks.storage.am.statistics.historgram.UniformHistogramBucket;
-import org.apach.hyracks.storage.am.statistics.historgram.UniformHistogramSynopsis;
+import org.apache.hyracks.storage.am.statistics.historgram.ContinuousHistogramSynopsis;
+import org.apache.hyracks.storage.am.statistics.historgram.HistogramBucket;
+import org.apache.hyracks.storage.am.statistics.historgram.UniformHistogramBucket;
+import org.apache.hyracks.storage.am.statistics.historgram.UniformHistogramSynopsis;
 import org.apache.hyracks.api.dataflow.value.ITypeTraits;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.storage.am.common.api.ISynopsis;

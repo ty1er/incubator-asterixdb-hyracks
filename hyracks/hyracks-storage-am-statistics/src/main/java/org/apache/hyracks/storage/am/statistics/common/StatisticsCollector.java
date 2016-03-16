@@ -22,7 +22,7 @@ package org.apache.hyracks.storage.am.statistics.common;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 
-import org.apach.hyracks.storage.am.statistics.historgram.UniformHistogramBucket;
+import org.apache.hyracks.storage.am.statistics.historgram.UniformHistogramBucket;
 import org.apache.hyracks.api.dataflow.value.ITypeTraits;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.api.io.FileReference;

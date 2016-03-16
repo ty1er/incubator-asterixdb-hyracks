@@ -772,7 +772,8 @@ public class LSMBTree extends AbstractLSMIndex implements ITreeIndex {
                 if (statsType != null) {
                     statisticsBuilder.end();
                     statisticsManager.sendFlushStatistics(statisticsBuilder.getSynopsis(),
-                            ((LSMBTreeDiskComponent) component).getBTree().getFileReference().getFile().toPath());
+                            ((LSMBTreeDiskComponent) component).getStatisticsCollector().getFileReference().getFile()
+                                    .toPath());
                 }
                 bulkLoader.end();
 

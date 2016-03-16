@@ -16,20 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apach.hyracks.storage.am.statistics.historgram;
-
-import java.util.ArrayList;
-import java.util.List;
+package org.apache.hyracks.storage.am.statistics.historgram;
 
 import org.apache.hyracks.api.dataflow.value.ITypeTraits;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ContinuousHistogramSynopsis extends EquiHeightHistogramSynopsis<HistogramBucket> {
 
     private static final long serialVersionUID = 1L;
 
     public ContinuousHistogramSynopsis(ITypeTraits keyTypeTraits, int bucketNum) throws HyracksDataException {
-        this(keyTypeTraits, bucketNum, new ArrayList<HistogramBucket>(bucketNum));
+        this(keyTypeTraits, bucketNum, new ArrayList<>(bucketNum));
     }
 
     public ContinuousHistogramSynopsis(ITypeTraits keyTypeTraits, int bucketNum, List<HistogramBucket> buckets)
@@ -42,7 +42,7 @@ public class ContinuousHistogramSynopsis extends EquiHeightHistogramSynopsis<His
         return SynopsisType.ContinuousHistogram;
     }
 
-    public void appendToBucket(int bucketId, long tuplePos, double frequency) {
+    public void appendToBucket(int bucketId, int bucketNum, long tuplePos, double frequency) {
         if (bucketId >= buckets.size()) {
             buckets.add(new HistogramBucket(0l, frequency));
         } else {

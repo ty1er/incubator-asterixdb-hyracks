@@ -19,7 +19,7 @@
 
 package org.apache.hyracks.storage.am.statistics.common;
 
-import org.apach.hyracks.storage.am.statistics.historgram.HistogramCollector;
+import org.apache.hyracks.storage.am.statistics.historgram.HistogramCollector;
 import org.apache.hyracks.api.dataflow.value.ITypeTraits;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.api.io.FileReference;

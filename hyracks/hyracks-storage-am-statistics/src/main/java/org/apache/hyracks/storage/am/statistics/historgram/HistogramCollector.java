@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apach.hyracks.storage.am.statistics.historgram;
+package org.apache.hyracks.storage.am.statistics.historgram;
 
 import org.apache.hyracks.api.dataflow.value.ITypeTraits;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
@@ -90,13 +90,16 @@ public class HistogramCollector extends StatisticsCollector {
                 activeBucket++;
                 addedElementsNum = 0;
             }
-            histogram.appendToBucket(activeBucket, currTuplePosition, 1.0);
+            histogram.appendToBucket(activeBucket, size, currTuplePosition, 1.0);
             addedElementsNum++;
             lastAddedTuplePosition = currTuplePosition;
         }
 
         @Override
         public void end() throws IndexException, HyracksDataException {
+            if (addedElementsNum == 0) {
+                histogram.appendToBucket(0, 0, histogram.getDomainEnd(), 0.0);
+            }
             histogram.setBucketBorder(activeBucket, histogram.getDomainEnd());
             persistHistogram();
         }
