@@ -19,6 +19,7 @@
 package org.apache.hyracks.algebricks.compiler.api;
 
 import org.apache.hyracks.algebricks.common.config.AlgebricksConfig;
+import org.apache.hyracks.algebricks.common.constraints.AlgebricksPartitionConstraint;
 import org.apache.hyracks.algebricks.common.exceptions.AlgebricksException;
 import org.apache.hyracks.algebricks.core.algebra.base.ILogicalPlan;
 import org.apache.hyracks.algebricks.core.algebra.base.IOptimizationContext;
@@ -52,11 +53,11 @@ public class HeuristicCompilerFactoryBuilder extends AbstractCompilerFactoryBuil
                 IExpressionEvalSizeComputer expressionEvalSizeComputer,
                 IMergeAggregationExpressionFactory mergeAggregationExpressionFactory,
                 IExpressionTypeComputer expressionTypeComputer, INullableTypeComputer nullableTypeComputer,
-                ICardinalityEstimator cardinalityEstimator, PhysicalOptimizationConfig physicalOptimizationConfig) {
+                ICardinalityEstimator cardinalityEstimator, PhysicalOptimizationConfig physicalOptimizationConfig, AlgebricksPartitionConstraint clusterLocations) {
             LogicalOperatorPrettyPrintVisitor prettyPrintVisitor = new LogicalOperatorPrettyPrintVisitor();
             return new AlgebricksOptimizationContext(varCounter, expressionEvalSizeComputer,
                     mergeAggregationExpressionFactory, expressionTypeComputer, nullableTypeComputer,
-                    cardinalityEstimator, physicalOptimizationConfig, prettyPrintVisitor);
+                    cardinalityEstimator, physicalOptimizationConfig, clusterLocations, prettyPrintVisitor);
         }
     }
 
@@ -78,7 +79,7 @@ public class HeuristicCompilerFactoryBuilder extends AbstractCompilerFactoryBuil
                     int varCounter) {
                 final IOptimizationContext oc = optCtxFactory.createOptimizationContext(varCounter,
                         expressionEvalSizeComputer, mergeAggregationExpressionFactory, expressionTypeComputer,
-                        nullableTypeComputer, cardinalityEstimator, physicalOptimizationConfig);
+                        nullableTypeComputer, cardinalityEstimator, physicalOptimizationConfig, clusterLocations);
                 oc.setMetadataDeclarations(metadata);
                 final HeuristicOptimizer opt = new HeuristicOptimizer(plan, logicalRewrites, physicalRewrites, oc);
                 return new ICompiler() {
