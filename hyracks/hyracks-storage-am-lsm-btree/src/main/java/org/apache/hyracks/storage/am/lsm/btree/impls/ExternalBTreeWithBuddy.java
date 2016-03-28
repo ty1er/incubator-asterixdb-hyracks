@@ -553,8 +553,8 @@ public class ExternalBTreeWithBuddy extends AbstractLSMIndex implements ITreeInd
             BTree btree = component.getBTree();
             BTree buddyBtree = component.getBuddyBTree();
             BloomFilter bloomFilter = component.getBloomFilter();
-            btree.deactivate();
-            buddyBtree.deactivate();
+            btree.deactivateCloseHandle();
+            buddyBtree.deactivateCloseHandle();
             bloomFilter.deactivate();
         }
         for (ILSMComponent c : secondDiskComponents) {
@@ -564,8 +564,8 @@ public class ExternalBTreeWithBuddy extends AbstractLSMIndex implements ITreeInd
                 BTree btree = component.getBTree();
                 BTree buddyBtree = component.getBuddyBTree();
                 BloomFilter bloomFilter = component.getBloomFilter();
-                btree.deactivate();
-                buddyBtree.deactivate();
+                btree.deactivateCloseHandle();
+                buddyBtree.deactivateCloseHandle();
                 bloomFilter.deactivate();
             }
         }
@@ -618,8 +618,10 @@ public class ExternalBTreeWithBuddy extends AbstractLSMIndex implements ITreeInd
                 new LSMComponentFileReferences(insertFileRef, deleteFileRef, bloomFilterFileRef, statisticsFileRef));
         if (createComponent) {
             component.getBloomFilter().create();
+        } else {
+            component.getBTree().activate();
+            component.getBuddyBTree().activate();
         }
-
         component.getBloomFilter().activate();
         return component;
     }

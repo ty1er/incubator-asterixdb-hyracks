@@ -337,7 +337,7 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
             LSMBTreeDiskComponent component = (LSMBTreeDiskComponent) c;
             BTree btree = component.getBTree();
             BloomFilter bloomFilter = component.getBloomFilter();
-            btree.deactivate();
+            btree.deactivateCloseHandle();
             bloomFilter.deactivate();
             StatisticsCollector stats = component.getStatisticsCollector();
             if (stats != null) {
@@ -350,7 +350,7 @@ public class ExternalBTree extends LSMBTree implements ITwoPCIndex {
                 LSMBTreeDiskComponent component = (LSMBTreeDiskComponent) c;
                 BTree btree = component.getBTree();
                 BloomFilter bloomFilter = component.getBloomFilter();
-                btree.deactivate();
+                btree.deactivateCloseHandle();
                 bloomFilter.deactivate();
                 StatisticsCollector stats = component.getStatisticsCollector();
                 if (stats != null) {

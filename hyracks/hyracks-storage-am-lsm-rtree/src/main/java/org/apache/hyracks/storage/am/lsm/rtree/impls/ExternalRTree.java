@@ -360,8 +360,8 @@ public class ExternalRTree extends LSMRTree implements ITwoPCIndex {
             RTree rtree = component.getRTree();
             BTree btree = component.getBTree();
             BloomFilter bloomFilter = component.getBloomFilter();
-            rtree.deactivate();
-            btree.deactivate();
+            rtree.deactivateCloseHandle();
+            btree.deactivateCloseHandle();
             bloomFilter.deactivate();
         }
         for (ILSMComponent c : secondDiskComponents) {
@@ -371,8 +371,8 @@ public class ExternalRTree extends LSMRTree implements ITwoPCIndex {
                 RTree rtree = component.getRTree();
                 BTree btree = component.getBTree();
                 BloomFilter bloomFilter = component.getBloomFilter();
-                rtree.deactivate();
-                btree.deactivate();
+                rtree.deactivateCloseHandle();
+                btree.deactivateCloseHandle();
                 bloomFilter.deactivate();
             }
         }
