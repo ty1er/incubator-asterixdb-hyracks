@@ -22,12 +22,8 @@ import org.apache.hyracks.api.dataflow.value.ITypeTraits;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.api.io.FileReference;
 import org.apache.hyracks.dataflow.common.data.accessors.ITupleReference;
-import org.apache.hyracks.storage.am.common.api.IOrdinalPrimitiveValueProvider;
-import org.apache.hyracks.storage.am.common.api.ISynopsis;
+import org.apache.hyracks.storage.am.common.api.*;
 import org.apache.hyracks.storage.am.common.api.ISynopsis.SynopsisType;
-import org.apache.hyracks.storage.am.common.api.ISynopsisBuilder;
-import org.apache.hyracks.storage.am.common.api.ISynopsisElement;
-import org.apache.hyracks.storage.am.common.api.IndexException;
 import org.apache.hyracks.storage.am.statistics.common.AbstractSynopsisBuilder;
 import org.apache.hyracks.storage.am.statistics.common.StatisticsCollector;
 import org.apache.hyracks.storage.common.buffercache.IBufferCache;
@@ -90,7 +86,7 @@ public class HistogramCollector extends StatisticsCollector {
                 activeBucket++;
                 addedElementsNum = 0;
             }
-            histogram.appendToBucket(activeBucket, size, currTuplePosition, 1.0);
+            histogram.appendToBucket(activeBucket, activeBucket, currTuplePosition, 1.0);
             addedElementsNum++;
             lastAddedTuplePosition = currTuplePosition;
         }
