@@ -6,7 +6,7 @@ import org.apache.hyracks.storage.am.common.api.IIndexSearchArgument;
 
 public interface ICardinalityEstimator {
 
-    void getSelectivity(IIndexSearchArgument searchArg, IMetadataProvider metadataProvider, String dataverseName,
+    long getSelectivity(IIndexSearchArgument searchArg, IMetadataProvider metadataProvider, String dataverseName,
             String datasetName, String indexName) throws AlgebricksException;
 
 }

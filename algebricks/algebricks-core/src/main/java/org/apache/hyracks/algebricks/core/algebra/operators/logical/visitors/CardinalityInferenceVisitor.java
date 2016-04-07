@@ -63,8 +63,8 @@ import org.apache.hyracks.algebricks.core.algebra.visitors.ILogicalOperatorVisit
  * worst case; 2. the cardinality is some unknown value.
  */
 public class CardinalityInferenceVisitor implements ILogicalOperatorVisitor<Long, Void> {
-    private static final Long ONE = 1L;
-    private static final Long UNKNOWN = 1000L;
+    public static final Long ONE = 1L;
+    public static final Long UNKNOWN = -1L;
 
     @Override
     public Long visitAggregateOperator(AggregateOperator op, Void arg) throws AlgebricksException {
